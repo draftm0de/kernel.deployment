@@ -70,7 +70,7 @@
           BUILD_ARGS=$(cat "$BUILD_ARG_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
           remaining_args+=("${BUILD_ARGS[@]}")
         else
-          echo "[Error] --build-args=<file> does not exists" >&2
+          echo "[Error] --build-args=$BUILD_ARG_FILE does not exists" >&2
           exit 1
         fi
       ;;
