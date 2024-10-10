@@ -30,7 +30,7 @@ jobs:
         run: |      
           BUILD_ARGS_FILE=${BUILD_ARGS_FILE:-.build_args}
           if [ -f "$BUILD_ARGS_FILE" ]; then
-            ./docker.sh --build-args=$BUILD_ARGS_FILE $CONTEXT
+            ./docker.sh -t $IMAGE --build-args=$BUILD_ARGS_FILE $CONTEXT
           else
-            docker build $CONTEXT
+            docker build -t $IMAGE $CONTEXT
           fi 
