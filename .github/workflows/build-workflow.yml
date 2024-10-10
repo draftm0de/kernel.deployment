@@ -3,12 +3,16 @@ name: Build Docker Image
 on:
   workflow_call:
     inputs:
+      image:
+        description: "image name"
+        required: true
+        type: string
       context:
-        description: "folder within the Dockerfile"
+        description: "Context (Path) for build command"
         required: true
         type: string
       build_args:
-        description: "filename for --build-args (relative to context)"
+        description: "filename for --build-args"
         required: false
         type: string
 
@@ -22,7 +26,11 @@ jobs:
       - name: Use the passed argument
         env:
           CONTEXT: ${{ inputs.context }}
-          BUILD_ARGS: ${{ inputs.build_args }}
-        run: |
-          echo "environment variable context: $CONTEXT"
-          echo "environment variable build_args: $BUILD_ARGS"
+          BUILD_ARGS_FILE: ${{ inputs.build_args }}
+        run: |      
+          BUILD_ARGS_FILE=${BUILD_ARGS_FILE:-.build_args}
+          if [ -f "$BUILD_ARGS_FILE" ]; then
+            ./docker.sh --build-args=$BUILD_ARGS_FILE $CONTEXT
+          else
+            docker build $CONTEXT
+          fi 
