@@ -1,0 +1,28 @@
+name: Build Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      context:
+        description: "folder within the Dockerfile"
+        required: true
+        type: string
+      build_args:
+        description: "filename for --build-args (relative to context)"
+        required: false
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout own repository and map as main
+        uses: actions/checkout@v4
+
+      - name: Use the passed argument
+        env:
+          CONTEXT: ${{ inputs.context }}
+          BUILD_ARGS: ${{ inputs.build_args }}
+        run: |
+          echo "environment variable context: $CONTEXT"
+          echo "environment variable build_args: $BUILD_ARGS"
