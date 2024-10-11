@@ -20,31 +20,31 @@ jobs:
   build_image:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the parent repository (this repo)
-      - name: Check out the parent repository
+      - name: Check out the kernel.deployment repository
         uses: actions/checkout@v4
         with:
-          repository: draftm0de/kernel.deployment  # Parent repository
-          path: parent  # Checkout the parent repo into 'parent' folder
+          repository: draftm0de/kernel.deployment
+          path: parent
 
-      # Step 2: Checkout the child repository manually (optional if needed)
-      - name: Check out the child repository
+      - name: Check out the own (parent) repository
         uses: actions/checkout@v4
         with:
-          path: content  # Checkout into 'content' folder          
+          path: content
           
-      # Step 3: List files in the parent directory (for debugging)
-      - name: List parent directory
-        run: ls parent -la
-
-      # Step 4: List files in the child directory (for debugging)
-      - name: List content directory
-        run: ls content -la        
-
       # Step 3: List files in the child directory (for debugging)
       - name: Run docker.sh script
         env:
           IMAGE: ${{ inputs.image }}
           CONTEXT: ${{ inputs.context }}
           BUILD_ARGS_FILE: ${{ inputs.build_args }}
-        run: ls content -la
+        run: |
+          CONTEXT="content/${CONTEXT}"
+          BUILD_ARGS_FILE="${BUILD_ARGS_FILE:-.build_args}
+          if [ -f "${CONTEXT}/${BUILD_ARGS_FILE}" ]; then
+            echo ".build-args file found"
+            ./parent/docker.sh --tag $IMAGE --build-args=${CONTEXT}/${BUILD_ARGS_FILE} ${CONTEXT}
+          else
+            echo ".build-args file not found"
+            docker build --tag ${IMAGE} ${CONTEXT}
+          fi
+            
