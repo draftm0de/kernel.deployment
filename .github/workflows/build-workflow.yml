@@ -31,8 +31,7 @@ jobs:
         with:
           path: content
           
-      # Step 3: List files in the child directory (for debugging)
-      - name: Run docker.sh script
+      - name: docker build
         env:
           IMAGE: ${{ inputs.image }}
           CONTEXT: ${{ inputs.context }}
