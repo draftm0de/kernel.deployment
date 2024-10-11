@@ -4,15 +4,15 @@ on:
   workflow_call:
     inputs:
       image:
-        description: "image name"
+        description: "Image Name"
         required: true
         type: string
-      context:
-        description: "Context (Path) for build command"
+      mount:
+        description: "Mount from child child repository (compare with docker context)"
         required: true
         type: string
       build_args:
-        description: "filename for --build-args"
+        description: "Filename to be used for --build-args (relative to mount)"
         required: false
         type: string
 
@@ -20,17 +20,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout own repository and map as main
-        uses: actions/checkout@v4
-
-      - name: Use the passed argument
+      - name: Run docker.sh script
         env:
-          CONTEXT: ${{ inputs.context }}
+          IMAGE: ${{ inputs.image }}
+          MOUNT: ${{ inputs.mount }}
           BUILD_ARGS_FILE: ${{ inputs.build_args }}
         run: |      
           BUILD_ARGS_FILE=${BUILD_ARGS_FILE:-.build_args}
-          if [ -f "$BUILD_ARGS_FILE" ]; then
-            ./docker.sh -t $IMAGE --build-args=$BUILD_ARGS_FILE $CONTEXT
+          # can you get the context 
+          echo ls ${MOUNT} -la
+          # execute docker 
+          if [ -f "${MOUNT}/${BUILD_ARGS_FILE}" ]; then
+            ./docker.sh -t $IMAGE --build-args=${MOUNT}/${BUILD_ARGS_FILE} ${MOUNT}
           else
-            docker build -t $IMAGE $CONTEXT
+            docker build -t $IMAGE ${MOUNT}
           fi 
