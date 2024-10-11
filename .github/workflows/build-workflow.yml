@@ -20,16 +20,21 @@ jobs:
   build_image:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Checkout the parent repository (this repo)
+      - name: Check out the parent repository
+        uses: actions/checkout@v4
+        with:
+          repository: draftm0de/kernel.deployment  # Parent repository
+          path: parent  # Checkout the parent repo into 'parent' folder
+          
+      # Step 2: List files in the parent directory (for debugging)
+      - name: List parent directory
+        run: ls parent -la
+
+      # Step 3: List files in the child directory (for debugging)
       - name: Run docker.sh script
         env:
           IMAGE: ${{ inputs.image }}
           CONTEXT: ${{ inputs.context }}
           BUILD_ARGS_FILE: ${{ inputs.build_args }}
-        run: |      
-          BUILD_ARGS_FILE=${BUILD_ARGS_FILE:-.build_args}
-          # can you get the context 
-          echo "child context:"
-          ls ${CONTEXT} -la
-          # get current repository content
-          echo "own context:"
-          ls -la
+        run: ls content -la
