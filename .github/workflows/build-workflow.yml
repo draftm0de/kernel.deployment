@@ -20,6 +20,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Check out the child repository
+        uses: actions/checkout@v4
+        with:
+          path: content  # Same path used in the child workflow
+
+      # Debugging step: List files in /content to verify access
+      - name: List /content directory
+        run: ls content -la
+
       - name: Run docker.sh script
         env:
           IMAGE: ${{ inputs.image }}
@@ -28,7 +37,7 @@ jobs:
         run: |      
           BUILD_ARGS_FILE=${BUILD_ARGS_FILE:-.build_args}
           # can you get the context 
-          ls content -la
+          ls ${CONTEXT} -la
           # execute docker 
           if [ -f "${CONTEXT}/${BUILD_ARGS_FILE}" ]; then
             ./docker.sh -t $IMAGE --build-args=${CONTEXT}/${BUILD_ARGS_FILE} ${MOUNT}
