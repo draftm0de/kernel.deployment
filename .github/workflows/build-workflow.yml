@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: content
-          
+
       - name: docker build
         env:
           IMAGE: ${{ inputs.image }}
@@ -41,9 +41,23 @@ jobs:
           BUILD_ARGS_FILE="${BUILD_ARGS_FILE:-.build_args}"
           if [ -f "${CONTEXT}/${BUILD_ARGS_FILE}" ]; then
             echo ".build-args file found"
-            ./parent/docker.sh --tag $IMAGE --build-args=${CONTEXT}/${BUILD_ARGS_FILE} ${CONTEXT}
+            ./parent/docker.sh build --tag $IMAGE --build-args=${CONTEXT}/${BUILD_ARGS_FILE} ${CONTEXT}
           else
             echo ".build-args file not found"
             docker build --tag ${IMAGE} ${CONTEXT}
           fi
-            
+
+      - name: Save Docker Image
+        run: docker save -o ${{ inputs.image }}.tar ${{ inputs.image }}
+
+      - name: Scan with Clair
+        uses: quay/clair-action@main
+        with:
+          image-path: ${{ inputs.image }}.tar
+          format: sarif
+          output: clair_results.sarif
+
+      - name: Upload SARIF Report
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: clair_results.sarif
