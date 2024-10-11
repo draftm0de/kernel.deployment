@@ -4,15 +4,19 @@ on:
   workflow_call:
     inputs:
       namespace:
-        description: "Image Namespace"
+        description: "Image (Namespace)"
         required: true
         type: string      
       image:
-        description: "Image Name"
+        description: "Image (Name)"
+        required: true
+        type: string
+      tag:
+        description: "Image (Tag)"
         required: true
         type: string
       context:
-        description: "Docker build path"
+        description: "Docker build context/path"
         required: true
         type: string
       build_args:
@@ -39,11 +43,25 @@ jobs:
         env:
           BUILD_ARGS_FILE: ${{ inputs.build_args }}
         run: |
+          echo "[Notice] Build image..."
           CONTEXT="content/${{ inputs.context }}"
-          TAG="--tag ${{ inputs.namespace }}/${{ inputs.image }}"
+          TAG="--tag ${{ inputs.namespace }}/${{ inputs.image }}:${{ inputs.tag }}"
           BUILD_ARGS_FILE="$CONTEXT/${BUILD_ARGS_FILE:-.build_args}"
           if [ -f "$BUILD_ARGS_FILE" ]; then
             ./parent/docker.sh build $TAG --build-args=$BUILD_ARGS_FILE $CONTEXT
           else
             docker build $TAG $CONTEXT
           fi
+          echo "[Notice] > build successfully"
+
+  sha_protection:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Protect duplicate SHA
+        run: |
+          echo "[Notice] Protect built SHA against remote"          
+          REPOSITORY="${{ inputs.namespace }}/${{ inputs.image }}"
+          IMAGE_NAME="$REPOSITORY:${{ inputs.tag }}"
+          SHA=$("./parent/docker.sh" "image sha" "$IMAGE_NAME")
+          ("./parent/docker.sh" "image tags" "$REPOSITORY" "--remote" "--sha=$SHA" "--exists")
+          echo "[Notice] > Protection successfully"
