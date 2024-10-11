@@ -1,4 +1,5 @@
 name: Build Docker Image
+author: Peter Fux
 
 on:
   workflow_call:
@@ -23,6 +24,22 @@ on:
         description: "Filename to be used for --build-args"
         required: false
         type: string
+      sha_protection:
+        description: "Tagging and Pushing protect already existing SHA"
+        required: true
+        type: choice
+        options:
+          - true
+          - false
+        default: "false"
+      docker_username:
+        description: "Docker Login (Username)"
+        type: string
+        required: true
+      docker_password:
+        description: "Docker Login (Password)"
+        type: string
+        required: true
 
 jobs:
   build_and_scan:
@@ -55,9 +72,12 @@ jobs:
           echo "[Notice] > build successfully"
 
       - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        run: |
+          echo "${{ inputs.docker_password }} > content/DOCKER_PASSWORD
+          cat "content/DOCKER_PASSWORD" | docker login -u "${{ secrets.docker_username }}" --password-stdin
 
       - name: Protect duplicate SHA
+        if: ${{ inputs.sha_scan == 'true' }}
         run: |
           echo "[Notice] Protect built SHA against remote"          
           REPOSITORY="${{ inputs.namespace }}/${{ inputs.image }}"
