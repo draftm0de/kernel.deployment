@@ -38,7 +38,7 @@ jobs:
           BUILD_ARGS_FILE: ${{ inputs.build_args }}
         run: |
           CONTEXT="content/${CONTEXT}"
-          BUILD_ARGS_FILE="${BUILD_ARGS_FILE:-.build_args}
+          BUILD_ARGS_FILE="${BUILD_ARGS_FILE:-.build_args}"
           if [ -f "${CONTEXT}/${BUILD_ARGS_FILE}" ]; then
             echo ".build-args file found"
             ./parent/docker.sh --tag $IMAGE --build-args=${CONTEXT}/${BUILD_ARGS_FILE} ${CONTEXT}
