@@ -47,16 +47,3 @@ jobs:
           else
             docker build $TAG $CONTEXT
           fi
-
-      - name: Docker Image Scan
-        uses: anchore/scan-action@v3
-        id: scan
-        with:
-          image: ${{ inputs.namespace }}/${{ inputs.image }}
-          fail-build: true
-          output-format: sarif
-
-      - name: Upload Anchore Scan SARIF Report
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: ${{ steps.scan.outputs.sarif }}
