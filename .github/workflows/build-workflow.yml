@@ -7,7 +7,7 @@ on:
         description: "Image Name"
         required: true
         type: string
-      mount:
+      context:
         description: "Mount from child child repository (compare with docker context)"
         required: true
         type: string
@@ -23,15 +23,15 @@ jobs:
       - name: Run docker.sh script
         env:
           IMAGE: ${{ inputs.image }}
-          MOUNT: ${{ inputs.mount }}
+          CONTEXT: ${{ inputs.context }}
           BUILD_ARGS_FILE: ${{ inputs.build_args }}
         run: |      
           BUILD_ARGS_FILE=${BUILD_ARGS_FILE:-.build_args}
           # can you get the context 
           echo ls ${MOUNT} -la
           # execute docker 
-          if [ -f "${MOUNT}/${BUILD_ARGS_FILE}" ]; then
-            ./docker.sh -t $IMAGE --build-args=${MOUNT}/${BUILD_ARGS_FILE} ${MOUNT}
+          if [ -f "${CONTEXT}/${BUILD_ARGS_FILE}" ]; then
+            ./docker.sh -t $IMAGE --build-args=${CONTEXT}/${BUILD_ARGS_FILE} ${MOUNT}
           else
-            docker build -t $IMAGE ${MOUNT}
+            docker build -t $IMAGE ${CONTEXT}
           fi 
