@@ -28,7 +28,6 @@ jobs:
         run: |      
           BUILD_ARGS_FILE=${BUILD_ARGS_FILE:-.build_args}
           # can you get the context 
-          ls ${CONTEXT} -la
           ls /${CONTEXT} -la
           # execute docker 
           if [ -f "${CONTEXT}/${BUILD_ARGS_FILE}" ]; then
