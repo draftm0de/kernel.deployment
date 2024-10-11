@@ -24,18 +24,18 @@ jobs:
   build_image:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the kernel.deployment repository
+      - name: Check out kernel.deployment repository
         uses: actions/checkout@v4
         with:
           repository: draftm0de/kernel.deployment
           path: parent
 
-      - name: Check out the own (parent) repository
+      - name: Check out own (parent) repository
         uses: actions/checkout@v4
         with:
           path: content
 
-      - name: docker build
+      - name: Docker Image Build
         env:
           BUILD_ARGS_FILE: ${{ inputs.build_args }}
         run: |
@@ -47,18 +47,16 @@ jobs:
           else
             docker build $TAG $CONTEXT
           fi
-          
-      - name: Save(Tar) Docker Image
-        run: docker save -o content/image.tar ${{ inputs.namespace }}/${{ inputs.image }}
 
-      - name: Scan with Clair
-        uses: quay/clair-action@main
+      - name: Docker Image Scan
+        uses: anchore/scan-action@v3
+        id: scan
         with:
-          image-path: content/image.tar
-          format: sarif
-          output: clair_results.sarif
+          image: "localbuild/testimage:latest"
+          fail-build: true
+          output-format: sarif
 
-      - name: Upload SARIF Report
+      - name: Upload Anchore Scan SARIF Report
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: clair_results.sarif
+          sarif_file: ${{ steps.scan.outputs.sarif }}
