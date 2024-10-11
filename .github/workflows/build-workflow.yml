@@ -58,11 +58,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: build_and_scan
     steps:
+      - name: Check out kernel.deployment repository
+        uses: actions/checkout@v4
+        with:
+          repository: draftm0de/kernel.deployment
+          path: parent
+
       - name: Protect duplicate SHA
         run: |
           echo "[Notice] Protect built SHA against remote"          
           REPOSITORY="${{ inputs.namespace }}/${{ inputs.image }}"
           IMAGE_NAME="$REPOSITORY:${{ inputs.tag }}"
           SHA=$("./parent/docker.sh" "image sha" "$IMAGE_NAME")
+          echo "[Debug] SHA for $IMAGE_NAME: $SHA"
           ("./parent/docker.sh" "image tags" "$REPOSITORY" "--remote" "--sha=$SHA" "--exists")
           echo "[Notice] > Protection successfully"
