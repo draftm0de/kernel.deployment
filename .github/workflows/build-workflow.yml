@@ -26,10 +26,20 @@ jobs:
         with:
           repository: draftm0de/kernel.deployment  # Parent repository
           path: parent  # Checkout the parent repo into 'parent' folder
+
+      # Step 2: Checkout the child repository manually (optional if needed)
+      - name: Check out the child repository
+        uses: actions/checkout@v4
+        with:
+          path: content  # Checkout into 'content' folder          
           
-      # Step 2: List files in the parent directory (for debugging)
+      # Step 3: List files in the parent directory (for debugging)
       - name: List parent directory
         run: ls parent -la
+
+      # Step 4: List files in the child directory (for debugging)
+      - name: List content directory
+        run: ls content -la        
 
       # Step 3: List files in the child directory (for debugging)
       - name: Run docker.sh script
