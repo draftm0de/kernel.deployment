@@ -50,7 +50,7 @@ jobs:
         with:
           path: content
 
-      - name: Docker Image Build
+      - name: Build Docker Image
         env:
           BUILD_ARGS_FILE: ${{ inputs.build_args }}
         run: |
@@ -68,10 +68,9 @@ jobs:
       - name: Log in to Docker Hub
         run: |
           echo "${{ secrets.docker_password }}" > content/DOCKER_PASSWORD
-          cat "content/DOCKER_PASSWORD" | docker login -u "${{ secrets.docker_username }}" --password-stdin
+          cat "content/DOCKER_PASSWORD" | docker login -u "${{ secrets.docker_username }}" --password-stdin          
 
       - name: Protect duplicate SHA
-        if: ${{ inputs.sha_protection == 'true' }}
         run: |
           echo "[Notice] Protect built SHA against remote"          
           REPOSITORY="${{ inputs.namespace }}/${{ inputs.image }}"
@@ -80,3 +79,33 @@ jobs:
           echo "[Debug] SHA for $IMAGE_NAME: $SHA"
           ("./parent/docker.sh" "image tags" "$REPOSITORY" "--remote" "--sha=$SHA" "--exists")
           echo "[Notice] > Protection successfully"
+
+      - name: Get Latest Remote Tag
+        run: |
+          BUILT_IMAGE_NAME="${{ inputs.namespace }}/${{ inputs.image }}:${{ inputs.tag }}"
+          echo "[Notice] Get latest remote tag for $BUILT_IMAGE_NAME "
+          LATEST_TAG=$("./parent/docker.sh" "image tags" "$BUILT_IMAGE_NAME" "--remote" "--latest=patch")
+          echo "[Notice] > latest remote tag for $BUILT_IMAGE_NAME: $LATEST_TAG"
+          # Save LATEST_TAG to the GITHUB_ENV file so it can be accessed by later steps
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV         
+
+      - name: Tag Docker Image
+        run: |
+          BUILT_IMAGE_NAME="${{ inputs.namespace }}/${{ inputs.image }}:${{ inputs.tag }}"
+          echo "[Notice] Tag docker image"
+          TAGS=$("./parent/docker.sh" "image tag" "$BUILT_IMAGE_NAME" "$REPOSITORY:$LATEST_TAG" "--tag-increase" "--tag-level=3")
+          echo "[Notice] > docker image tagged successfully"     
+          # Save TAGS to the GITHUB_ENV file so it can be accessed by later steps
+          echo "TAGS=$TAGS" >> $GITHUB_ENV
+
+      - name: Push Docker Image
+        run: |
+          BUILT_IMAGE_NAME="${{ inputs.namespace }}/${{ inputs.image }}:${{ inputs.tag }}"
+          echo "[Notice] Push docker images"
+          TAGS=($TAGS)
+          TAGS+=("$BUILT_IMAGE_NAME")
+          for TAG in "${TAGS[@]}"; do
+            echo "docker push $TAG"
+          done
+          echo "[Notice] > Pushing docker images successfully"         
+          
