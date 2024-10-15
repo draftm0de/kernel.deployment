@@ -24,7 +24,7 @@ on:
         required: false
         type: string
       sha_protection:
-        description: "Tagging and Pushing protect already existing SHA"
+        description: "Protect against duplicate SHA"
         type: string
         default: "false"
     secrets:
@@ -71,7 +71,7 @@ jobs:
           cat "content/DOCKER_PASSWORD" | docker login -u "${{ secrets.docker_username }}" --password-stdin
 
       - name: Protect duplicate SHA
-        if: ${{ inputs.sha_scan == 'true' }}
+        if: ${{ inputs.sha_protection == 'true' }}
         run: |
           echo "[Notice] Protect built SHA against remote"          
           REPOSITORY="${{ inputs.namespace }}/${{ inputs.image }}"
