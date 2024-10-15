@@ -95,10 +95,10 @@ jobs:
 
       - name: Tag Docker Image
         run: |
+          echo "[Notice] Tag docker image"
           REPOSITORY="${{ inputs.namespace }}/${{ inputs.image }}"          
           IMAGE_NAME="${REPOSITORY}:${{ inputs.tag }}"
           CONTEXT="content/${{ inputs.context }}"
-          echo "[Notice] Tag docker image"
           TAG_VERSION_FILE="$CONTEXT/.version"
           if [ -f "$TAG_VERSION_FILE" ]; then
             TAG_VERSION=$(cat $TAG_VERSION_FILE)
@@ -107,6 +107,7 @@ jobs:
           else
             TAG_INCREASE="--tag-increase"
           fi         
+          echo "[Debug] REPOSITORY: $REPOSITORY"
           echo "[Notice] latest tag: $LATEST_TAG"
           echo "[Notice] count of levels for tagging: ${{ inputs.tag_level }}"
           TAGS=$("./parent/docker.sh" "image tag" "$IMAGE_NAME" "${REPOSITORY}:${LATEST_TAG}" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")    
