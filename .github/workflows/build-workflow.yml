@@ -67,7 +67,7 @@ jobs:
 
       - name: Log in to Docker Hub
         run: |
-          echo "${{ inputs.docker_password }} > content/DOCKER_PASSWORD
+          echo "${{ secrets.docker_password }}" > content/DOCKER_PASSWORD
           cat "content/DOCKER_PASSWORD" | docker login -u "${{ secrets.docker_username }}" --password-stdin
 
       - name: Protect duplicate SHA
