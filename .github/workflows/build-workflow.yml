@@ -91,7 +91,7 @@ jobs:
           echo "[Notice] Get latest remote tag for $BUILT_IMAGE_NAME "
           LATEST_TAG=$("./parent/docker.sh" "image tags" "$BUILT_IMAGE_NAME" "--remote" "--latest=patch")
           echo "[Notice] > latest remote tag for $BUILT_IMAGE_NAME: $LATEST_TAG"
-          echo "::set-output name=latest_tag::${LATEST_TAG:-0.0.0}"      
+          echo "LATEST_TAG=${LATEST_TAG:-0.0.0}" >> $GITHUB_ENV     
 
       - name: Tag Docker Image
         run: |
@@ -105,14 +105,12 @@ jobs:
             echo "[Notice] automatically increase: $TAG_VERSION"
           else
             TAG_INCREASE="--tag-increase"
-          fi
-          LATEST_TAG="${{ steps.get_latest_tag.outputs.latest_tag }}"          
+          fi         
           echo "[Notice] latest tag: $LATEST_TAG"
           echo "[Notice] count of levels for tagging: ${{ inputs.tag_level }}"
-          TAGS=$("./parent/docker.sh" "image tag" "$BUILT_IMAGE_NAME" "${REPOSITORY}:${LATEST_TAG}" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")
-          echo "[Notice] > docker image tagged successfully"     
-          # Save TAGS to the GITHUB_ENV file so it can be accessed by later steps
-          echo "TAGS=$TAGS" >> $GITHUB_ENV
+          TAGS=$("./parent/docker.sh" "image tag" "$BUILT_IMAGE_NAME" "${REPOSITORY}:${LATEST_TAG}" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")    
+          echo "TAGS=${TAGS[*]}" >> $GITHUB_ENV
+          echo "[Notice] > docker image tagged successfully"          
 
       - name: Push Docker Image
         run: |
