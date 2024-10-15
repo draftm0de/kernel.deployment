@@ -101,7 +101,6 @@ jobs:
           echo "[Notice] Tag docker image"
           TAG_VERSION_FILE="$CONTEXT/.version"
           if [ -f "$TAG_VERSION_FILE" ]; then
-            echo "[Debug] $TAG_VERSION_FILE"  
             TAG_VERSION=$(cat $TAG_VERSION_FILE)
             TAG_INCREASE="--tag-increase=$TAG_VERSION"
             echo "[Notice] automatically increase: $TAG_VERSION"
