@@ -85,14 +85,13 @@ jobs:
           echo "[Notice] > Protection successfully"
 
       - name: Get Latest Remote Tag
+        id: get_latest_tag
         run: |
           BUILT_IMAGE_NAME="${{ inputs.namespace }}/${{ inputs.image }}:${{ inputs.tag }}"
           echo "[Notice] Get latest remote tag for $BUILT_IMAGE_NAME "
           LATEST_TAG=$("./parent/docker.sh" "image tags" "$BUILT_IMAGE_NAME" "--remote" "--latest=patch")
           echo "[Notice] > latest remote tag for $BUILT_IMAGE_NAME: $LATEST_TAG"
-          # Save LATEST_TAG to the GITHUB_ENV file so it can be accessed by later steps
-          # If no LATEST_TAG use default 0.0.0
-          echo "LATEST_TAG=${LATEST_TAG:-0.0.0}" >> $GITHUB_ENV         
+          echo "::set-output name=latest_tag::${LATEST_TAG:-0.0.0}"      
 
       - name: Tag Docker Image
         run: |
@@ -107,6 +106,7 @@ jobs:
           else
             TAG_INCREASE="--tag-increase"
           fi
+          LATEST_TAG="${{ steps.get_latest_tag.outputs.latest_tag }}"          
           echo "[Notice] latest tag: $LATEST_TAG"
           echo "[Notice] count of levels for tagging: ${{ inputs.tag_level }}"
           TAGS=$("./parent/docker.sh" "image tag" "$BUILT_IMAGE_NAME" "${REPOSITORY}:${LATEST_TAG}" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")
