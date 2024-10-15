@@ -110,8 +110,9 @@ jobs:
           echo "[Notice] latest tag: $LATEST_TAG"
           echo "[Notice] count of levels for tagging: ${{ inputs.tag_level }}"
           echo "[Debug] image tag $IMAGE_NAME ${REPOSITORY}:${LATEST_TAG} $TAG_INCREASE --tag-level=${{ inputs.tag_level }}"
-          TAGS=$("./parent/docker.sh" "image tag" "$IMAGE_NAME" "${REPOSITORY}:${LATEST_TAG}" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")    
-          echo "TAGS=${TAGS[@]}" >> $GITHUB_ENV     
+          TAGS=$("./parent/docker.sh" "image tag" "$IMAGE_NAME" "${REPOSITORY}:${LATEST_TAG}" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")
+          TAGS_COMPRESSED=$(echo "$TAGS" | tr '\n' ' ')
+          echo "TAGS=$TAGS_COMPRESSED" >> $GITHUB_ENV     
           echo "[Notice] > docker image tagged successfully"          
 
       - name: Push Docker Image
