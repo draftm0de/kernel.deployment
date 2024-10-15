@@ -106,6 +106,7 @@ jobs:
           else
             TAG_INCREASE="--tag-increase"
           fi
+          echo "[Notice] latest tag: $LATEST_TAG"
           echo "[Notice] count of levels for tagging: ${{ inputs.tag_level }}"
           TAGS=$("./parent/docker.sh" "image tag" "$BUILT_IMAGE_NAME" "$REPOSITORY:$LATEST_TAG" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")
           echo "[Notice] > docker image tagged successfully"     
