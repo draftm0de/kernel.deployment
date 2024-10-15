@@ -32,13 +32,12 @@ on:
           - true
           - false
         default: "false"
+    secrets:
       docker_username:
         description: "Docker Login (Username)"
-        type: string
         required: true
       docker_password:
         description: "Docker Login (Password)"
-        type: string
         required: true
 
 jobs:
