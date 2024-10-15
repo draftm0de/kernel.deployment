@@ -95,7 +95,9 @@ jobs:
 
       - name: Tag Docker Image
         run: |
-          BUILT_IMAGE_NAME="${{ inputs.namespace }}/${{ inputs.image }}:${{ inputs.tag }}"
+          REPOSITORY="${{ inputs.namespace }}/${{ inputs.image }}"          
+          IMAGE_NAME="${REPOSITORY}:${{ inputs.tag }}"
+          CONTEXT="content/${{ inputs.context }}"
           echo "[Notice] Tag docker image"
           TAG_VERSION_FILE="$CONTEXT/.version"
           if [ -f "$TAG_VERSION_FILE" ]; then
@@ -108,7 +110,7 @@ jobs:
           fi         
           echo "[Notice] latest tag: $LATEST_TAG"
           echo "[Notice] count of levels for tagging: ${{ inputs.tag_level }}"
-          TAGS=$("./parent/docker.sh" "image tag" "$BUILT_IMAGE_NAME" "${REPOSITORY}:${LATEST_TAG}" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")    
+          TAGS=$("./parent/docker.sh" "image tag" "$IMAGE_NAME" "${REPOSITORY}:${LATEST_TAG}" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")    
           echo "TAGS=${TAGS[*]}" >> $GITHUB_ENV
           echo "[Notice] > docker image tagged successfully"          
 
