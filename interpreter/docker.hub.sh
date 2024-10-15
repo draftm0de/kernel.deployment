@@ -202,13 +202,19 @@ docker_image_tags() {
   RESPONSE=$(mktemp)
   HTTP_CODE=$(curl -s -o "$RESPONSE" -w "%{http_code}" -H "Authorization: Bearer $TOKEN" \
                  "${DOCKER_REGISTRY_URI}/${IMAGE_NAME}/tags/list")
-  TAG_LIST=$(.handle_api_response "$RESPONSE" "$HTTP_CODE" "$FAILURE: Failed to retrieve tags")
-  EXIT=$?
-  if [ $EXIT -ne 0 ]; then
-    exit $EXIT
+
+  if [ "$HTTP_CODE" -eq 404 ]; then
+    TAGS=()
+  else
+    TAG_LIST=$(.handle_api_response "$RESPONSE" "$HTTP_CODE" "$FAILURE: Failed to retrieve tags")
+    EXIT=$?
+    if [ $EXIT -ne 0 ]; then
+      exit $EXIT
+    fi
+    local TAGS_STRING
+    TAGS_STRING=$(jq -r '.tags[]' <<< "$TAG_LIST" | sort -V)
+    mapfile -t TAGS <<< "$TAGS_STRING"
   fi
-  TAGS=$(jq -r '.tags[]' <<< "$TAG_LIST" | sort -V)
-  mapfile -t TAGS <<< "$TAGS"
 
   rm -f "$RESPONSE"  # Clean up the temporary file
 
