@@ -98,11 +98,11 @@ jobs:
         run: |
           BUILT_IMAGE_NAME="${{ inputs.namespace }}/${{ inputs.image }}:${{ inputs.tag }}"
           echo "[Notice] Tag docker image"
-          TAG_VERSION_FILE="$CONTEXT/.version}"
+          TAG_VERSION_FILE="$CONTEXT/.version"
           if [ -f "$TAG_VERSION_FILE" ]; then
             TAG_VERSION=$(cat $TAG_VERSION_FILE)
             TAG_INCREASE="--tag-increase=$TAG_VERSION"
-            echo "[Notice] used BASE_TAG for automatically increase: $TAG_VERSION"      
+            echo "[Notice] automatically increase: $TAG_VERSION"      
           else
             TAG_INCREASE="--tag-increase"
           fi
