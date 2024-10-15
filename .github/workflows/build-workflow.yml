@@ -27,6 +27,10 @@ on:
         description: "Protect against duplicate SHA"
         type: string
         default: "false"
+      tag_level:
+        description: "Levels to tag images"
+        type: string
+        default: 3
     secrets:
       docker_username:
         description: "Docker Login (Username)"
@@ -87,13 +91,23 @@ jobs:
           LATEST_TAG=$("./parent/docker.sh" "image tags" "$BUILT_IMAGE_NAME" "--remote" "--latest=patch")
           echo "[Notice] > latest remote tag for $BUILT_IMAGE_NAME: $LATEST_TAG"
           # Save LATEST_TAG to the GITHUB_ENV file so it can be accessed by later steps
-          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV         
+          # If no LATEST_TAG use default 0.0.0
+          echo "LATEST_TAG=${LATEST_TAG:-0.0.0}" >> $GITHUB_ENV         
 
       - name: Tag Docker Image
         run: |
           BUILT_IMAGE_NAME="${{ inputs.namespace }}/${{ inputs.image }}:${{ inputs.tag }}"
           echo "[Notice] Tag docker image"
-          TAGS=$("./parent/docker.sh" "image tag" "$BUILT_IMAGE_NAME" "$REPOSITORY:$LATEST_TAG" "--tag-increase" "--tag-level=3")
+          TAG_VERSION_FILE="$CONTEXT/.version}"
+          if [ -f "$TAG_VERSION_FILE" ]; then
+            TAG_VERSION=$(cat $TAG_VERSION_FILE)
+            TAG_INCREASE="--tag-increase=$TAG_VERSION"
+            echo "[Notice] used BASE_TAG for automatically increase: $TAG_VERSION"      
+          else
+            TAG_INCREASE="--tag-increase"
+          fi
+          echo "[Notice] count of levels for tagging: ${{ inputs.tag_level }}"
+          TAGS=$("./parent/docker.sh" "image tag" "$BUILT_IMAGE_NAME" "$REPOSITORY:$LATEST_TAG" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")
           echo "[Notice] > docker image tagged successfully"     
           # Save TAGS to the GITHUB_ENV file so it can be accessed by later steps
           echo "TAGS=$TAGS" >> $GITHUB_ENV

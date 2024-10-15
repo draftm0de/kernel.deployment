@@ -254,21 +254,26 @@
   MAJOR=$(echo "$TAG" | cut -d. -f1)
   MINOR=$(echo "$TAG" | cut -d. -f2)
 
-  TAGS=("$TAG")
   if [[ "$LEVEL" -gt 3 ]]; then
     echo "[Error] --tag-level=$LEVEL cannot be greater than 3" >&2
     exit 1
   elif [[ "$LEVEL" -eq 3 ]]; then
-    if [ "$TAG" != "$MAJOR.$MINOR" ]; then
-      TAGS+=("$MAJOR.$MINOR")
+    if [ "$TAG" = "$MAJOR" ]; then
+      echo "[Error] --tag-level=$LEVEL requires a PATCH leveled TAG, given tag: $TAG " >&2
+      exit 1
+    elif [ "$TAG" = "$MAJOR.$MINOR" ]; then
+      echo "[Error] --tag-level=$LEVEL requires a PATCH leveled TAG, given tag: $TAG " >&2
+      exit 1
     fi
-    TAGS+=("$MAJOR")
+    TAGS=("$TAG" "$MAJOR.$MINOR" "$MAJOR")
   elif [[ "$LEVEL" -eq 2 ]]; then
-    if [ "$TAG" == "$MAJOR.$MINOR" ]; then
-      TAGS+=("$MAJOR")
-    else
-      TAGS+=("$MAJOR.$MINOR")
+    if [ "$TAG" == "$MAJOR" ]; then
+      echo "[Error] --tag-level=$LEVEL requires a MINOR leveled TAG, given tag: $TAG " >&2
+      exit 1
     fi
+    TAGS=("$MAJOR.$MINOR" "$MAJOR")
+  else
+    TAGS=("$TAG")
   fi
 
   echo "${TAGS[*]}"
@@ -316,7 +321,7 @@
     if [ -n "$TARGET_TAG" ]; then
       # Replace the old version with the new version in the BASE string
       local NEW_TAG
-      NEW_TAG=$(echo "$TARGET_IMAGE" | sed "s/$CLEAN_TARGET_TAG/$NEW_VERSION/")
+      NEW_TAG=$(echo "$TARGET_TAG" | sed "s/$CLEAN_TARGET_TAG/$NEW_VERSION/")
       echo "$NEW_TAG"
     else
       echo "$NEW_VERSION"

@@ -160,6 +160,10 @@ DOCKER_HUB_URI="https://hub.docker.com/v2"
   HTTP_CODE=$(curl -s -o "$RESPONSE" -w "%{http_code}" -H "Authorization: Bearer $TOKEN" \
                  -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
                  "${DOCKER_REGISTRY_URI}/${IMAGE_NAME}/manifests/${IMAGE_TAG}")
+  if [ "$HTTP_CODE" -eq 404 ]; then
+    echo ""
+    return
+  fi
   MANIFEST=$(.handle_api_response "$RESPONSE" "$HTTP_CODE" "$FAILURE: Failed to retrieve manifest")
   EXIT=$?
   if [ $EXIT -ne 0 ]; then
@@ -222,7 +226,11 @@ docker_image_tags() {
     --tag=*)
       IMAGE_TAG="${FILTER##*=}"
       local IMAGE_SHA
-      IMAGE_SHA=$(.docker_image_sha_by_token "$IMAGE_NAME:$IMAGE_TAG" "$TOKEN")
+      if [ ${#TAGS[@]} -gt 0 ]; then
+        IMAGE_SHA=$(.docker_image_sha_by_token "$IMAGE_NAME:$IMAGE_TAG" "$TOKEN")
+      else
+        IMAGE_SHA="-"
+      fi
       local SHA_TAGS=()
       local TAG_SHA
       for SHA_TAG in "${TAGS[@]}"; do

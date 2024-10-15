@@ -14,23 +14,27 @@ docker_image_tags() {
 
   # Get all tags for the image name
   local TAGS
-  TAGS=$(docker images "$IMAGE_NAME" --format="{{ .Tag }}")
+  TAGS_STRING=$(docker images "$IMAGE_NAME" --format="{{ .Tag }}")
   RESULT_EXIT=$?
   if [ $RESULT_EXIT -ne 0 ]; then
-    exit $RESULT_EXIT
+    TAGS=()
+  else
+    # convert tags into an array
+    mapfile -t TAGS <<< "$TAGS_STRING"
   fi
-
-  # convert tags into an array
-  mapfile -t TAGS <<< "$TAGS"
 
   case "$FILTER" in
     --tag=*)
       local IMAGE_TAG="${FILTER##*=}"
       local IMAGE_SHA
-      IMAGE_SHA=$(docker_image_sha "$IMAGE_NAME:$IMAGE_TAG")
-      RESULT_EXIT=$?
-      if [ $RESULT_EXIT -ne 0 ]; then
-        exit $RESULT_EXIT
+      if [ ${#TAGS[@]} -gt 0 ]; then
+        IMAGE_SHA=$(docker_image_sha "$IMAGE_NAME:$IMAGE_TAG")
+        RESULT_EXIT=$?
+        if [ $RESULT_EXIT -ne 0 ]; then
+          exit $RESULT_EXIT
+        fi
+      else
+        IMAGE_SHA="-"
       fi
       local SHA_TAGS=()
       local TAG_SHA
