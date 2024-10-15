@@ -25,11 +25,7 @@ on:
         type: string
       sha_protection:
         description: "Tagging and Pushing protect already existing SHA"
-        required: false
-        type: choice
-        options:
-          - true
-          - false
+        type: string
         default: "false"
     secrets:
       docker_username:
