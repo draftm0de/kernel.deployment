@@ -1,5 +1,4 @@
 name: Build Docker Image
-author: Peter Fux
 
 on:
   workflow_call:
@@ -26,7 +25,7 @@ on:
         type: string
       sha_protection:
         description: "Tagging and Pushing protect already existing SHA"
-        required: true
+        required: false
         type: choice
         options:
           - true
