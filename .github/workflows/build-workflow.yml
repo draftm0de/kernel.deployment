@@ -100,15 +100,16 @@ jobs:
           echo "[Notice] Tag docker image"
           TAG_VERSION_FILE="$CONTEXT/.version"
           if [ -f "$TAG_VERSION_FILE" ]; then
+            echo "[Debug] $TAG_VERSION_FILE"  
             TAG_VERSION=$(cat $TAG_VERSION_FILE)
             TAG_INCREASE="--tag-increase=$TAG_VERSION"
-            echo "[Notice] automatically increase: $TAG_VERSION"      
+            echo "[Notice] automatically increase: $TAG_VERSION"
           else
             TAG_INCREASE="--tag-increase"
           fi
           echo "[Notice] latest tag: $LATEST_TAG"
           echo "[Notice] count of levels for tagging: ${{ inputs.tag_level }}"
-          TAGS=$("./parent/docker.sh" "image tag" "$BUILT_IMAGE_NAME" "$REPOSITORY:$LATEST_TAG" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")
+          TAGS=$("./parent/docker.sh" "image tag" "$BUILT_IMAGE_NAME" "${REPOSITORY}:${LATEST_TAG}" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")
           echo "[Notice] > docker image tagged successfully"     
           # Save TAGS to the GITHUB_ENV file so it can be accessed by later steps
           echo "TAGS=$TAGS" >> $GITHUB_ENV
