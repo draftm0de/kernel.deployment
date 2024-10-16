@@ -59,10 +59,10 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: source
+          inculde-hidden-files: true
           path: |
             content/
             parent/
-            **/*
 
   build:
     needs: checkout
