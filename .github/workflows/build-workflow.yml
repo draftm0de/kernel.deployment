@@ -81,6 +81,7 @@ jobs:
         run: |
           echo "[Notice] Build image..."
           CONTEXT="content/${{ inputs.context }}"
+          ls $CONTEXT -la
           IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:latest"
           BUILD_ARGS_FILE="$CONTEXT/${BUILD_ARGS_FILE:-.build_args}"
           ls $CONTEXT -la
