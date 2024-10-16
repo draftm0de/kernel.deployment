@@ -55,14 +55,16 @@ jobs:
         with:
           path: content
 
-      - name: Upload repositories as an artifact
+      - name: Archive content and parent directories
+        run: |
+          tar -czf source.tar.gz content/ parent/
+
+
+      - name: Upload archive as artifact
         uses: actions/upload-artifact@v3
         with:
           name: source
-          include-hidden-files: true
-          path: |
-            content/
-            parent/
+          path: source.tar.gz
 
   build:
     needs: checkout
