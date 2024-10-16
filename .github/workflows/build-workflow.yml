@@ -11,26 +11,27 @@ on:
         description: "Image (Name)"
         required: true
         type: string
-      tag:
-        description: "Image (Tag)"
-        required: true
-        type: string
       context:
         description: "Docker build context/path"
         required: true
         type: string
-      build_args:
+      build_args_file:
         description: "Filename to be used for --build-args"
         required: false
         type: string
-      sha_protection:
+      tag_level:
+        description: "Levels for tagging an image"
+        required: true
+        type: number
+      tag_base_version_file:
+         description: "Filename within the Base Version for auto tagging"
+         required: false
+         type: string
+      protected_tag:
         description: "Protect against duplicate SHA"
         type: string
+        required: false
         default: "false"
-      tag_level:
-        description: "Levels to tag images"
-        type: string
-        default: 3
     secrets:
       docker_username:
         description: "Docker Login (Username)"
