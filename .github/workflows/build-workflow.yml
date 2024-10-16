@@ -80,6 +80,7 @@ jobs:
           CONTEXT="content/${{ inputs.context }}"
           IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:latest"
           BUILD_ARGS_FILE="$CONTEXT/${BUILD_ARGS_FILE:-.build_args}"
+          ls -la
           if [ -f "$BUILD_ARGS_FILE" ]; then
             ./parent/docker.sh build --tag $IMAGE --build-args=$BUILD_ARGS_FILE $CONTEXT
           else
