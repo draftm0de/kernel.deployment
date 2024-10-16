@@ -62,6 +62,7 @@ jobs:
           path: |
             content/
             parent/
+            **/*
 
   build:
     needs: checkout
