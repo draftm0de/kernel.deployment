@@ -56,6 +56,7 @@ jobs:
           path: content
 
   build:
+    needs: checkout
     runs-on: ubuntu-latest
     steps:
       - name: Build Docker Image
@@ -89,21 +90,22 @@ jobs:
           echo "[Notice] > Protection successfully"
   tag:
     runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Get Latest Remote Tag
         id: get_latest_tag
         run: |
-          IMAGE_NAME="${{ inputs.namespace }}/${{ inputs.image }}:${{ inputs.tag }}"
-          echo "[Notice] Get latest remote tag for $BUILT_IMAGE_NAME "
-          LATEST_TAG=$("./parent/docker.sh" "image tags" "$IMAGE_NAME" "--remote" "--latest=patch")
+          IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:latest"
+          echo "[Notice] Get latest remote tag for $IMAGE"
+          LATEST_TAG=$("./parent/docker.sh" "image tags" "$IMAGE" "--remote" "--latest=patch")
           echo "LATEST_TAG=${LATEST_TAG:-0.0.0}" >> $GITHUB_ENV
-          echo "[Notice] > latest remote tag for $IMAGE_NAME: $LATEST_TAG"          
+          echo "[Notice] > latest remote tag for $IMAGE: $LATEST_TAG"          
 
       - name: Tag Docker Image
         run: |
           echo "[Notice] Tag docker image"
           REPOSITORY="${{ inputs.namespace }}/${{ inputs.image }}"          
-          IMAGE_NAME="$REPOSITORY:${{ inputs.tag }}"
+          IMAGE="$REPOSITORY:latest"
           CONTEXT="content/${{ inputs.context }}"
           TAG_VERSION_FILE="$CONTEXT/.version"
           if [ -f "$TAG_VERSION_FILE" ]; then
@@ -115,7 +117,7 @@ jobs:
           fi         
           echo "[Notice] latest tag: $LATEST_TAG"
           echo "[Notice] count of levels for tagging: ${{ inputs.tag_level }}"
-          TAGS=$("./parent/docker.sh" "image tag" "$IMAGE_NAME" "${REPOSITORY}:${LATEST_TAG}" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")
+          TAGS=$("./parent/docker.sh" "image tag" "$IMAGE" "${REPOSITORY}:${LATEST_TAG}" "$TAG_INCREASE" "--tag-level=${{ inputs.tag_level }}")
           TAGS_COMPRESSED=$(echo "$TAGS" | tr '\n' ' ')
           echo "TAGS=$TAGS_COMPRESSED" >> $GITHUB_ENV     
           echo "[Notice] > docker image tagged successfully"          
