@@ -55,20 +55,33 @@ jobs:
         with:
           path: content
 
+      - name: Upload repositories as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: source
+          path: |
+            content/
+            parent/
+
   build:
     needs: checkout
     runs-on: ubuntu-latest
     steps:
+      - name: Download the artifact with the checked-out repositories
+        uses: actions/download-artifact@v3
+        with:
+          name: source
+
       - name: Build Docker Image
         env:
           BUILD_ARGS_FILE: ${{ inputs.build_args_file }}
         run: |
           echo "[Notice] Build image..."
-          CONTEXT="content/${{ inputs.context }}"
+          CONTEXT="source/content/${{ inputs.context }}"
           IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:latest"
           BUILD_ARGS_FILE="$CONTEXT/${BUILD_ARGS_FILE:-.build_args}"
           if [ -f "$BUILD_ARGS_FILE" ]; then
-            ./parent/docker.sh build --tag $IMAGE --build-args=$BUILD_ARGS_FILE $CONTEXT
+            ./source/parent/docker.sh build --tag $IMAGE --build-args=$BUILD_ARGS_FILE $CONTEXT
           else
             docker build --tag $IMAGE $CONTEXT
           fi
@@ -76,17 +89,17 @@ jobs:
 
       - name: Log in to Docker Hub
         run: |
-          echo "${{ secrets.docker_password }}" > content/DOCKER_PASSWORD
-          cat "content/DOCKER_PASSWORD" | docker login -u "${{ secrets.docker_username }}" --password-stdin   
+          echo "${{ secrets.docker_password }}" > DOCKER_PASSWORD
+          cat "DOCKER_PASSWORD" | docker login -u "${{ secrets.docker_username }}" --password-stdin   
 
       - name: Protect duplicate SHA
         run: |
           echo "[Notice] Protect built SHA against remote"          
           REPOSITORY="${{ inputs.namespace }}/${{ inputs.image }}"
           IMAGE="$REPOSITORY:${{ inputs.protected_tag }}"
-          SHA=$("./parent/docker.sh" "image sha" "$IMAGE")
+          SHA=$("./source/parent/docker.sh" "image sha" "$IMAGE")
           echo "[Debug] SHA for $IMAGE: $SHA"
-          ("./parent/docker.sh" "image tags" "$REPOSITORY" "--remote" "--sha=$SHA" "--exists")
+          ("./source/parent/docker.sh" "image tags" "$REPOSITORY" "--remote" "--sha=$SHA" "--exists")
           echo "[Notice] > Protection successfully"
   tag:
     runs-on: ubuntu-latest
