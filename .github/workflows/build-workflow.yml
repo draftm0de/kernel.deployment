@@ -68,6 +68,7 @@ jobs:
           echo "::notice:: > build successfully"
   test:
     runs-on: ubuntu-latest
+    needs: build
     steps: 
       - name: Scan Docker Image
         run: |
