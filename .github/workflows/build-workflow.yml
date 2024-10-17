@@ -104,10 +104,10 @@ jobs:
       - name: Download the Docker Image From Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ${{ steps.image-save.outputs.IMAGE_SAVE_NAME }}
+          name: ${{ needs.build.image-save.outputs.IMAGE_SAVE_NAME }}
 
       - name: Load the Docker image
-        run: docker load -i ${{ steps.image-save.outputs.IMAGE_SAVE_FILE }}        
+        run: docker load -i ${{ needs.build.image-save.outputs.IMAGE_SAVE_FILE }}        
           
       - name: Scan Docker Image
         run: |
