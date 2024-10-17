@@ -94,7 +94,7 @@ jobs:
       - name: Upload Docker Image Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: docker-images
+          name: ${{ steps.image-save.outputs.IMAGE_SAVE_NAME }}
           path: ${{ steps.image-save.outputs.IMAGE_SAVE_FILE }}
           
   test:
@@ -102,9 +102,9 @@ jobs:
     needs: build
     steps: 
       - name: Download the Docker Image From Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: docker-images
+          name: ${{ steps.image-save.outputs.IMAGE_SAVE_NAME }}
 
       - name: Load the Docker image
         run: docker load -i ${{ steps.image-save.outputs.IMAGE_SAVE_FILE }}        
