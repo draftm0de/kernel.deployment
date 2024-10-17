@@ -55,7 +55,7 @@ jobs:
           if [ -d "${{ inputs.context }}" ]; then
             IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:latest"
             if [ -f "$BUILD_ARGS_FILE" ]; then
-              echo "::notice::- Build with --build-args"
+              echo "::debug::- Build with --build-args: $BUILD_ARGS_FILE"
               BUILD_ARGS=$(cat "$BUILD_ARGS_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
               docker build --tag $IMAGE $BUILD_ARGS ${{ inputs.context }}
             else
@@ -66,5 +66,10 @@ jobs:
             exit 1
           fi
           echo "::notice:: > build successfully"
-       
+  test:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Scan Docker Image
+        run: |
+          docker images
           
