@@ -63,7 +63,8 @@ jobs:
             if [ -n "${BUILD_TARGET}" ]; then
               echo "::debug::- Build with --target: $BUILD_TARGET"
               IMAGE_TAG="${BUILD_TARGET}-${IMAGE_TAG}"
-              BUILD_TARGET=" --target $IMAGE_BUILD_TARGET              
+              # leading space required, concatination in docker build command
+              BUILD_TARGET=" --target $IMAGE_BUILD_TARGET"            
             fi             
             IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:${IMAGE_TAG}"
             if [ -f "$BUILD_ARGS_FILE" ]; then
