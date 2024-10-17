@@ -88,8 +88,8 @@ jobs:
           IMAGE_SAVE_NAME="${{ inputs.image }}-${{ steps.image-build.outputs.BUILT_IMAGE_TAG }}"
           IMAGE_SAVE_FILE="${IMAGE_SAVE_NAME}.tar"
           docker save -o ${IMAGE_SAVE_FILE} ${{ steps.image-build.outputs.BUILT_IMAGE_NAME }}
-          echo "IMAGE_SAVE_NAME=${IMAGE_SAVE_NAME}" >> $GITHUB_OUTPUT
-          echo "IMAGE_SAVE_FILE=${IMAGE_SAVE_FILE}" >> $GITHUB_OUTPUT
+          echo "IMAGE_ARTIFACT_NAME=${IMAGE_SAVE_NAME}" >> $GITHUB_OUTPUT
+          echo "IMAGE_ARTIFACT_FILE=${IMAGE_SAVE_FILE}" >> $GITHUB_OUTPUT
 
       - name: Upload Docker Image Artifact
         uses: actions/upload-artifact@v4
