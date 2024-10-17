@@ -111,16 +111,12 @@ jobs:
         with:
           name: ${{ needs.build.outputs.image_artifact_name }}
 
-      - name: Load the Docker image
-        if: ${{ needs.build.outputs.image_artifact_file != '' }}
-        run: docker load -i ${{ needs.build.outputs.image_artifact_file }}        
+#      - name: Load the Docker image
+#        if: ${{ needs.build.outputs.image_artifact_file != '' }}
+#        run: docker load -i ${{ needs.build.outputs.image_artifact_file }}        
           
       - name: Scan Docker Image
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          image-ref: '${{ needs.build.outputs.built_image_name }} '
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
+          input: '/github/workspace/${{ steps.image-save.outputs.image_artifact_file }}'
           severity: 'CRITICAL,HIGH'          
