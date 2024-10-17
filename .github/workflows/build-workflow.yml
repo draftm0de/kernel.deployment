@@ -79,22 +79,24 @@ jobs:
             exit 1
           fi
           echo "::notice:: > build successfully"
-          echo "IMAGE=${IMAGE}" >> $GITHUB_OUTPUT
-          echo "IMAGE_FILE=${{ inputs.image }}-${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "BUILT_IMAGE_NAME=${IMAGE}" >> $GITHUB_OUTPUT
+          echo "BUILT_IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_OUTPUT
           
       - name: Save Docker Image
-        id: image-store
+        id: image-save
         run: |
-          IMAGE="${{ steps.image-build.outputs.IMAGE }}"
-          IMAGE_FILE="${{ steps.image-build.outputs.IMAGE_FILE }}.tar"
-          docker save -o $IMAGE_FILE $IMAGE
-          echo "IMAGE_FILE=$IMAGE_FILE" >> $GITHUB_OUTPUT
+          IMAGE_SAVE_NAME="${{ inputs.image }}-${{ steps.image-build.outputs.BUILT_IMAGE_TAG }}"
+          IMAGE_SAVE_FILE="${IMAGE_SAVE_NAME}.tar"
+          docker save -o ${IMAGE_SAVE_FILE} ${{ steps.image-build.outputs.BUILT_IMAGE_NAME }}
+          echo "IMAGE_SAVE_NAME=${IMAGE_SAVE_NAME}" >> $GITHUB_OUTPUT
+          echo "IMAGE_SAVE_FILE=${IMAGE_SAVE_FILE}" >> $GITHUB_OUTPUT
 
       - name: Upload Docker Image Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.image-build.outputs.IMAGE }}
-          path: ${{ steps.image-store.outputs.IMAGE_FILE }}         
+          name: ${{ steps.image-save.outputs.IMAGE_SAVE_NAME }}
+          path: ${{ steps.image-save.outputs.IMAGE_SAVE_FILE }}
+          
   test:
     runs-on: ubuntu-latest
     needs: build
