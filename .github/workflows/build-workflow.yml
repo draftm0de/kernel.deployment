@@ -47,6 +47,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      image_artifact_name: ${{ steps.image-save.outputs.image_artifact_name }}
+      image_artifact_file: ${{ steps.image-save.outputs.image_artifact_file }}
     steps:
       - name: Check Uut Own (parent) Repository
         uses: actions/checkout@v4
@@ -64,7 +67,7 @@ jobs:
               echo "::debug::- Build with --target: $BUILD_TARGET"
               IMAGE_TAG="${BUILD_TARGET}-${IMAGE_TAG}"
               # leading space required, concatination in docker build command
-              BUILD_TARGET=" --target $IMAGE_BUILD_TARGET"            
+              BUILD_TARGET=" --target $BUILD_TARGET"            
             fi             
             IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:${IMAGE_TAG}"
             if [ -f "$BUILD_ARGS_FILE" ]; then
@@ -88,26 +91,28 @@ jobs:
           IMAGE_SAVE_NAME="${{ inputs.image }}-${{ steps.image-build.outputs.BUILT_IMAGE_TAG }}"
           IMAGE_SAVE_FILE="${IMAGE_SAVE_NAME}.tar"
           docker save -o ${IMAGE_SAVE_FILE} ${{ steps.image-build.outputs.BUILT_IMAGE_NAME }}
-          echo "IMAGE_ARTIFACT_NAME=${IMAGE_SAVE_NAME}" >> $GITHUB_OUTPUT
-          echo "IMAGE_ARTIFACT_FILE=${IMAGE_SAVE_FILE}" >> $GITHUB_OUTPUT
+          echo "image_artifact_name=${IMAGE_SAVE_NAME}" >> $GITHUB_OUTPUT
+          echo "image_artifact_file=${IMAGE_SAVE_FILE}" >> $GITHUB_OUTPUT
 
       - name: Upload Docker Image Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.image-save.outputs.IMAGE_SAVE_NAME }}
-          path: ${{ steps.image-save.outputs.IMAGE_SAVE_FILE }}
+          name: ${{ steps.image-save.outputs.image_artifact_name }}
+          path: ${{ steps.image-save.outputs.image_artifact_file }}
           
   test:
     runs-on: ubuntu-latest
     needs: build
     steps: 
       - name: Download the Docker Image From Artifacts
+        if: ${{ needs.build.outputs.image_artifact_name != '' }}
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build.image-save.outputs.IMAGE_SAVE_NAME }}
+          name: ${{ needs.build.outputs.image_artifact_name }}
 
       - name: Load the Docker image
-        run: docker load -i ${{ needs.build.image-save.outputs.IMAGE_SAVE_FILE }}        
+        if: ${{ needs.build.outputs.image_artifact_file != '' }}
+        run: docker load -i ${{ needs.build.outputs.image_artifact_file }}        
           
       - name: Scan Docker Image
         run: |
