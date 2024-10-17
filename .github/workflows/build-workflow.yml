@@ -49,7 +49,7 @@ jobs:
 
       - name: Build Docker Image
         env:
-          BUILD_ARGS_FILE: ${{ inputs.build_args_file }}
+          BUILD_ARGS_FILE: ${{ inputs.context }}/${{ inputs.build_args_file }}
         run: |
           echo "::Notice:: Build image..."
           if [ -d "${{ inputs.context }}" ]; then
