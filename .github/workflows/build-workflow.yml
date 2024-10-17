@@ -56,7 +56,7 @@ jobs:
             IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:latest"
             if [ -f "$BUILD_ARGS_FILE" ]; then
               echo "::notice::- Build with --build-args"
-              BUILD_ARGS=$(cat "$BUILD_ARG_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
+              BUILD_ARGS=$(cat "$BUILD_ARGS_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
               docker build --tag $IMAGE $BUILD_ARGS ${{ inputs.context }}
             else
               docker build --tag $IMAGE ${{ inputs.context }}
