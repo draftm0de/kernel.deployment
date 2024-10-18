@@ -90,7 +90,7 @@ jobs:
               BUILD_TARGET=" --target $BUILD_TARGET"            
             fi             
             IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:${IMAGE_TAG}"
-            BUILD_ARGS_FILE: ${{ inputs.context }}/${{ inputs.build_args_file }}
+            BUILD_ARGS_FILE="${{ inputs.context }}/${{ inputs.build_args_file }}"
             if [ -f "$BUILD_ARGS_FILE" ]; then
               echo "::debug::- Build with --build-args: $BUILD_ARGS_FILE"
               BUILD_ARGS=$(cat "$BUILD_ARGS_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
