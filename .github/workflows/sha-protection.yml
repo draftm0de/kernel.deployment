@@ -12,8 +12,10 @@ on:
         required: false
         type: string  
     secrets:
-      docker_username: ${{ secrets.DOCKER_USERNAME }}
-      docker_password: ${{ secrets.DOCKER_PASSWORD }}        
+      docker_username:
+        required: true
+      docker_password:
+        required: true
 
 jobs:        
   scan:
