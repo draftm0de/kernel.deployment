@@ -143,5 +143,5 @@ jobs:
         with:
           input: ${{ env.ARTIFACT_PATH }}/${{ inputs.artifact_file }}
           severity: ${{ inputs.scan_severity }}
-          trivyignores: ${{ inputs.context }}
+          trivyignores: ${{ steps.trivy-setup.outputs.trivyignore_file }}
         
