@@ -23,19 +23,23 @@ on:
         description: "Filename to be used for --build-args"
         required: false
         type: string
-      tag_level:
-        description: "Levels for tagging an image"
-        required: true
-        type: number
-      tag_base_version_file:
-         description: "Filename within the Base Version for auto tagging"
-         required: false
-         type: string
-      protected_tag:
-        description: "Protect against duplicate SHA"
-        type: string
+      build_artifact:
+        description: "Artifact Name to be used to store built image"
         required: false
-        default: "false"
+        type: boolean
+#      tag_level:
+#        description: "Levels for tagging an image"
+#        required: true
+#        type: number
+#      tag_base_version_file:
+#         description: "Filename within the Base Version for auto tagging"
+#         required: false
+#         type: string
+#      protected_tag:
+#        description: "Protect against duplicate SHA"
+#        type: string
+#        required: false
+#        default: "false"
 # for security scan
 #      context:
 #        description: "Docker build context/path"
@@ -58,20 +62,21 @@ on:
       docker_password:
         description: "Docker Login (Password)"
         required: true
-
+env:
+  IMAGE_ARTIFACT_NAME: "image.artifact"
+  
 jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      built_image_name: ${{ steps.image-build.outputs.built_image_name }}
+      built_name: ${{ steps.image-build.outputs.built_name }}
+      built_file: ${{ steps.image-save.outputs.built_file }}
     steps:
       - name: Check Out Own (parent) Repository
         uses: actions/checkout@v4
 
       - name: Build Docker Image
         id: image-build
-        env:
-          BUILD_ARGS_FILE: ${{ inputs.context }}/${{ inputs.build_args_file }}
         run: |
           echo "::Notice:: Build image..."
           if [ -d "${{ inputs.context }}" ]; then
@@ -84,6 +89,7 @@ jobs:
               BUILD_TARGET=" --target $BUILD_TARGET"            
             fi             
             IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:${IMAGE_TAG}"
+            BUILD_ARGS_FILE: ${{ inputs.context }}/${{ inputs.build_args_file }}
             if [ -f "$BUILD_ARGS_FILE" ]; then
               echo "::debug::- Build with --build-args: $BUILD_ARGS_FILE"
               BUILD_ARGS=$(cat "$BUILD_ARGS_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
@@ -96,24 +102,28 @@ jobs:
             exit 1
           fi
           echo "::notice:: > build successfully"
-          echo "::notice:: Save Docker Image"
-          IMAGE_ARTIFACT_FILE="${{ inputs.image }}.tar"
-          docker save -o ${IMAGE_ARTIFACT_FILE} ${IMAGE}         
-          echo "::notice:: > save successfully"
-          echo "image_artifact_file=${IMAGE_ARTIFACT_FILE}" >> $GITHUB_OUTPUT
+          echo "built_name=${IMAGE}" >> $GITHUB_OUTPUT
 
+      - name: Save Docker Image
+        id: image-save
+        if: ${{ inputs.build_artifact }}
+        run: |
+          built_file="${{ inputs.image }}.tar"
+          docker save -o ${built_file} ${{ steps.image-build.outputs.built_name }}
+          echo "built_file=${built_file}" >> $GITHUB_OUTPUT
+          
       - name: Upload Docker Image Artifact
+        if: ${{ inputs.build_artifact }}
         uses: actions/upload-artifact@v4
         with:
-          name: artifact
-          path: ${{ steps.image-build.outputs.image_artifact_file }}
+          path: ${{ steps.image-save.outputs.built_file }}
           if-no-files-found: error
           
   test:
     runs-on: ubuntu-20.04
     needs: build
     env:
-      ARTIFACT_PATH: "./.artifact"
+      ARTIFACT_PATH: "./image.artifacts"
     steps: 
       - name: Check Out Own (parent) Repository
         uses: actions/checkout@v4
@@ -133,7 +143,6 @@ jobs:
       - name: Download the Docker Image From Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: artifact
           path: ${{ env.ARTIFACT_PATH }}
 
       - name: Verify
