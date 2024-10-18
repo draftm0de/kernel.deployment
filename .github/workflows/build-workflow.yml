@@ -122,7 +122,6 @@ jobs:
       - name: Prepare/Observe .trivyignore File
         id: trivy-setup
         run: |
-          ls ${{ inputs.context }} -la
           TRIVY_IGNORE_FILE="${{ inputs.context }}/.trivyignore"
           if [ -f "$TRIVY_IGNORE_FILE" ]; then
             echo "::notice:: > Use $TRIVY_IGNORE_FILE"
@@ -144,6 +143,5 @@ jobs:
         with:
           input: ${{ env.ARTIFACT_PATH }}/${{ inputs.artifact_file }}
           severity: ${{ inputs.scan_severity }}
-        env:
-          TRIVY_IGNORE_FILE: ${{ steps.trivy-setup.outputs.trivyignore_file }}
+          trivyignores: ${{ inputs.context }}
         
