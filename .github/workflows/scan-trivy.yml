@@ -32,9 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ARTIFACT_PATH: "./artifacts"
-      TRIVY_DB_VERSION: 2
-      TRIVY_JAVA_DB_VERSION: 1
-      TRIVY_CACHE_PATH: .cache/trivy
+      TRIVY_VERSION: v0.56.1
     steps: 
       - name: Check Out Repository
         uses: actions/checkout@v4
@@ -62,49 +60,18 @@ jobs:
           
           echo "::notice:: > setup successfully"
 
-      - name: Set Cache DBs Key
-        id: cache-key
-        run: |
-          DATE=$(date +'%Y-%m-%d')
-          KEY="cache-trivy-$DATE"
-          echo "key=$KEY" >> $GITHUB_OUTPUT          
-
-      - name: Load Cache DBs
-        id: cache-trivy
-        uses: actions/cache@v4
-        with:
-          path: ${{ github.workspace }}/${{ env.TRIVY_CACHE_PATH }}
-          key: ${{ steps.cache-key.outputs.key }}          
-
-      - name: Download and extract the vulnerability DB
-        if: steps.cache-trivy.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p $GITHUB_WORKSPACE/${{ env.TRIVY_CACHE_PATH }}/db
-          oras pull ghcr.io/aquasecurity/trivy-db:${{ env.TRIVY_DB_VERSION }}
-          tar -xzf db.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/db
-          rm db.tar.gz          
-
-      - name: Download and extract the Java DB
-        if: steps.cache-trivy.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p $GITHUB_WORKSPACE/${{ env.TRIVY_CACHE_PATH }}/java-db
-          oras pull ghcr.io/aquasecurity/trivy-java-db:${{ env.TRIVY_JAVA_DB_VERSION }}
-          tar -xzf javadb.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/java-db
-          rm javadb.tar.gz   
-          
-      - name: Save DBs to cache
-        if: steps.cache-trivy.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: ${{ github.workspace }}/${{ env.TRIVY_CACHE_PATH }}
-          key: ${{ steps.cache-key.outputs.key }}
-
       - name: Download the Docker Image From Artifacts
         if: ${{ inputs.artifact_name }}
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.artifact_name }}
-          path: ${{ env.ARTIFACT_PATH }}
+          path: ${{ env.ARTIFACT_PATH }}      
+
+      - name: Setup Trivy
+        uses: aquasecurity/setup-trivy@0.2.0
+        with:
+          cache: true
+          version: ${{ env.TRIVY_VERSION }}
      
       - name: Scan Docker Image
         uses: aquasecurity/trivy-action@0.20.0
@@ -113,6 +80,3 @@ jobs:
           trivyignores: ${{ steps.scan-setup.outputs.trivyignores }}
           severity: ${{ inputs.severity }}
           scanners: ${{ inputs.scanners }}
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
