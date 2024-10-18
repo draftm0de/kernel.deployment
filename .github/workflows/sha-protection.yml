@@ -1,4 +1,4 @@
-name: Scan Docker Image
+name: Protect Duplicate SHA
 
 on:
   workflow_call:
