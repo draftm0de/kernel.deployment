@@ -62,8 +62,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      IMAGE_ARTIFACT_FILE: "{{ inputs.image }}.tar"
     outputs:
       built_image_name: ${{ steps.image-build.outputs.built_image_name }}
     steps:
@@ -98,18 +96,16 @@ jobs:
             exit 1
           fi
           echo "::notice:: > build successfully"
-          echo "built_image_name=${IMAGE}" >> $GITHUB_OUTPUT
-          echo "built_image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
-          
-      - name: Save Docker Image
-        id: image-save
-        run: |
-          docker save -o ${IMAGE_ARTIFACT_FILE} ${{ steps.image-build.outputs.built_image_name }}
+          echo "::notice:: Save Docker Image
+          IMAGE_ARTIFACT_FILE="{{ inputs.image }}.tar"
+          docker save -o ${IMAGE_ARTIFACT_FILE} ${IMAGE}         
+          echo "::notice:: > save successfully"
+          echo "image_artifact_file=${IMAGE_ARTIFACT_FILE}" >> $GITHUB_OUTPUT
 
       - name: Upload Docker Image Artifact
         uses: actions/upload-artifact@v4
         with:
-          path: ${IMAGE_ARTIFACT_FILE}
+          path: ${{ steps.image-build.outputs.image_artifact_file }}
           
   test:
     runs-on: ubuntu-20.04
@@ -141,5 +137,5 @@ jobs:
           input: ${{ inputs.artifact_file }}
           severity: ${{ inputs.scan_severity }}
         env:
-          TRIVY_IGNORE_FILE: ${{ inputs.context }}/.trivyignore
+          TRIVY_IGNORE_FILE: ${{ steps.trivy-ignore-file.outputs.trivy_ignore_file }}
         
