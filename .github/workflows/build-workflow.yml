@@ -134,12 +134,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.artifact_file }}   
-          path: ${ARTIFACT_PATH}
+          path: ${{ env.ARTIFACT_PATH }}
           
       - name: Scan Docker Image
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          input: ${ARTIFACT_PATH}/${{ inputs.artifact_file }}
+          input: ${{ env.ARTIFACT_PATH }}/${{ inputs.artifact_file }}
           severity: ${{ inputs.scan_severity }}
         env:
           TRIVY_IGNORE_FILE: ${{ steps.trivy-ignore-file.outputs.trivy_ignore_file }}
