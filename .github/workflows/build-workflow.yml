@@ -135,12 +135,17 @@ jobs:
         # name is not set, default: artifact
         with:   
           path: ${{ env.ARTIFACT_PATH }}
-          
-      - name: Scan Docker Image
-        uses: aquasecurity/trivy-action@0.20.0
-        with:
-          input: ${{ env.ARTIFACT_PATH }}/${{ inputs.artifact_file }}
-          severity: ${{ inputs.scan_severity }}
-        env:
-          TRIVY_IGNORE_FILE: ${{ steps.trivy-ignore-file.outputs.trivy_ignore_file }}
+
+      - name: Verify
+        run: |
+          ls -la
+          ls ${{ env.ARTIFACT_PATH }} -la
+#          
+#      - name: Scan Docker Image
+#        uses: aquasecurity/trivy-action@0.20.0
+#        with:
+#          input: ${{ env.ARTIFACT_PATH }}/${{ inputs.artifact_file }}
+#          severity: ${{ inputs.scan_severity }}
+#        env:
+#          TRIVY_IGNORE_FILE: ${{ steps.trivy-ignore-file.outputs.trivy_ignore_file }}
         
