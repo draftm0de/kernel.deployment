@@ -4,54 +4,29 @@ on:
   workflow_call:
     inputs:
       namespace:
-        description: "Image (Namespace)"
+        description: "image (Namespace)"
         required: true
         type: string      
       image:
-        description: "Image (Name)"
+        description: "image (Name)"
         required: true
         type: string      
       context:
-        description: "Docker build context/path"
-        required: true
+        description: "docker build context (path)"
+        required: false
         type: string
       build_target:
-        description: "Image Built (Target)"
+        description: "docker build --target"
         required: false
         type: string
       build_args_file:
-        description: "Filename to be used for --build-args"
+        description: "filename to be used for --build-args"
         required: false
         type: string
-      build_artifact:
-        description: "Upload built image to artifact"
-        required: false
-        type: boolean
-      artifact_name:
+      image_artifact_file:
         description: "Artifact name to be used"
         required: false
         type: string
-        default: "image.artifact"
-# for security scan
-      artifact_file:
-        description: "Image Artifact File"
-        type: string
-        required: false
-        default: "kernel.caddy.tar"      
-#      artifact_name:
-#        description: "Artifact name to be used"
-#        required: false
-#        type: string
-#        default: "image.artifact"        
-      scan_severity:
-        description: "Image Scan Severities"
-        type: string
-        required: false
-        default: "CRITICAL,HIGH"
-
-env:
-  IMAGE_ARTIFACT_NAME: "image.artifact"
-  
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -67,81 +42,48 @@ jobs:
         run: |
           echo "::notice:: Build image..."
           if [ -d "${{ inputs.context }}" ]; then
-            IMAGE_TAG="latest"
-            BUILD_TARGET="${{ inputs.build_target }}"
-            if [ -n "${BUILD_TARGET}" ]; then
+            CONTEXT="${{ inputs.context }}"
+          else
+            CONTEXT="."
+          fi
+          
+          IMAGE_TAG="latest"
+          BUILD_TARGET="${{ inputs.build_target }}"
+          if [ -n "${BUILD_TARGET}" ]; then
               echo "::notice::- Build with --target: $BUILD_TARGET"
               IMAGE_TAG="${BUILD_TARGET}-${IMAGE_TAG}"
               # leading space required, concatination in docker build command
               BUILD_TARGET=" --target $BUILD_TARGET"            
-            else 
-              echo "::notice::- Build without --target"
-            fi             
-            IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:${IMAGE_TAG}"
-            BUILD_ARGS_FILE="${{ inputs.context }}/${{ inputs.build_args_file }}"
-            if [ -f "$BUILD_ARGS_FILE" ]; then
-              echo "::notice::- Build with --build-args: $BUILD_ARGS_FILE"
-              BUILD_ARGS=$(cat "$BUILD_ARGS_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
-              docker build --tag ${IMAGE}${BUILD_TARGET} $BUILD_ARGS ${{ inputs.context }}
-            else
-              echo "::notice::- Build without --build-args"
-              docker build --tag ${IMAGE}${BUILD_TARGET} ${{ inputs.context }}
-            fi
+          else 
+            echo "::notice::- Build without --target"
+          fi    
+          
+          IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:${IMAGE_TAG}"
+          BUILD_ARGS_FILE="${CONTEXT}/${{ inputs.build_args_file }}"
+          if [ -f "$BUILD_ARGS_FILE" ]; then
+            echo "::notice::- Build with --build-args: $BUILD_ARGS_FILE"
+            BUILD_ARGS=$(cat "$BUILD_ARGS_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
+            docker build --tag ${IMAGE}${BUILD_TARGET} $BUILD_ARGS ${CONTEXT}
           else
-            echo "::error:: Directory ${{ inputs.context }} does not exist"
-            exit 1
+            echo "::notice::- Build without --build-args"
+            docker build --tag ${IMAGE}${BUILD_TARGET} ${CONTEXT}
           fi
+
           echo "::notice:: > build successfully"
           echo "built_name=${IMAGE}" >> $GITHUB_OUTPUT
 
       - name: Save Docker Image
         id: image-save
-        if: ${{ inputs.build_artifact }}
+        if: ${{ inputs.image_artifact_file }}
         run: |
-          built_file="${{ inputs.image }}.tar"
+          built_file="${{ inputs.image_artifact_file }}.tar"
           docker save -o ${built_file} ${{ steps.image-build.outputs.built_name }}
           echo "built_file=${built_file}" >> $GITHUB_OUTPUT
           
       - name: Upload Docker Image Artifact
-        if: ${{ inputs.build_artifact }}
+        if: ${{ inputs.image_artifact_file }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.artifact_name }}
+          name: artifacts
           path: ${{ steps.image-save.outputs.built_file }}
           if-no-files-found: error
-          
-  test:
-    runs-on: ubuntu-20.04
-    needs: build
-    env:
-      ARTIFACT_PATH: "./image.artifacts"
-    steps: 
-      - name: Check Out Own (parent) Repository
-        uses: actions/checkout@v4
-
-      - name: Prepare/Observe .trivyignore File
-        id: trivy-setup
-        run: |
-          TRIVY_IGNORE_FILE="${{ inputs.context }}/.trivyignore"
-          if [ -f "$TRIVY_IGNORE_FILE" ]; then
-            echo "::notice:: > Use $TRIVY_IGNORE_FILE"
-          else
-            echo "::notice:: > Create Empty $TRIVY_IGNORE_FILE"
-            touch "$TRIVY_IGNORE_FILE"
-          fi
-          echo "trivyignore_file=${TRIVY_IGNORE_FILE}" >> $GITHUB_OUTPUT
-        
-      - name: Download the Docker Image From Artifacts
-        if: ${{ inputs.artifact_name }}
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ inputs.artifact_name }}
-          path: ${{ env.ARTIFACT_PATH }}
-     
-      - name: Scan Docker Image
-        uses: aquasecurity/trivy-action@0.20.0
-        with:
-          input: ${{ env.ARTIFACT_PATH }}/${{ inputs.artifact_file }}
-          severity: ${{ inputs.scan_severity }}
-          trivyignores: ${{ steps.trivy-setup.outputs.trivyignore_file }}
-        
