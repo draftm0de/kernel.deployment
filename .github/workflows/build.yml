@@ -15,6 +15,7 @@ on:
         description: "docker build context (path)"
         required: false
         type: string
+        default: .
       build_target:
         description: "docker build --target"
         required: false
@@ -23,10 +24,11 @@ on:
         description: "filename to be used for --build-args"
         required: false
         type: string
-      image_artifact_file:
-        description: "Artifact name to be used"
+      artifact_name:
+        description: "artifact name"
         required: false
-        type: string
+        type: string          
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -50,7 +52,7 @@ jobs:
           IMAGE_TAG="latest"
           BUILD_TARGET="${{ inputs.build_target }}"
           if [ -n "${BUILD_TARGET}" ]; then
-              echo "::notice::- Build with --target: $BUILD_TARGET"
+              echo "::notice::- build with --target: $BUILD_TARGET"
               IMAGE_TAG="${BUILD_TARGET}-${IMAGE_TAG}"
               # leading space required, concatination in docker build command
               BUILD_TARGET=" --target $BUILD_TARGET"            
@@ -59,14 +61,14 @@ jobs:
           fi    
           
           IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:${IMAGE_TAG}"
-          BUILD_ARGS_FILE="${CONTEXT}/${{ inputs.build_args_file }}"
+          BUILD_ARGS_FILE="${{ inputs.context }}/${{ inputs.build_args_file }}"
           if [ -f "$BUILD_ARGS_FILE" ]; then
             echo "::notice::- Build with --build-args: $BUILD_ARGS_FILE"
             BUILD_ARGS=$(cat "$BUILD_ARGS_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
-            docker build --tag ${IMAGE}${BUILD_TARGET} $BUILD_ARGS ${CONTEXT}
+            docker build --tag ${IMAGE}${BUILD_TARGET} $BUILD_ARGS ${{ inputs.context }}
           else
             echo "::notice::- Build without --build-args"
-            docker build --tag ${IMAGE}${BUILD_TARGET} ${CONTEXT}
+            docker build --tag ${IMAGE}${BUILD_TARGET} ${{ inputs.context }}
           fi
 
           echo "::notice:: > build successfully"
@@ -74,16 +76,16 @@ jobs:
 
       - name: Save Docker Image
         id: image-save
-        if: ${{ inputs.image_artifact_file }}
+        if: ${{ inputs.artifact_name }}
         run: |
-          built_file="${{ inputs.image_artifact_file }}.tar"
+          built_file="${{ inputs.image }}.tar"
           docker save -o ${built_file} ${{ steps.image-build.outputs.built_name }}
           echo "built_file=${built_file}" >> $GITHUB_OUTPUT
           
       - name: Upload Docker Image Artifact
-        if: ${{ inputs.image_artifact_file }}
+        if: ${{ inputs.artifact_name }}
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts
+          name: ${{ inputs.artifact_name }}
           path: ${{ steps.image-save.outputs.built_file }}
           if-no-files-found: error
