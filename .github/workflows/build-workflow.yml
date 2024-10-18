@@ -36,6 +36,21 @@ on:
         type: string
         required: false
         default: "false"
+# for security scan
+#      context:
+#        description: "Docker build context/path"
+#        required: true
+#        type: string
+      artifact_file:
+        description: "Image Artifact File"
+        type: string
+        required: false
+        default: ".images/kernel.caddy.tar"      
+      scan_severity:
+        description: "Image Scan Severities"
+        type: string
+        required: false
+        default: "CRITICAL,HIGH"
     secrets:
       docker_username:
         description: "Docker Login (Username)"
@@ -44,14 +59,12 @@ on:
         description: "Docker Login (Password)"
         required: true
 
-env:
-  IMAGE_ARTIFACT_FOLDER: image
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      IMAGE_ARTIFACT_FILE: ".images/{{ inputs.image }}.tar"
     outputs:
-      image_artifact_file: ${{ steps.image-save.outputs.image_artifact_file }}
       built_image_name: ${{ steps.image-build.outputs.built_image_name }}
     steps:
       - name: Check Out Own (parent) Repository
@@ -91,34 +104,42 @@ jobs:
       - name: Save Docker Image
         id: image-save
         run: |
-          IMAGE_SAVE_NAME="${{ inputs.image }}-${{ steps.image-build.outputs.built_image_tag }}"
-          IMAGE_SAVE_FILE="${{ env.IMAGE_ARTIFACT_FOLDER }}/${IMAGE_SAVE_NAME}.tar"
-          docker save -o ${IMAGE_SAVE_FILE} ${{ steps.image-build.outputs.built_image_name }}
-          echo "image_artifact_file=${IMAGE_SAVE_FILE}" >> $GITHUB_OUTPUT
+          docker save -o ${IMAGE_ARTIFACT_FILE} ${{ steps.image-build.outputs.built_image_name }}
 
       - name: Upload Docker Image Artifact
         uses: actions/upload-artifact@v4
         with:
-          path: ${{ steps.image-save.outputs.image_artifact_file }}
+          path: ${IMAGE_ARTIFACT_FILE}
           
   test:
     runs-on: ubuntu-20.04
     needs: build
     steps: 
+      - name: Check Out Own (parent) Repository
+        uses: actions/checkout@v4
+
+      - name: Prepare/Observe .trivyignore File
+        id: trivy-ignore-file
+        run: |
+          TRIVY_IGNORE_FILE="${{ inputs.context }}/.trivyignore"
+          if [ -f "$TRIVY_IGNORE_FILE" ]; then
+            echo "::notice:: > Use $TRIVY_IGNORE_FILE"
+          else
+            echo "::notice:: > Create Empty $TRIVY_IGNORE_FILE"
+            touch "$TRIVY_IGNORE_FILE"
+          fi
+          echo "trivy_ignore_file=${TRIVY_IGNORE_FILE}" >> $GITHUB_OUTPUT
+        
       - name: Download the Docker Image From Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ${{ steps.image-save.outputs.image_artifact_file }}
-
-      - name: List
-        run: ls -la
-
-#      - name: Load the Docker image
-#        if: ${{ needs.build.outputs.image_artifact_file != '' }}
-#        run: docker load -i ${{ needs.build.outputs.image_artifact_file }}        
+          path: ${{ inputs.artifact_file }}   
           
-#      - name: Scan Docker Image
-#        uses: aquasecurity/trivy-action@0.20.0
-#        with:
-#          input: '/github/workspace/${{ steps.image-save.outputs.image_artifact_file }}'
-#          severity: 'CRITICAL,HIGH'          
+      - name: Scan Docker Image
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          input: ${{ inputs.artifact_file }}
+          severity: ${{ inputs.scan_severity }}
+        env:
+          TRIVY_IGNORE_FILE: ${{ inputs.context }}/.trivyignore
+        
