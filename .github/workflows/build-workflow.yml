@@ -104,8 +104,8 @@ jobs:
 
       - name: Upload Docker Image Artifact
         uses: actions/upload-artifact@v4
-        # name is not set, default: artifact
         with:
+          name: artifact
           path: ${{ steps.image-build.outputs.image_artifact_file }}
           if-no-files-found: error
           
@@ -132,8 +132,8 @@ jobs:
         
       - name: Download the Docker Image From Artifacts
         uses: actions/download-artifact@v4
-        # name is not set, default: artifact
-        with:   
+        with:
+          name: artifact
           path: ${{ env.ARTIFACT_PATH }}
 
       - name: Verify
