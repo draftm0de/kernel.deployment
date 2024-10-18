@@ -34,7 +34,7 @@ jobs:
       built_name: ${{ steps.image-build.outputs.built_name }}
       built_file: ${{ steps.image-save.outputs.built_file }}
     steps:
-      - name: Check Out Own (parent) Repository
+      - name: Check Out Repository
         uses: actions/checkout@v4
 
       - name: Build Docker Image
