@@ -68,7 +68,7 @@ jobs:
           path: ${{ env.ARTIFACT_PATH }}      
 
       - name: Setup Trivy
-        uses: aquasecurity/setup-trivy@0.2.0
+        uses: aquasecurity/setup-trivy@v0.2.0
         with:
           cache: true
           version: ${{ env.TRIVY_VERSION }}
