@@ -39,6 +39,9 @@ jobs:
       - name: Check Out Repository
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
       - name: Build Docker Image
         id: image-build
         run: |
@@ -65,10 +68,10 @@ jobs:
           if [ -f "$BUILD_ARGS_FILE" ]; then
             echo "::notice::- Build with --build-args: $BUILD_ARGS_FILE"
             BUILD_ARGS=$(cat "$BUILD_ARGS_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
-            docker build --tag ${IMAGE}${BUILD_TARGET} $BUILD_ARGS ${{ inputs.context }}
+            docker buildx build --provenance=true --sbom=true --tag ${IMAGE}${BUILD_TARGET} $BUILD_ARGS ${{ inputs.context }}
           else
             echo "::notice::- Build without --build-args"
-            docker build --tag ${IMAGE}${BUILD_TARGET} ${{ inputs.context }}
+            docker buildx build --provenance=true --sbom=true --tag ${IMAGE}${BUILD_TARGET} ${{ inputs.context }}
           fi
 
           echo "::notice:: > build successfully"
