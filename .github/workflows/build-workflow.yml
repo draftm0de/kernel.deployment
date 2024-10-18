@@ -130,6 +130,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ${{ inputs.artifact_file }}   
+
+      - name: List
+        run: ls -la
           
       - name: Scan Docker Image
         uses: aquasecurity/trivy-action@0.20.0
