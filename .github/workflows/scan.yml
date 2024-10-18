@@ -21,6 +21,11 @@ on:
         type: string
         required: false
         default: "CRITICAL,HIGH"
+      scanners:
+        description: "Image Scan Scanners"
+        type: string
+        required: false
+        default: "vuln,secret"        
 
 jobs:        
   scan:
@@ -66,5 +71,6 @@ jobs:
         with:
           input: ${{ steps.trivy-setup.outputs.input }}
           trivyignores: ${{ steps.trivy-setup.outputs.trivyignores }}
-          severity: ${{ inputs.severity }}          
+          severity: ${{ inputs.severity }}    
+          scanners: ${{ inputs.scanners }}
         
