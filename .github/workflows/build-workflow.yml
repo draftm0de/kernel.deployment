@@ -24,44 +24,30 @@ on:
         required: false
         type: string
       build_artifact:
-        description: "Artifact Name to be used to store built image"
+        description: "Upload built image to artifact"
         required: false
         type: boolean
-#      tag_level:
-#        description: "Levels for tagging an image"
-#        required: true
-#        type: number
-#      tag_base_version_file:
-#         description: "Filename within the Base Version for auto tagging"
-#         required: false
-#         type: string
-#      protected_tag:
-#        description: "Protect against duplicate SHA"
-#        type: string
-#        required: false
-#        default: "false"
+      artifact_name:
+        description: "Artifact name to be used"
+        required: false
+        type: string
+        default: "image.artifact"
 # for security scan
-#      context:
-#        description: "Docker build context/path"
-#        required: true
-#        type: string
       artifact_file:
         description: "Image Artifact File"
         type: string
         required: false
         default: "kernel.caddy.tar"      
+#      artifact_name:
+#        description: "Artifact name to be used"
+#        required: false
+#        type: string
+#        default: "image.artifact"        
       scan_severity:
         description: "Image Scan Severities"
         type: string
         required: false
         default: "CRITICAL,HIGH"
-#    secrets:
-#      docker_username:
-#        description: "Docker Login (Username)"
-#        required: true
-#      docker_password:
-#        description: "Docker Login (Password)"
-#        required: true
 
 env:
   IMAGE_ARTIFACT_NAME: "image.artifact"
@@ -120,7 +106,7 @@ jobs:
         if: ${{ inputs.build_artifact }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.IMAGE_ARTIFACT_NAME }}
+          name: ${{ inputs.artifact_name }}
           path: ${{ steps.image-save.outputs.built_file }}
           if-no-files-found: error
           
@@ -146,21 +132,17 @@ jobs:
           echo "trivy_ignore_file=${TRIVY_IGNORE_FILE}" >> $GITHUB_OUTPUT
         
       - name: Download the Docker Image From Artifacts
+        if: ${{ inputs.artifact_name }}
         uses: actions/download-artifact@v4
         with:
-          name: ${{ env.IMAGE_ARTIFACT_NAME }}
+          name: ${{ inputs.artifact_name }}
           path: ${{ env.ARTIFACT_PATH }}
-
-      - name: Verify
-        run: |
-          ls -la
-          ls ${{ env.ARTIFACT_PATH }} -la
-#          
-#      - name: Scan Docker Image
-#        uses: aquasecurity/trivy-action@0.20.0
-#        with:
-#          input: ${{ env.ARTIFACT_PATH }}/${{ inputs.artifact_file }}
-#          severity: ${{ inputs.scan_severity }}
-#        env:
-#          TRIVY_IGNORE_FILE: ${{ steps.trivy-ignore-file.outputs.trivy_ignore_file }}
+     
+      - name: Scan Docker Image
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          input: ${{ env.ARTIFACT_PATH }}/${{ inputs.artifact_file }}
+          severity: ${{ inputs.scan_severity }}
+        env:
+          TRIVY_IGNORE_FILE: ${{ steps.trivy-ignore-file.outputs.trivy_ignore_file }}
         
