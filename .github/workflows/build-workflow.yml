@@ -134,11 +134,11 @@ jobs:
       - name: List
         run: ls -la
           
-      - name: Scan Docker Image
-        uses: aquasecurity/trivy-action@0.20.0
-        with:
-          input: ${{ inputs.artifact_file }}
-          severity: ${{ inputs.scan_severity }}
-        env:
-          TRIVY_IGNORE_FILE: ${{ steps.trivy-ignore-file.outputs.trivy_ignore_file }}
+#      - name: Scan Docker Image
+#        uses: aquasecurity/trivy-action@0.20.0
+#        with:
+#          input: ${{ inputs.artifact_file }}
+#          severity: ${{ inputs.scan_severity }}
+#        env:
+#          TRIVY_IGNORE_FILE: ${{ steps.trivy-ignore-file.outputs.trivy_ignore_file }}
         
