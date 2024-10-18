@@ -80,3 +80,4 @@ jobs:
           trivyignores: ${{ steps.scan-setup.outputs.trivyignores }}
           severity: ${{ inputs.severity }}
           scanners: ${{ inputs.scanners }}
+          exit-code: 1
