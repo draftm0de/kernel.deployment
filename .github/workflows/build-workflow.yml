@@ -103,6 +103,7 @@ jobs:
           
   test:
     runs-on: ubuntu-20.04
+    needs: build
     steps: 
       - name: Download the Docker Image From Artifacts
         uses: actions/download-artifact@v4
