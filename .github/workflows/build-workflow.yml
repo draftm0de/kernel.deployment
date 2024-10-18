@@ -104,12 +104,16 @@ jobs:
 
       - name: Upload Docker Image Artifact
         uses: actions/upload-artifact@v4
+        # name is not set, default: artifact
         with:
           path: ${{ steps.image-build.outputs.image_artifact_file }}
+          if-no-files-found: error
           
   test:
     runs-on: ubuntu-20.04
     needs: build
+    env:
+      ARTIFACT_PATH: "./.artifact"
     steps: 
       - name: Check Out Own (parent) Repository
         uses: actions/checkout@v4
@@ -129,16 +133,14 @@ jobs:
       - name: Download the Docker Image From Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ${{ inputs.artifact_file }}   
-
-      - name: List
-        run: ls -la
+          name: ${{ inputs.artifact_file }}   
+          path: ${ARTIFACT_PATH}
           
-#      - name: Scan Docker Image
-#        uses: aquasecurity/trivy-action@0.20.0
-#        with:
-#          input: ${{ inputs.artifact_file }}
-#          severity: ${{ inputs.scan_severity }}
-#        env:
-#          TRIVY_IGNORE_FILE: ${{ steps.trivy-ignore-file.outputs.trivy_ignore_file }}
+      - name: Scan Docker Image
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          input: ${ARTIFACT_PATH}/${{ inputs.artifact_file }}
+          severity: ${{ inputs.scan_severity }}
+        env:
+          TRIVY_IGNORE_FILE: ${{ steps.trivy-ignore-file.outputs.trivy_ignore_file }}
         
