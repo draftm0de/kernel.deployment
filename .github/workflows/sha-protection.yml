@@ -1,0 +1,43 @@
+name: Scan Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      artifact_name:
+        description: "artifact name"
+        required: false
+        type: string  
+    secrets:
+      docker_username: ${{ secrets.DOCKER_USERNAME }}
+      docker_password: ${{ secrets.DOCKER_PASSWORD }}        
+
+jobs:        
+  scan:
+    runs-on: ubuntu-latest
+    env:
+      ARTIFACT_PATH: "./artifacts"
+    steps: 
+      - name: Check Out Repository
+        uses: actions/checkout@v4
+        with:
+          repository: draftm0de/kernel.deployment
+
+      - name: Download the Docker Image From Artifacts
+        if: ${{ inputs.artifact_name }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ${{ env.ARTIFACT_PATH }}      
+
+      - name: Load Docker Image from Artifact
+        id: load-image
+        if: ${{ inputs.artifact_name }}
+        run: |
+          IMAGE=$(docker load --input ${{ env.ARTIFACT_PATH }}/${{ inputs.artifact_name }} | grep 'Loaded image' | awk '{print $3}')
+          echo "::notice:: image for ${{ env.image }}: $IMAGE"
+          echo "image=${IMAGE}" >> $GITHUB_ENV
+
+      - name: Get Local Image SHA
+        run: |
+          SHA=$(./docker.sh image sha ${{ env.image }} 
+          echo "::notice:: SHA for ${{ env.image }}: $SHA"
