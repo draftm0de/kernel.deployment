@@ -54,7 +54,7 @@ jobs:
         run: |
           echo "::notice:: Get SHA..."
           
-          SHA=$(./docker.sh image sha ${{ env.image }} 
+          SHA=$(./docker.sh image sha ${{ env.image }})
           echo "::notice:: > SHA for ${{ env.image }}: $SHA"
           
           echo "::notice:: > load successfully"
