@@ -120,7 +120,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Prepare/Observe .trivyignore File
-        id: trivy-ignore-file
+        id: trivy-setup
         run: |
           ls ${{ inputs.context }} -la
           TRIVY_IGNORE_FILE="${{ inputs.context }}/.trivyignore"
@@ -130,7 +130,7 @@ jobs:
             echo "::notice:: > Create Empty $TRIVY_IGNORE_FILE"
             touch "$TRIVY_IGNORE_FILE"
           fi
-          echo "trivy_ignore_file=${TRIVY_IGNORE_FILE}" >> $GITHUB_OUTPUT
+          echo "trivyignore_file=${TRIVY_IGNORE_FILE}" >> $GITHUB_OUTPUT
         
       - name: Download the Docker Image From Artifacts
         if: ${{ inputs.artifact_name }}
@@ -145,5 +145,5 @@ jobs:
           input: ${{ env.ARTIFACT_PATH }}/${{ inputs.artifact_file }}
           severity: ${{ inputs.scan_severity }}
         env:
-          TRIVY_IGNORE_FILE: ${{ steps.trivy-ignore-file.outputs.trivy_ignore_file }}
+          TRIVY_IGNORE_FILE: ${{ steps.trivy-setup.outputs.trivyignore_file }}
         
