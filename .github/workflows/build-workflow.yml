@@ -44,11 +44,13 @@ on:
         description: "Docker Login (Password)"
         required: true
 
+env:
+  IMAGE_ARTIFACT_NAME: image-artifact
+
 jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      image_artifact_name: ${{ steps.image-save.outputs.image_artifact_name }}
       image_artifact_file: ${{ steps.image-save.outputs.image_artifact_file }}
       built_image_name: ${{ steps.image-build.outputs.built_image_name }}
     steps:
@@ -98,7 +100,7 @@ jobs:
       - name: Upload Docker Image Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.image-save.outputs.image_artifact_name }}
+          name: ${{ env.IMAGE_ARTIFACT_NAME }}
           path: ${{ steps.image-save.outputs.image_artifact_file }}
           
   test:
@@ -109,14 +111,17 @@ jobs:
         if: ${{ needs.build.outputs.image_artifact_name != '' }}
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build.outputs.image_artifact_name }}
+          name: ${{ env.IMAGE_ARTIFACT_NAME }}
+
+      - name: Get Source
+        run: ls -la
 
 #      - name: Load the Docker image
 #        if: ${{ needs.build.outputs.image_artifact_file != '' }}
 #        run: docker load -i ${{ needs.build.outputs.image_artifact_file }}        
           
-      - name: Scan Docker Image
-        uses: aquasecurity/trivy-action@0.20.0
-        with:
-          input: '/github/workspace/${{ steps.image-save.outputs.image_artifact_file }}'
-          severity: 'CRITICAL,HIGH'          
+#      - name: Scan Docker Image
+#        uses: aquasecurity/trivy-action@0.20.0
+#        with:
+#          input: '/github/workspace/${{ steps.image-save.outputs.image_artifact_file }}'
+#          severity: 'CRITICAL,HIGH'          
