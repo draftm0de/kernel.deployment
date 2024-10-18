@@ -1,0 +1,67 @@
+name: Scan Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "docker image (name / artifact.file)"
+        required: true
+        type: string    
+      context:
+        description: "docker build context (path)"
+        required: false
+        type: string
+        default: .    
+      artifact_name:
+        description: "artifact name"
+        required: false
+        type: string       
+      severity:
+        description: "Image Scan Severities"
+        type: string
+        required: false
+        default: "critical, high"
+      scanners:
+        description: "Image Scan Scanners"
+        type: string
+        required: false
+        default: "quickview,cves,recommendations"
+
+jobs:        
+  scan:
+    runs-on: ubuntu-latest
+    env:
+      ARTIFACT_PATH: "./artifacts"
+    steps: 
+      - name: Check Out Repository
+        uses: actions/checkout@v4
+
+      - name: Prepare/Setup Docker Scout
+        id: scan-setup
+        run: |
+          echo "::notice:: Prepare/Setup Docker Scout..."
+
+          if [ -n "${{ inputs.artifact_name }}" ]; then
+            INPUT="archive://${{ env.ARTIFACT_PATH }}/${{ inputs.image }}.tar"
+          else
+            INPUT="${{ inputs.image }}"
+          fi 
+          echo "input=$INPUT" >> $GITHUB_OUTPUT          
+          echo "::notice:: > use (input): $INPUT"
+          
+          echo "::notice:: > setup successfully"
+        
+      - name: Download the Docker Image From Artifacts
+        if: ${{ inputs.artifact_name }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ${{ env.ARTIFACT_PATH }}
+     
+      - name: Scan Docker Image
+        uses: docker/scout-action@v1
+        with:
+          command: quickview,cves,recommendations
+          image: ${{ steps.scan-setup.outputs.input }}
+          only-severities: ${{ inputs.severity }}    
+        
