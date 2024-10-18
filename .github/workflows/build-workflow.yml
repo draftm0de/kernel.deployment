@@ -97,7 +97,7 @@ jobs:
           fi
           echo "::notice:: > build successfully"
           echo "::notice:: Save Docker Image"
-          IMAGE_ARTIFACT_FILE="{{ inputs.image }}.tar"
+          IMAGE_ARTIFACT_FILE="${{ inputs.image }}.tar"
           docker save -o ${IMAGE_ARTIFACT_FILE} ${IMAGE}         
           echo "::notice:: > save successfully"
           echo "image_artifact_file=${IMAGE_ARTIFACT_FILE}" >> $GITHUB_OUTPUT
