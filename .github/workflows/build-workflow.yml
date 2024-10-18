@@ -45,18 +45,71 @@ on:
         required: true
 
 env:
-  IMAGE_ARTIFACT_NAME: image-artifact
+  IMAGE_ARTIFACT_FOLDER: image
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      image_artifact_file: ${{ steps.image-save.outputs.image_artifact_file }}
+      built_image_name: ${{ steps.image-build.outputs.built_image_name }}
+    steps:
+      - name: Check Out Own (parent) Repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        id: image-build
+        env:
+          BUILD_ARGS_FILE: ${{ inputs.context }}/${{ inputs.build_args_file }}
+        run: |
+          echo "::Notice:: Build image..."
+          if [ -d "${{ inputs.context }}" ]; then
+            IMAGE_TAG="latest"
+            BUILD_TARGET="${{ inputs.build_target }}"
+            if [ -n "${BUILD_TARGET}" ]; then
+              echo "::debug::- Build with --target: $BUILD_TARGET"
+              IMAGE_TAG="${BUILD_TARGET}-${IMAGE_TAG}"
+              # leading space required, concatination in docker build command
+              BUILD_TARGET=" --target $BUILD_TARGET"            
+            fi             
+            IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:${IMAGE_TAG}"
+            if [ -f "$BUILD_ARGS_FILE" ]; then
+              echo "::debug::- Build with --build-args: $BUILD_ARGS_FILE"
+              BUILD_ARGS=$(cat "$BUILD_ARGS_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
+              docker build --tag ${IMAGE}${BUILD_TARGET} $BUILD_ARGS ${{ inputs.context }}
+            else
+              docker build --tag ${IMAGE}${BUILD_TARGET} ${{ inputs.context }}
+            fi
+          else
+            echo "::error:: Directory ${{ inputs.context }} does not exist"
+            exit 1
+          fi
+          echo "::notice:: > build successfully"
+          echo "built_image_name=${IMAGE}" >> $GITHUB_OUTPUT
+          echo "built_image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          
+      - name: Save Docker Image
+        id: image-save
+        run: |
+          IMAGE_SAVE_NAME="${{ inputs.image }}-${{ steps.image-build.outputs.built_image_tag }}"
+          IMAGE_SAVE_FILE="${IMAGE_SAVE_NAME}.tar"
+          docker save -o ${IMAGE_SAVE_FILE} ${{ steps.image-build.outputs.built_image_name }}
+          echo "image_artifact_file=${{ env.IMAGE_ARTIFACT_FOLDER }}/${IMAGE_SAVE_FILE}" >> $GITHUB_OUTPUT
+
+      - name: Upload Docker Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: ${{ steps.image-save.outputs.image_artifact_file }}
+          
   test:
     runs-on: ubuntu-20.04
     steps: 
       - name: Download the Docker Image From Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ${{ env.IMAGE_ARTIFACT_NAME }}
+          path: ${{ steps.image-save.outputs.image_artifact_file }}
 
-      - name: Get Source
+      - name: List
         run: ls -la
 
 #      - name: Load the Docker image
