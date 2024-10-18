@@ -55,13 +55,14 @@ on:
         type: string
         required: false
         default: "CRITICAL,HIGH"
-    secrets:
-      docker_username:
-        description: "Docker Login (Username)"
-        required: true
-      docker_password:
-        description: "Docker Login (Password)"
-        required: true
+#    secrets:
+#      docker_username:
+#        description: "Docker Login (Username)"
+#        required: true
+#      docker_password:
+#        description: "Docker Login (Password)"
+#        required: true
+
 env:
   IMAGE_ARTIFACT_NAME: "image.artifact"
   
