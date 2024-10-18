@@ -122,6 +122,7 @@ jobs:
       - name: Prepare/Observe .trivyignore File
         id: trivy-ignore-file
         run: |
+          ls ${{ inputs.context }} -la
           TRIVY_IGNORE_FILE="${{ inputs.context }}/.trivyignore"
           if [ -f "$TRIVY_IGNORE_FILE" ]; then
             echo "::notice:: > Use $TRIVY_IGNORE_FILE"
