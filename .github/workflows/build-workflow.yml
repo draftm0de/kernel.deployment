@@ -79,26 +79,26 @@ jobs:
       - name: Build Docker Image
         id: image-build
         run: |
-          echo "::Notice:: Build image..."
+          echo "::notice:: Build image..."
           if [ -d "${{ inputs.context }}" ]; then
             IMAGE_TAG="latest"
             BUILD_TARGET="${{ inputs.build_target }}"
             if [ -n "${BUILD_TARGET}" ]; then
-              echo "::debug::- Build with --target: $BUILD_TARGET"
+              echo "::notice::- Build with --target: $BUILD_TARGET"
               IMAGE_TAG="${BUILD_TARGET}-${IMAGE_TAG}"
               # leading space required, concatination in docker build command
               BUILD_TARGET=" --target $BUILD_TARGET"            
             else 
-              echo "::debug::- Build without --target"
+              echo "::notice::- Build without --target"
             fi             
             IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:${IMAGE_TAG}"
             BUILD_ARGS_FILE="${{ inputs.context }}/${{ inputs.build_args_file }}"
             if [ -f "$BUILD_ARGS_FILE" ]; then
-              echo "::debug::- Build with --build-args: $BUILD_ARGS_FILE"
+              echo "::notice::- Build with --build-args: $BUILD_ARGS_FILE"
               BUILD_ARGS=$(cat "$BUILD_ARGS_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
               docker build --tag ${IMAGE}${BUILD_TARGET} $BUILD_ARGS ${{ inputs.context }}
             else
-              echo "::debug::- Build without --build-args"
+              echo "::notice::- Build without --build-args"
               docker build --tag ${IMAGE}${BUILD_TARGET} ${{ inputs.context }}
             fi
           else
