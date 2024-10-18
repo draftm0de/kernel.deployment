@@ -45,7 +45,7 @@ on:
         description: "Image Artifact File"
         type: string
         required: false
-        default: ".images/kernel.caddy.tar"      
+        default: "kernel.caddy.tar"      
       scan_severity:
         description: "Image Scan Severities"
         type: string
@@ -63,7 +63,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      IMAGE_ARTIFACT_FILE: ".images/{{ inputs.image }}.tar"
+      IMAGE_ARTIFACT_FILE: "{{ inputs.image }}.tar"
     outputs:
       built_image_name: ${{ steps.image-build.outputs.built_image_name }}
     steps:
