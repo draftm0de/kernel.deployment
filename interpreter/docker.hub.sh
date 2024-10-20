@@ -272,7 +272,8 @@ docker_image_tags() {
 # - string of sha (e.g. sha256:17a42d6b26d2158c95b53acb2074503df708f984eae216cc8ed8ee79fe497ebb)
 # ########################################
 docker_image_sha() {
-  local IMAGE_NAME="$1"
+  local IMAGE_NAME="${1}"
+  local FILTER="${2}"
 
   TOKEN=$(.docker_get_token "$IMAGE_NAME")
   EXIT=$?
