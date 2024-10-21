@@ -88,16 +88,9 @@ handle_image_sha() {
 
   local IMAGES
   IMAGES=$(.get_image_names_from_arguments "$CMD")
-  
-  local FILTER
-  local FILTER_SHA
-  FILTER_SHA=$(.get_option_from_arguments "--sha" "$CMD")
-  if [ -n "$FILTER_SHA" ]; then
-    FILTER="--sha=$FILTER_SHA"
-  fi
 
   local SHA
-  SHA=$(docker_image_sha "$IMAGES" "$FILTER")
+  SHA=$(docker_image_sha "$IMAGES")
   EXIT=$?
   if [ $EXIT -ne 0 ]; then
     exit $EXIT
