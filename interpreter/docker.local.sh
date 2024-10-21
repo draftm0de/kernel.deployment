@@ -82,7 +82,6 @@ docker_image_tags() {
 # ########################################
 docker_image_sha() {
   local IMAGE="${1}"
-  local FILTER="${2}"
 
   # Get the image SHA
   local SHA
