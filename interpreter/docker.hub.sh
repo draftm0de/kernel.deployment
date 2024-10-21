@@ -273,7 +273,6 @@ docker_image_tags() {
 # ########################################
 docker_image_sha() {
   local IMAGE_NAME="${1}"
-  local FILTER="${2}"
 
   TOKEN=$(.docker_get_token "$IMAGE_NAME")
   EXIT=$?
