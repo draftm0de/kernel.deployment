@@ -156,10 +156,15 @@ DOCKER_HUB_URI="https://hub.docker.com/v2"
     exit 1
   fi
 
+  TAG_SHA=$(curl -s -H "Authorization: Bearer $TOKEN" "https://hub.docker.com/v2/repositories/${IMAGE_NAME}/tags/${SHA_TAG}/" | jq -r '.images[0].digest' || echo "null")
+
   RESPONSE=$(mktemp)
+#  HTTP_CODE=$(curl -s -o "$RESPONSE" -w "%{http_code}" -H "Authorization: Bearer $TOKEN" \
+#                 -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+#                 "${DOCKER_REGISTRY_URI}/${IMAGE_NAME}/manifests/${IMAGE_TAG}")
   HTTP_CODE=$(curl -s -o "$RESPONSE" -w "%{http_code}" -H "Authorization: Bearer $TOKEN" \
-                 -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
-                 "${DOCKER_REGISTRY_URI}/${IMAGE_NAME}/manifests/${IMAGE_TAG}")
+                 "${DOCKER_HUB_URI}/repositories/${IMAGE_NAME}/tags/${IMAGE_TAG}")
+
   if [ "$HTTP_CODE" -eq 404 ]; then
     echo ""
     return
@@ -169,7 +174,8 @@ DOCKER_HUB_URI="https://hub.docker.com/v2"
   if [ $EXIT -ne 0 ]; then
     exit $EXIT
   fi
-  SHA=$(jq -r '.config.digest' <<< "$MANIFEST")
+#  SHA=$(jq -r '.config.digest' <<< "$MANIFEST")
+  SHA=$(jq -r '.images[0].digest' <<< "$MANIFEST")
 
   rm -f "$RESPONSE"  # Clean up the temporary file
 
