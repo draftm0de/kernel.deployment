@@ -25,12 +25,7 @@ on:
         description: "Image Scan Scanners"
         type: string
         required: false
-        default: "vuln,secret"        
-      ignore-base:
-        description: "Ignore base image vulnerabilities"
-        required: false
-        type: boolean
-        default: false
+        default: "vuln,secret"
 
 jobs:        
   scan:
