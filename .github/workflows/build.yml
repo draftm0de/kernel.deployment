@@ -64,7 +64,6 @@ jobs:
             echo "::notice::- Build without --build-args"
             docker build --tag ${image}${build_target} ${{ inputs.build_context }}
           fi
-          docker images
           echo "::notice:: > build successfully"
 
       - name: Save Docker Image
