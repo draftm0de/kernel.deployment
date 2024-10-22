@@ -76,7 +76,7 @@ jobs:
             exit 1
           else 
             echo "::notice:: > Get Local SHA successfully"
-          fi    
+          fi      
 
           echo "::notice:: Get Remote Tags..."
           
