@@ -36,27 +36,32 @@ jobs:
           name: ${{ inputs.artifact }}
           path: ${{ env.ARTIFACT_PATH }}      
 
-      - name: Load Docker Image from Artifact
-        if: ${{ inputs.artifact }}
+      - name: Prepare Docker Image
+        id: prepare-image
         run: |
-          echo "::notice:: Load Docker Image..."
+          if [ -n "${{ inputs.artifact }}" ]; then
+            echo "::notice:: Load Docker Image..."
           
-          INPUT="${{ env.ARTIFACT_PATH }}/${{ env.image }}.tar"
-          echo "::notice:: > load from: ${INPUT}"
+            INPUT="${{ env.ARTIFACT_PATH }}/${{ inputs.image }}.tar"
+            echo "::notice:: > load from: ${INPUT}"          
+            IMAGE=$(docker load --input ${INPUT} | grep 'Loaded image' | awk '{print $3}')
+            echo "::notice:: > image: $IMAGE"
           
-          IMAGE=$(docker load --input ${INPUT} | grep 'Loaded image' | awk '{print $3}')
-          echo "::notice:: > image: $IMAGE"
-          echo "image=${IMAGE}" >> $GITHUB_ENV
-
-          echo "::notice:: > load image successfully"
+            echo "::notice:: > load image successfully"
+            echo "image=$IMAGE" >> $GITHUB_ENV
+          else
+            echo "::notice:: Use Docker Image..."
+            echo "image=${{ inputs.image }}" >> $GITHUB_ENV
+            echo "::notice:: > Use image successfully"
+          fi 
 
       - name: Get Local Image SHA
         id: local-sha
         run: |
           echo "::notice:: Get Local SHA..."
           
-          SHA=$(./docker.sh image sha ${{ env.image }})
-          echo "::notice:: > SHA for ${{ env.image }}: $SHA"
+          SHA=$(./docker.sh image sha ${{ steps.prepare-image.outputs.image }})
+          echo "::notice:: > SHA for ${{ steps.prepare-image.outputs.image }}: $SHA"
           echo "sha=${SHA}" >> $GITHUB_OUTPUT
           if [ -z "${SHA}" ]; then
             echo "::error:: > Get Local SHA failure"
@@ -75,5 +80,5 @@ jobs:
         run: |
           echo "::notice:: Get Remote Tags..."
           
-          TAGS=$(./docker.sh image tags ${{ env.image }} --sha=${{ steps.local-sha.outputs.sha }})
-          echo "::notice:: > TAGS for ${{ env.image }}: $TAGS"             
+          TAGS=$(./docker.sh image tags ${{ steps.prepare-image.outputs.image }} --sha=${{ steps.local-sha.outputs.sha }})
+          echo "::notice:: > TAGS for ${{ steps.prepare-image.outputs.image }}: $TAGS"             
