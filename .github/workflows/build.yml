@@ -3,16 +3,20 @@ name: Build Docker Image
 on:
   workflow_call:
     inputs:
-      namespace:
-        description: "image (Namespace)"
+      image_namespace:
+        description: "Image (Namespace)"
         required: true
         type: string      
-      image:
-        description: "image (Name)"
+      image_name:
+        description: "Image (Name)"
         required: true
-        type: string      
-      context:
-        description: "docker build context (path)"
+        type: string
+      image_tag:
+        description: "Image (Tag)"
+        required: true
+        type: string
+      build_context:
+        description: "docker build context path (default: .)"
         required: false
         type: string
         default: .
@@ -32,9 +36,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      built_name: ${{ steps.image-build.outputs.built_name }}
-      built_file: ${{ steps.image-save.outputs.built_file }}
     steps:
       - name: Check Out Repository
         uses: actions/checkout@v4
@@ -43,49 +44,41 @@ jobs:
         id: image-build
         run: |
           echo "::notice:: Build image..."
-          if [ -d "${{ inputs.context }}" ]; then
-            CONTEXT="${{ inputs.context }}"
-          else
-            CONTEXT="."
-          fi
-          
-          IMAGE_TAG="latest"
-          BUILD_TARGET="${{ inputs.build_target }}"
-          if [ -n "${BUILD_TARGET}" ]; then
+           
+          build_target="${{ inputs.build_target }}"
+          if [ -n "${build_target}" ]; then
               echo "::notice::- build with --target: $BUILD_TARGET"
-              IMAGE_TAG="${BUILD_TARGET}-${IMAGE_TAG}"
-              # leading space required, concatination in docker build command
-              BUILD_TARGET=" --target $BUILD_TARGET"            
+              # leading space required, concatenation in docker build command
+              build_target=" --target $build_target"            
           else 
             echo "::notice::- Build without --target"
           fi    
           
-          IMAGE="${{ inputs.namespace }}/${{ inputs.image }}:${IMAGE_TAG}"
-          BUILD_ARGS_FILE="${{ inputs.context }}/${{ inputs.build_args_file }}"
-          if [ -f "$BUILD_ARGS_FILE" ]; then
-            echo "::notice::- Build with --build-args: $BUILD_ARGS_FILE"
-            BUILD_ARGS=$(cat "$BUILD_ARGS_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
-            docker build --tag ${IMAGE}${BUILD_TARGET} $BUILD_ARGS ${{ inputs.context }}
+          image="${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}"
+          build_args_file="${{ inputs.build_context }}/${{ inputs.build_args_file }}"
+          if [ -f "$build_args_file" ]; then
+            echo "::notice::- Build with --build-args: $build_args_file"
+            build_args=$(cat "$build_args_file" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
+            docker build --tag ${image}${build_target} $build_args ${{ inputs.build_context }}
           else
             echo "::notice::- Build without --build-args"
-            docker build --tag ${IMAGE}${BUILD_TARGET} ${{ inputs.context }}
+            docker build --tag ${image}${build_target} ${{ inputs.build_context }}
           fi
 
           echo "::notice:: > build successfully"
-          echo "built_name=${IMAGE}" >> $GITHUB_OUTPUT
 
       - name: Save Docker Image
         id: image-save
         if: ${{ inputs.artifact }}
         run: |
-          built_file="${{ inputs.image }}.tar"
-          docker save -o ${built_file} ${{ steps.image-build.outputs.built_name }}
-          echo "built_file=${built_file}" >> $GITHUB_OUTPUT
+          built_image_file="${{ inputs.image_name }}-${{ inputs.image_tag }}.tar"
+          docker save -o ${built_image_file} ${{ steps.image-build.outputs.built_name }}
+          echo "built_image_file=${built_image_file}" >> $GITHUB_OUTPUT
           
       - name: Upload Docker Image Artifact
         if: ${{ inputs.artifact }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact }}
-          path: ${{ steps.image-save.outputs.built_file }}
+          path: ${{ steps.image-save.outputs.built_image_file }}
           if-no-files-found: error

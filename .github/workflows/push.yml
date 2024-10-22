@@ -1,0 +1,103 @@
+name: Tag and Push Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      image_namespace:
+        description: "Image (Namespace)"
+        required: true
+        type: string
+      image_name:
+        description: "Image (Name)"
+        required: true
+        type: string
+      image_tag:
+        description: "Image (Tag)"
+        required: true
+        type: string
+      protect:
+        description: "Prevent duplicate SHA"
+        required: true
+        type: boolean
+      artifact:
+        description: "artifact name"
+        required: false
+        type: string
+    secrets:
+      docker_username:
+        required: true
+      docker_password:
+        required: true
+
+jobs:        
+  scan:
+    runs-on: ubuntu-latest
+    env:
+      ARTIFACT_PATH: "./artifacts"
+      IMAGE: "${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}"
+    steps: 
+      - name: Check Out Repository
+        uses: actions/checkout@v4
+        with:
+          repository: draftm0de/kernel.deployment
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.docker_username }}
+          password: ${{ secrets.docker_password }}
+
+      - name: Download Docker Image From Artifacts
+        if: ${{ inputs.artifact }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact }}
+          path: ${{ env.ARTIFACT_PATH }}      
+
+      - name: Load Docker Image From Artifact
+        if: ${{ inputs.artifact }}
+        run: |
+          echo "::notice:: Load Docker Image..."
+
+          input="${{ env.ARTIFACT_PATH }}/${{ inputs.image_name }}-${{ inputs.image_tag }}.tar"
+          echo "::notice:: > load from: ${input}"          
+          docker load --input ${input}
+        
+          echo "::notice:: > load image successfully"
+
+      - name: Prevent duplicate SHA
+        if: ${{ inputs.protect }}
+        run: |
+          echo "::notice:: Get Local SHA..."
+          
+          image="${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}"          
+          local_sha=$(./docker.sh image sha ${image})
+          echo "::notice:: > SHA: $SHA"
+          if [ -z "${SHA}" ]; then
+            echo "::error:: > Get Local SHA failure"
+            exit 1
+          else 
+            echo "::notice:: > Get Local SHA successfully"
+          fi    
+
+          echo "::notice:: Get Remote Tags..."
+          
+          remote_tags=$(./docker.sh image tags ${{ inputs.image_namespace }}/${{ inputs.image_name }} --remote --sha=${local_sha})
+          if [ -n "$remote_tags" ]; then 
+            echo "::error:: > image already provide some tags for given SHA"
+            exit 1
+          else
+            echo "::notice:: > image does not have any tags for given SHA"
+          fi
+          
+      - name: Push Docker Image
+        run: |
+          echo "::notice:: Push Docker Image(s)..."
+          
+          tags=()
+          tags+=("${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}")
+          for tag in "${tags[@]}"; do
+            echo "::notice:: docker push ${tag}"
+          done
+          
+          echo "::notice:: > Pushing image(s) successfully"

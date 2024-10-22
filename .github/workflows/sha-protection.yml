@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       image:
-        description: "docker image (name / artifact.file)"
+        description: "docker image (IMAGE:TAG / artifact.file)"
         required: true
         type: string    
       artifact:
@@ -36,29 +36,29 @@ jobs:
           name: ${{ inputs.artifact }}
           path: ${{ env.ARTIFACT_PATH }}      
 
-      - name: Prepare Docker Image
-        id: prepare-image
+      - name: Docker Image Artifact
+        if: ${{ inputs.artifact }}
         run: |
-          if [ -n "${{ inputs.artifact }}" ]; then
-            echo "::notice:: Load Docker Image..."
-          
-            INPUT="${{ env.ARTIFACT_PATH }}/${{ inputs.image }}.tar"
-            echo "::notice:: > load from: ${INPUT}"          
-            IMAGE=$(docker load --input ${INPUT} | grep 'Loaded image' | awk '{print $3}')
-            echo "::notice:: > image: $IMAGE"
-          
-            echo "::notice:: > load image successfully"
-            echo "image=$IMAGE" >> $GITHUB_OUTPUT
-          else
-            echo "::notice:: Use Docker Image..."
-            echo "image=${{ inputs.image }}" >> $GITHUB_OUTPUT
-            echo "::notice:: > Use image successfully"
-          fi 
+          echo "::notice:: Load Docker Image..."
+        
+          INPUT="${{ env.ARTIFACT_PATH }}/${{ inputs.image }}.tar"
+          echo "::notice:: > load from: ${INPUT}"          
+          IMAGE=$(docker load --input ${INPUT} | grep 'Loaded image' | awk '{print $3}')
+          echo "::notice:: > image: $IMAGE"
+        
+          echo "::notice:: > load image successfully"
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
       - name: Get Local Image SHA
         id: local-sha
         run: |
           echo "::notice:: Get Local SHA..."
+          
+          IMAGE={{ inputs.image }}
+          if [ -n "${{ inputs.artifact }}" ]; then
+            IMAGE_NAME=${{ steps.prepare-image.outputs.image }}
+          else
+          fi
           
           SHA=$(./docker.sh image sha ${{ steps.prepare-image.outputs.image }})
           echo "::notice:: > SHA for ${{ steps.prepare-image.outputs.image }}: $SHA"
