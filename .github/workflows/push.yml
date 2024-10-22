@@ -62,6 +62,7 @@ jobs:
           input="${{ env.ARTIFACT_PATH }}/${{ inputs.image_name }}-${{ inputs.image_tag }}.tar"
           echo "::notice:: > load from: ${input}"          
           docker load --input ${input}
+          docker images
         
           echo "::notice:: > load image successfully"
 
@@ -71,6 +72,7 @@ jobs:
           echo "::notice:: Get Local SHA..."
           
           image="${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}"          
+          docker images
           local_sha=$(./docker.sh image sha ${image})
           echo "::notice:: > SHA: $SHA"
           if [ -z "${SHA}" ]; then
