@@ -71,8 +71,9 @@ jobs:
         id: image-save
         if: ${{ inputs.artifact }}
         run: |
+          image="${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}"
           built_image_file="${{ inputs.image_name }}-${{ inputs.image_tag }}.tar"
-          docker save -o ${built_image_file} ${{ steps.image-build.outputs.built_name }}
+          docker save -o ${built_image_file} ${image}
           echo "built_image_file=${built_image_file}" >> $GITHUB_OUTPUT
           
       - name: Upload Docker Image Artifact
