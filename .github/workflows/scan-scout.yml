@@ -41,6 +41,11 @@ on:
         type: string
         required: false
         default: "quickview,cves,recommendations"
+      ignore-base:
+        description: "Ignore base image vulnerabilities"
+        required: false
+        type: boolean
+        default: false
     secrets:
       docker_username:
         description: "Docker Login (Username)"
@@ -92,4 +97,5 @@ jobs:
           command: quickview,cves,recommendations
           image: ${{ steps.scan-setup.outputs.input }}
           only-severities: ${{ inputs.severity }}    
+          ignore-base: ${{ inputs.ingore-base }}
         
