@@ -24,7 +24,7 @@ on:
         description: "filename to be used for --build-args"
         required: false
         type: string
-      artifact_name:
+      artifact:
         description: "artifact name"
         required: false
         type: string          
@@ -76,16 +76,16 @@ jobs:
 
       - name: Save Docker Image
         id: image-save
-        if: ${{ inputs.artifact_name }}
+        if: ${{ inputs.artifact }}
         run: |
           built_file="${{ inputs.image }}.tar"
           docker save -o ${built_file} ${{ steps.image-build.outputs.built_name }}
           echo "built_file=${built_file}" >> $GITHUB_OUTPUT
           
       - name: Upload Docker Image Artifact
-        if: ${{ inputs.artifact_name }}
+        if: ${{ inputs.artifact }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.artifact_name }}
+          name: ${{ inputs.artifact }}
           path: ${{ steps.image-save.outputs.built_file }}
           if-no-files-found: error

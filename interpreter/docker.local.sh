@@ -75,15 +75,14 @@ docker_image_tags() {
 # docker_image_sha
 # arguments:
 # - image_name (e.g. draftmode/base.caddy, draftmode/base.caddy:latest)
-# - username (docker username)
-# - password (docker password)
+# - filter
+#    --sha={SHA TO COMPARE}
 # return:
 # - string of sha (e.g. sha256:17a42d6b26d2158c95b53acb2074503df708f984eae216cc8ed8ee79fe497ebb)
 # ########################################
 docker_image_sha() {
   local IMAGE="${1}"
 
-  # Get the image SHA
   local SHA
   SHA=$(docker inspect --format="{{.Id}}" "$IMAGE")
   RESULT_EXIT=$?

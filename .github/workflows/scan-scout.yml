@@ -27,7 +27,7 @@ on:
         required: false
         type: string
         default: .    
-      artifact_name:
+      artifact:
         description: "artifact name"
         required: false
         type: string       
@@ -68,7 +68,7 @@ jobs:
         run: |
           echo "::notice:: Prepare/Setup Docker Scout..."
 
-          if [ -n "${{ inputs.artifact_name }}" ]; then
+          if [ -n "${{ inputs.artifact }}" ]; then
             INPUT="archive://${{ env.ARTIFACT_PATH }}/${{ inputs.image }}.tar"
           else
             INPUT="${{ inputs.image }}"
@@ -79,10 +79,10 @@ jobs:
           echo "::notice:: > setup successfully"
         
       - name: Download the Docker Image From Artifacts
-        if: ${{ inputs.artifact_name }}
+        if: ${{ inputs.artifact }}
         uses: actions/download-artifact@v4
         with:
-          name: ${{ inputs.artifact_name }}
+          name: ${{ inputs.artifact }}
           path: ${{ env.ARTIFACT_PATH }}
 
       - name: Login to Docker Hub
