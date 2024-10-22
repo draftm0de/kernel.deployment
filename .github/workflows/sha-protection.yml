@@ -48,10 +48,10 @@ jobs:
             echo "::notice:: > image: $IMAGE"
           
             echo "::notice:: > load image successfully"
-            echo "image=$IMAGE" >> $GITHUB_ENV
+            echo "image=$IMAGE" >> $GITHUB_OUTPUT
           else
             echo "::notice:: Use Docker Image..."
-            echo "image=${{ inputs.image }}" >> $GITHUB_ENV
+            echo "image=${{ inputs.image }}" >> $GITHUB_OUTPUT
             echo "::notice:: > Use image successfully"
           fi 
 
@@ -80,5 +80,8 @@ jobs:
         run: |
           echo "::notice:: Get Remote Tags..."
           
+          TAGS=$(./docker.sh image tags ${{ steps.prepare-image.outputs.image }} --remote --sha=${{ steps.local-sha.outputs.sha }})
+          echo "::notice:: > Remote tags for ${{ steps.prepare-image.outputs.image }}: $TAGS"             
+          
           TAGS=$(./docker.sh image tags ${{ steps.prepare-image.outputs.image }} --sha=${{ steps.local-sha.outputs.sha }})
-          echo "::notice:: > TAGS for ${{ steps.prepare-image.outputs.image }}: $TAGS"             
+          echo "::notice:: > Local tags for ${{ steps.prepare-image.outputs.image }}: $TAGS"                       
