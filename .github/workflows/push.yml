@@ -71,10 +71,9 @@ jobs:
           echo "::notice:: Get Local SHA..."
           
           image="${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}"          
-          docker images
           local_sha=$(./docker.sh image sha ${image})
           echo "::notice:: > SHA: $SHA"
-          if [ -z "${SHA}" ]; then
+          if [ -z "${local_sha}" ]; then
             echo "::error:: > Get Local SHA failure"
             exit 1
           else 
