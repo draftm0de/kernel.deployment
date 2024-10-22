@@ -59,10 +59,8 @@ jobs:
 
           input="${{ env.ARTIFACT_PATH }}/${{ inputs.image_name }}-${{ inputs.image_tag }}.tar"
           echo "::notice:: > load from: ${input}"          
-          image=$(docker load --input ${input} | grep 'Loaded image' | awk '{print $3}')
-          echo "::notice:: > image: $image"          
-          docker images
-        
+          docker load --input ${input}        
+       
           echo "::notice:: > load image successfully"
 
       - name: Prevent duplicate SHA
