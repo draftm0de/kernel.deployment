@@ -26,6 +26,11 @@ on:
         type: string
         required: false
         default: "vuln,secret"        
+      ignore-base:
+        description: "Ignore base image vulnerabilities"
+        required: false
+        type: boolean
+        default: false
 
 jobs:        
   scan:
