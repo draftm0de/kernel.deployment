@@ -207,6 +207,11 @@ docker_image_tags() {
   if [ $EXIT -ne 0 ]; then
     exit $EXIT
   fi
+  JWT_TOKEN=$(.docker_api_get_jwt_token)
+  EXIT=$?
+  if [ $EXIT -ne 0 ]; then
+    exit $EXIT
+  fi
 
   # prepare curl request
   RESPONSE=$(mktemp)
@@ -233,7 +238,7 @@ docker_image_tags() {
       IMAGE_TAG="${FILTER##*=}"
       local IMAGE_SHA
       if [ ${#TAGS[@]} -gt 0 ]; then
-        IMAGE_SHA=$(.docker_image_sha_by_token "$IMAGE_NAME:$IMAGE_TAG" "$TOKEN")
+        IMAGE_SHA=$(.docker_image_sha_by_token "$IMAGE_NAME:$IMAGE_TAG" "$JWT_TOKEN")
       else
         IMAGE_SHA="-"
       fi
@@ -242,7 +247,7 @@ docker_image_tags() {
       for SHA_TAG in "${TAGS[@]}"; do
         # exclude passed TAG from TAG_LIST
         if [ "$SHA_TAG" != "$IMAGE_TAG" ]; then
-          TAG_SHA=$(.docker_image_sha_by_token "$IMAGE_NAME:$SHA_TAG" "$TOKEN")
+          TAG_SHA=$(.docker_image_sha_by_token "$IMAGE_NAME:$SHA_TAG" "$JWT_TOKEN")
           if [ "$TAG_SHA" == "$IMAGE_SHA" ]; then
             SHA_TAGS+=("$SHA_TAG")
           fi
@@ -255,7 +260,7 @@ docker_image_tags() {
       local SHA_TAGS=()
       local TAG_SHA
       for SHA_TAG in "${TAGS[@]}"; do
-        TAG_SHA=$(.docker_image_sha_by_token "$IMAGE_NAME:$SHA_TAG" "$TOKEN")
+        TAG_SHA=$(.docker_image_sha_by_token "$IMAGE_NAME:$SHA_TAG" "$JWT_TOKEN")
         if [ "$TAG_SHA" == "$IMAGE_SHA" ]; then
           SHA_TAGS+=("$SHA_TAG")
         fi
