@@ -7,7 +7,7 @@ All **OPTIONS** and **COMMANDS** are forwarded in the same way you pass them to 
 Usage:  ./docker.sh [OPTIONS] COMMAND"
 ```
 
-### command: image tag|tag
+### command: image tag|tag 
 Tag a given SOURCE_IMAGE:[TAG] to a TARGET_IMAGE:[TAG]
 
 #### option: --tag-increase|--tag-increase=[BASE_TAG]
@@ -73,33 +73,12 @@ _example (--tag-level set to 3)_
 ### command: image sha
 Get the SHA for a given image.<br>
 
-_example_
 ```
 ./docker.sh image sha draftmode/base.caddy:1.2.1
 ./docker.sh image sha draftmode/base.caddy:1.2.1 --remote
 >> sha256:17a42d6b26d2158c95b53acb2074503df708f984eae216cc8ed8ee79fe497ebb
 ```
-
-#### option: --compare|--compare=[TYPE]
-_default: TYPE=eq_<br><br>
-In case of using the OPTION **--remote** the remote and local SHA keys are compared.
-
-_--compare=eq_<br>
-- remote SHA is equal to local SHA: no response, no exit code
-- remote SHA is NOT euqal to local SHA: respond an error message, exit code 1
-
-_--compare=neq_<br>
-- remote SHA is equal to local SHA: respond an error message, exit code 1
-- remote SHA is NOT euqal to local SHA: no response, no exit code
-
-_example_
-```
-./docker.sh image sha draftmode/base.caddy:latest --remote --compare
-```
-
 ### command: image tags|tags
-List all [IMAGE_NAME] related tags.
-
 ```
 REPOSITORY                TAG       SHA
 draftmode/base.caddy      1         sha256:17a42d6b26d2158c95b53acb2074503df708f984eae216cc8ed8ee79fe497ebb
@@ -120,46 +99,63 @@ List all [IMAGE_NAME] tags
 >> latest
 ```
 
-#### option: --sha=[sha]
-List all [IMAGE_NAME] tags filtered on the given SHA
+#### IMAGE:[TAG]
+There are three options
+#### TAG starts with *
+List all tags where tag.name starts with
 ```
-./docker.sh image tags draftmode/base.caddy --sha=sha256:567899abc6d2158c95b53acb2074503df708f984eae216cc8ed8ee1245abc123
-./docker.sh image tags draftmode/base.caddy --remote --sha=sha256:567899abc6d2158c95b53acb2074503df708f984eae216cc8ed8ee1245abc123
->> 1.1
+./docker.sh image tags draftmode/base.caddy:la*
+>> latest
 ```
 
-#### option: --latest|--latest=[TYPE]
-_default: TYPE=patch_<br><br>
-Reduce all [IMAGE_NAME] tags based on the OPTION [TYPE].<br>
-TYPE options:
-- patch (pattern: #.#.#)
-- major (pattern: #.#)
-- minor (minor: #)
-
-_example (type not set or type=patch)_
+#### TAG ends with *
+List all tags where tag.name ends with
 ```
-./docker.sh image tags draftmode/base.caddy --latest
-./docker.sh image tags draftmode/base.caddy --latest --remote
+./docker.sh image tags draftmode/base.caddy:*st
+>> latest
+```
+
+#### TAG does not have any *
+List all tags having the same SHA from the given IMAGE:TAG.
+```
+./docker.sh image tags draftmode/base.caddy:latest
+>> 1
+>> 1.2
+>> 1.2.2
+>> latest
+xx 1.1 (has another SHA and is not returned)
+```
+
+#### option: --format=[FORMAT]
+List only tags matching the format
+- major: [0-9]
+- minor: [0-9].[0-9]
+- patch: [0-9].[0-9].[0-9]
+
+```
+./docker.sh image tags draftmode/base.caddy:latest --format=major
+>> 1
+
+./docker.sh image tags draftmode/base.caddy:latest --format=minor
+>> 1.2
+
+./docker.sh image tags draftmode/base.caddy:latest --format=patch
 >> 1.2.2
 ```
-_example (type=minor)_
+
+#### option: --latest
+_This option is only used when --format is used!_<br>
+Order all filtered tags and returns only the first (latest) one.<br>
+
 ```
-./docker.sh image tags draftmode/base.caddy --latest=minor
-./docker.sh image tags draftmode/base.caddy --latest=minor --remote
+./docker.sh image tags draftmode/base.caddy:latest --format=patch --latest
+>> 1.2.2
+
+./docker.sh image tags draftmode/base.caddy:latest --format=minor --latest
 >> 1.2
-```
-_example (type=major)_
-```
-./docker.sh image tags draftmode/caddy.proxy --latest=major
-./docker.sh image tags draftmode/caddy.proxy --latest=major --remote
+
+./docker.sh image tags draftmode/caddy.proxy:latest --format=major --latest
 >> 1
-```
-#### option: --exists
-If there is at least one TAG matching to the given SHA 
-- respond an error message
-- exit(1)
-```
-./docker.sh image tags draftmode/base.caddy --remote --sha=sha256:567899abc6d2158c95b53acb2074503df708f984eae216cc8ed8ee1245abc123 --exit
 ```
 
 ### Options

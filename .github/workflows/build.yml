@@ -36,6 +36,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      IMAGE=${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}
     steps:
       - name: Check Out Repository
         uses: actions/checkout@v4
@@ -44,35 +46,30 @@ jobs:
         id: image-build
         run: |
           echo "::notice:: Build image..."
-           
-          build_target="${{ inputs.build_target }}"
-          if [ -n "${build_target}" ]; then
-              echo "::notice::- build with --target: $BUILD_TARGET"
+                   
+          build_options="--tag ${{ env.IMAGE }} --label commit=${{ github.sha }}"
+          echo "::notice::--label: commit=${{ github.sha }}"
+          if [ -n "${{ inputs.build_target }}" ]; then
+              echo "::notice::--target: ${{ inputs.build_target }}"
               # leading space required, concatenation in docker build command
-              build_target=" --target $build_target"            
-          else 
-            echo "::notice::- Build without --target"
+              build_options="${build_options} --target ${{ inputs.build_target }}"            
           fi    
           
-          image="${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}"
           build_args_file="${{ inputs.build_context }}/${{ inputs.build_args_file }}"
           if [ -f "$build_args_file" ]; then
-            echo "::notice::- Build with --build-args: $build_args_file"
+            echo "::notice::--build-args: $build_args_file"
             build_args=$(cat "$build_args_file" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
-            docker build --tag ${image}${build_target} $build_args ${{ inputs.build_context }}
-          else
-            echo "::notice::- Build without --build-args"
-            docker build --tag ${image}${build_target} ${{ inputs.build_context }}
+            build_options="${build_options} ${build_args}"            
           fi
+          docker build ${build_options} ${{ inputs.build_context }}          
           echo "::notice:: > build successfully"
 
       - name: Save Docker Image
         id: image-save
         if: ${{ inputs.artifact }}
         run: |
-          image="${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}"
           built_image_file="${{ inputs.image_name }}-${{ inputs.image_tag }}.tar"
-          docker save -o ${built_image_file} ${image}
+          docker save -o ${built_image_file} ${{ env.IMAGE }}
           echo "built_image_file=${built_image_file}" >> $GITHUB_OUTPUT
           
       - name: Upload Docker Image Artifact

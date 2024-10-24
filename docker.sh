@@ -1,187 +1,199 @@
 #!/bin/bash
 set -e
+set -o pipefail
 
 # Constants
 SCRIPT_PATH=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
-source "${SCRIPT_PATH}/docker.sh.methods"
-INTERPRETER_LOCAL="docker.local"
+# ##########################################
+# helper functions
+helper_get_image_names_from_arguments() {
+  IMAGE_NAME=()
+  # shellcheck disable=SC2206
+  ARGS=(${1})
+  for arg in "${ARGS[@]}"; do
+    case "$arg" in
+      -*)
+        # Skip arguments that start with a dash (-)
+        ;;
+      *)
+        IMAGE_NAME+=("$arg")
+        ;;
+    esac
+    shift
+  done
+  echo "${IMAGE_NAME[@]}"
+}
 
-# Argument handling
-read -r INTERPRETER CMD <<< "$(.parse_arguments "$@")"
+helper_get_option_from_arguments() {
+  local OPTION="${1}"
+  # shellcheck disable=SC2206
+  local ARGS=(${2})
+  local OPTION_DEFAULT="${3}"
 
-# Include custom docker command interpreter
-SCRIPT_FILE="${SCRIPT_PATH}/interpreter/${INTERPRETER}.sh"
-if [ -f "${SCRIPT_FILE}" ]; then
-  # shellcheck disable=SC1090
-  source "${SCRIPT_FILE}"
-else
-  echo "[Error] interpreter/${INTERPRETER}.sh is not implemented" >&2
-  exit 1
-fi
+  for arg in "${ARGS[@]}"; do
+     case "$arg" in
+      "${OPTION}")
+        echo "$OPTION_DEFAULT"
+        return
+      ;;
+      "${OPTION}="*)
+        local OPTION_DEFAULT="${arg##*=}"
+        echo "$OPTION_DEFAULT"
+        return
+      ;;
+      *)
+      ;;
+     esac
+     shift
+  done
+  echo ""
+}
 
-# Functions for command handling
-handle_image_tags() {
-  CMD=${CMD//image tags /}; CMD=${CMD//tags /};
-  local IMAGES
-  IMAGES=$(.get_image_names_from_arguments "$CMD")
+helper_parse_arguments() {
+  local -a remaining_args=()
+  local remote="docker.local"
 
-  local FILTER
-  local CMD_FILTER
-  CMD_FILTER=$(.get_option_from_arguments "--sha" "$CMD")
-  if [ -n "$CMD_FILTER" ]; then
-    FILTER="--sha=$CMD_FILTER"
-  fi
+  for arg in "$@"; do
+    case "$arg" in
+      --remote=*)
+        remote="${arg#*=}"
+        ;;
+      --remote)
+        remote="docker.hub"
+        ;;
+      --build-args=*)
+        BUILD_ARG_FILE="${arg##*=}"
+        if [ -f "$BUILD_ARG_FILE" ]; then
+          # shellcheck disable=SC2002
+          BUILD_ARGS=$(cat "$BUILD_ARG_FILE" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
+          remaining_args+=("${BUILD_ARGS[@]}")
+        else
+          echo "[Error] --build-args=$BUILD_ARG_FILE does not exists" >&2
+          exit 1
+        fi
+      ;;
+      *)
+        remaining_args+=("$arg")
+        ;;
+    esac
+  done
+  echo "$remote" "${remaining_args[@]}"
+}
 
-  CMD_FILTER=$(.get_option_from_arguments "--tag" "$CMD")
-  if [ -n "$CMD_FILTER" ]; then
-    FILTER="--tag=$CMD_FILTER"
-  fi
+helper_filter_tag() {
+  tag_list="${1}"
+  pattern="${2}"
+  latest="${3}"
+  read -r -a tags <<< "$tag_list"
 
-  local IMAGE_NAME="${IMAGES%:*}"
-  local IMAGE_TAG="${IMAGES##*:}"
-  if [ "$IMAGE_TAG" != "$IMAGE_NAME" ]; then
-    FILTER="--tag=$IMAGE_TAG"
-  fi
-
-  local TAGS_LIST
-  TAGS_LIST=$(docker_image_tags "$IMAGE_NAME" "$FILTER")
-
-  local OPTION
-  OPTION=$(.get_option_from_arguments "--latest" "$CMD" "patch")
-  if [ -n "$OPTION" ]; then
-    TAGS_LIST=$(.filter_image_tags "$OPTION" "$TAGS_LIST")
-  fi
-
-  OPTION=$(.get_option_from_arguments "--exists" "$CMD" "exit")
-  case "$OPTION" in
-    exit)
-      if [ -n "$TAGS_LIST" ]; then
-        echo "[Error] tags for $IMAGE_NAME $FILTER already exists" >&2
-        exit 1
+  matching_tags=()
+  for tag in "${tags[@]}"; do
+    if [[ "$tag" =~ ^([a-zA-Z0-9-]*)?${pattern}$ ]]; then
+      matching_tags+=("$tag")
+    fi
+  done
+  if [ -n "$latest" ]; then
+    latest_tag=$(echo "${matching_tags[@]}" | tr ' ' '\n' | sed -E 's/^[a-zA-Z0-9-]*//' | sort -V | tail -n 1)
+    for tag in "${matching_tags[@]}"; do
+      if [[ "$tag" =~ $latest_tag$ ]]; then
+        echo "$tag"
+        break
       fi
+    done
+  else
+    echo "${matching_tags[@]}"
+  fi
+}
+# helper functions
+# ##########################################
+
+# ##########################################
+# base methods
+handle_image_tags() {
+  cmd=${cmd//image tags /}; cmd=${cmd//tags /};
+  images=$(helper_get_image_names_from_arguments "$cmd")
+
+  tag_list=$(docker_image_tags "$images")
+
+  format=$(helper_get_option_from_arguments "--format" "$cmd")
+  latest=$(helper_get_option_from_arguments "--latest" "$cmd" "true")
+  case "$format" in
+    patch)
+      pattern="([0-9]+)\.([0-9]+)\.([0-9]+)"
+      tag_list=$(helper_filter_tag "$tag_list" "$pattern" "$latest")
     ;;
-    *)
+    minor)
+      pattern="([0-9]+)\.([0-9]+)"
+      tag_list=$(helper_filter_tag "$tag_list" "$pattern" "$latest")
+    ;;
+    major)
+      pattern="([0-9]+)"
+      tag_list=$(helper_filter_tag "$tag_list" "$pattern" "$latest")
     ;;
   esac
 
-  read -r -a TAGS <<< "$TAGS_LIST"
-  for tag in "${TAGS[@]}"; do
+  read -r -a tags <<< "$tag_list"
+  for tag in "${tags[@]}"; do
     echo "$tag"
   done
 }
 
-handle_image_rm() {
-  if [ "${INTERPRETER}" != "$INTERPRETER_LOCAL" ]; then
-    CMD=${CMD//image rm /}; CMD=${CMD//rmi /};
-
-    local IMAGES
-    IMAGES=$(.get_image_names_from_arguments "$CMD")
-    docker_image_remove "$IMAGES"
-  else
-    CMD="docker $CMD"
-    read -r -a COMMAND <<< "$CMD"
-  fi
+handle_image_sha() {
+  cmd=${cmd//image sha /};
+  images=$(helper_get_image_names_from_arguments "$cmd")
+  sha=$(docker_image_sha "$images")
+  echo "$sha"
 }
 
-handle_image_sha() {
-  CMD=${CMD//image sha /};
-
-  local IMAGES
-  IMAGES=$(.get_image_names_from_arguments "$CMD")
-
-  local SHA
-  SHA=$(docker_image_sha "$IMAGES")
-  EXIT=$?
-  if [ $EXIT -ne 0 ]; then
-    exit $EXIT
-  fi
-
-  local OPTION_COMPARE
-  OPTION_COMPARE=$(.get_option_from_arguments "--compare" "$CMD" "eq")
-
-  if [ -n "$OPTION_COMPARE" ]; then
-    .compare_image_sha "$OPTION_COMPARE" "$IMAGES" "$SHA"
-  else
-    echo "$SHA"
-  fi
+handle_image_rmi() {
+  cmd=${cmd//image rm /}; cmd=${cmd//rm /};
+  images=$(helper_get_image_names_from_arguments "$cmd")
+  docker_image_remove "$images"
 }
 
 handle_image_tag() {
-  local IMAGE
-  local IMAGES
-  local SOURCE_IMAGE
-  local TARGET_IMAGE
-  local COMMAND
-
-  # cleanup command
-  COMMAND=${CMD//image tag /}; COMMAND=${COMMAND//tag /};
-  IMAGE=$(.get_image_names_from_arguments "$COMMAND")
-
-  read -r -a IMAGES <<< "$IMAGE"
-  SOURCE_IMAGE="${IMAGES[0]}"
-  TARGET_IMAGE="${IMAGES[1]}"
-  if [ -z "$SOURCE_IMAGE" ]; then
-    echo "[Error] \"docker tag\" requires exactly 2 arguments, SOURCE_IMAGE[:TAG] missing" >&2
-    exit 1
-  fi
-  if [ -z "$TARGET_IMAGE" ]; then
-    echo "[Error] \"docker tag\" requires exactly 2 arguments, TARGET_IMAGE[:TAG] missing" >&2
-    exit 1
-  fi
-
-  local TAG_INCREASE
-  TAG_INCREASE=$(.get_option_from_arguments "--tag-increase" "$CMD" "true")
-
-  if [ -n "$TAG_INCREASE" ]; then
-    local NEW_TAG
-    NEW_TAG=$(.get_incremented_image_tag "$TARGET_IMAGE" "$TAG_INCREASE")
-    EXIT=$?
-    if [ $EXIT -ne 0 ]; then
-      exit $EXIT
-    fi
-
-    local TAG_LEVEL
-    TAG_LEVEL=$(.get_option_from_arguments "--tag-level" "$CMD" "1")
-    if [ -n "$TAG_LEVEL" ] && [[ "$TAG_LEVEL" -gt 1 ]]; then
-      NEW_TAG=$(.get_image_tag_level "$NEW_TAG" "$TAG_LEVEL")
-    fi
-
-    read -r -a NEW_TAGS <<< "$NEW_TAG"
-    TARGET_IMAGE_NAME="${TARGET_IMAGE%%:*}"
-    for TARGET_TAG in "${NEW_TAGS[@]}"; do
-      # docker image tag "$SOURCE_IMAGE" "$TARGET_IMAGE_NAME:$TARGET_TAG"
-      echo "$TARGET_IMAGE_NAME:$TARGET_TAG"
-    done
-  fi
+  cmd=${cmd//image tag /}; cmd=${cmd//tag /};
 }
+# base methods
+# ##########################################
 
-# ########################################
-# handle arguments
-# ########################################
-COMMAND=("-")
-case "$CMD" in
+# ##########################################
+# Main
+read -r interpreter cmd <<< "$(helper_parse_arguments "$@")"
+
+# Include custom docker command interpreter
+script_file="${SCRIPT_PATH}/interpreter/${interpreter}.sh"
+if [ -f "${script_file}" ]; then
+  # shellcheck disable=SC1090
+  source "${script_file}"
+else
+  echo "[Error] interpreter/${interpreter}.sh is not implemented" >&2
+  exit 1
+fi
+
+command=("-")
+case "$cmd" in
   "image tags "*|"tags "*)
     handle_image_tags
   ;;
   "rmi "*|"image rm "*)
-    handle_image_rm
+    handle_image_rmi
   ;;
   "image sha "*)
     handle_image_sha
   ;;
   "image tag "*|"tag "*)
     handle_image_tag
-    exit 0
   ;;
   *)
-    CMD="docker $CMD"
-    read -r -a COMMAND <<< "$CMD"
+    cmd="docker $cmd"
+    read -r -a command <<< "${cmd}"
   ;;
 esac
 
-if [ "${COMMAND[*]}" != "-" ]; then
-  RESULT=$("${COMMAND[@]}")
-  if [ -n "$RESULT" ]; then
-    echo "$RESULT"
+if [ "${command[*]}" != "-" ]; then
+  result=$("${command[@]}")
+  if [ -n "${result}" ]; then
+    echo "${result}"
   fi
 fi

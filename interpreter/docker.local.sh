@@ -1,108 +1,80 @@
 #!/bin/bash
 set -e
+set -o pipefail
 
-# ########################################
-# docker_image_tags
-# arguments:
-# - image_name (e.g. draftmode/base.caddy, draftmode/base.caddy:latest)
-# return:
-# - string of tag
-# ########################################
 docker_image_tags() {
-  local IMAGE_NAME="${1}"
-  local FILTER="${2}"
+  image="${1}"
+  filter="${2}"
 
-  # Get all tags for the image name
-  local TAGS
-  TAGS_STRING=$(docker images "$IMAGE_NAME" --format="{{ .Tag }}")
-  RESULT_EXIT=$?
-  if [ $RESULT_EXIT -ne 0 ]; then
-    TAGS=()
+  image_name="${image%:*}"
+  image_tag="${image##*:}"
+  if [ "$image_tag" == "$image_name" ]; then
+    image_tag=""
   else
-    # convert tags into an array
-    mapfile -t TAGS <<< "$TAGS_STRING"
+    filter="--tag=$image_tag"
   fi
 
-  case "$FILTER" in
+  content=$(docker images "${image_name}" --format="{{ .Tag }}")
+  exit=$?
+  if [ $exit -ne 0 ]; then
+    exit $exit
+  fi
+
+  tags=()
+  case $filter in
     --tag=*)
-      local IMAGE_TAG="${FILTER##*=}"
-      local IMAGE_SHA
-      if [ ${#TAGS[@]} -gt 0 ]; then
-        IMAGE_SHA=$(docker_image_sha "$IMAGE_NAME:$IMAGE_TAG")
-        RESULT_EXIT=$?
-        if [ $RESULT_EXIT -ne 0 ]; then
-          exit $RESULT_EXIT
+      image_tag="${filter##*=}"
+      if [[ "$image_tag" == *'*'* ]]; then
+        if [[ "$image_tag" == \** ]]; then
+          tags_list=$(echo "$content" | grep ".${image_tag:1}" | sort -V)
+        else
+          tags_list=$(echo "$content" | grep "${image_tag::-1}." | sort -V)
         fi
+        mapfile -t tags <<< "$tags_list"
       else
-        IMAGE_SHA="-"
+        image_sha=$(docker_image_sha "$image")
+        exit=$?
+        if [ $exit -ne 0 ]; then
+          exit $exit
+        fi
+        if [ -n "$image_sha" ]; then
+          mapfile -t in_image_tags <<< "$content"
+          for in_image_tag in "${in_image_tags[@]}"; do
+            image_tag_sha=$(docker_image_sha "${image_name}:${in_image_tag}")
+            exit=$?
+            if [ $exit -ne 0 ]; then
+              exit $exit
+            fi
+            if [ "$image_tag_sha" == "$image_sha" ]; then
+              tags+=("${in_image_tag}")
+            fi
+          done
+        fi
       fi
-      local SHA_TAGS=()
-      local TAG_SHA
-      for SHA_TAG in "${TAGS[@]}"; do
-        # exclude passed TAG from TAG_LIST
-        if [ "$SHA_TAG" != "$IMAGE_TAG" ]; then
-          TAG_SHA=$(docker_image_sha "$IMAGE_NAME:$SHA_TAG")
-          RESULT_EXIT=$?
-          if [ $RESULT_EXIT -ne 0 ]; then
-            exit $RESULT_EXIT
-          fi
-          if [ "$TAG_SHA" == "$IMAGE_SHA" ]; then
-            SHA_TAGS+=("$SHA_TAG")
-          fi
-        fi
-      done
-      echo "${SHA_TAGS[*]}"
-    ;;
-    --sha=*)
-      local IMAGE_SHA="${FILTER##*=}"
-      local SHA_TAGS=()
-      local TAG_SHA
-      for SHA_TAG in "${TAGS[@]}"; do
-        TAG_SHA=$(docker_image_sha "$IMAGE_NAME:$SHA_TAG")
-        if [ "$TAG_SHA" == "$IMAGE_SHA" ]; then
-          SHA_TAGS+=("$SHA_TAG")
-        fi
-      done
-      echo "${SHA_TAGS[*]}"
     ;;
     *)
-      echo "${TAGS[*]}"
+      tags_list=$(echo "$content" | sort -V)
+      mapfile -t tags <<< "$tags_list"
     ;;
   esac
+  echo "${tags[*]}"
 }
 
-# ########################################
-# docker_image_sha
-# arguments:
-# - image_name (e.g. draftmode/base.caddy, draftmode/base.caddy:latest)
-# - filter
-#    --sha={SHA TO COMPARE}
-# return:
-# - string of sha (e.g. sha256:17a42d6b26d2158c95b53acb2074503df708f984eae216cc8ed8ee79fe497ebb)
-# ########################################
 docker_image_sha() {
-  local IMAGE="${1}"
+  image="${1}"
 
-  local SHA
-  SHA=$(docker inspect --format="{{.Id}}" "$IMAGE")
-  RESULT_EXIT=$?
-  if [ $RESULT_EXIT -ne 0 ]; then
-    exit $RESULT_EXIT
+  sha=$(docker inspect --format="{{.Id}}" "$image")
+  exit=$?
+  if [ $exit -ne 0 ]; then
+    exit $exit
   fi
-
-  # Return the SHA
-  echo "$SHA"
+  echo "${sha}"
 }
 
-# ########################################
-# docker_image_remove
-# arguments:
-# - image_name(s) (e.g. draftmode/base.caddy draftmode/base.proxy:latest)
-# ########################################
 docker_image_remove() {
-  local IMAGE_LIST=("$@")  # Split images into an array
+  read -r -a image_list <<< "$*"
 
-  for IMAGE in "${IMAGE_LIST[@]}"; do
-    docker rmi "$IMAGE"
+  for image in "${image_list[@]}"; do
+    docker rmi "${image}"
   done
 }

@@ -66,26 +66,15 @@ jobs:
       - name: Prevent duplicate SHA
         if: ${{ inputs.protect }}
         run: |
-          echo "::notice:: Get Local SHA..."
-          
-          image="${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}"          
-          local_sha=$(./docker.sh image sha ${image})
-          echo "::notice:: > SHA: $local_sha"
-          if [ -z "${local_sha}" ]; then
-            echo "::error:: > Get Local SHA failure"
-            exit 1
-          else 
-            echo "::notice:: > Get Local SHA successfully"
-          fi      
-
-          echo "::notice:: Get Remote Tags..."
-          
-          remote_tags=$(./docker.sh image tags ${{ inputs.image_namespace }}/${{ inputs.image_name }} --remote --sha=${local_sha})
-          if [ -n "$remote_tags" ]; then 
-            echo "::error:: > image already provide some tags for given SHA"
+          echo "::notice:: Get Tags For Commit Label..."
+                            
+          echo "::notice:: > use label.commit: ${{ github.sha }}"
+          tags=$(./docker.sh image tags ${{ inputs.image_namespace }}/${{ inputs.image_name }} --remote --commit=${{ github.sha }} --exists)
+          if [ -n "$tags" ]; then 
+            echo "::error:: > image already provide some tags for given commit label"
             exit 1
           else
-            echo "::notice:: > image does not have any tags for given SHA"
+            echo "::notice:: > image does not have any tags for given commit label"
           fi
           
       - name: Push Docker Image
