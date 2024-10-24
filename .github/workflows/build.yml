@@ -56,6 +56,7 @@ jobs:
           fi    
           
           build_args_file="${{ inputs.build_context }}/${{ inputs.build_args_file }}"
+
           if [ -f "$build_args_file" ]; then
             echo "::notice::--build-args: $build_args_file"
             build_args=$(cat "$build_args_file" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
