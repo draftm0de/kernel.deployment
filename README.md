@@ -13,10 +13,9 @@ Tag a given SOURCE_IMAGE:[TAG] to a TARGET_IMAGE:[TAG]
 #### option: --tag-increase|--tag-increase=[BASE_TAG]
 _default: BASE_TAG=true_<br>
 
-The common usage is to set TARGET_IMAGE:[TAG] to the latest TAG version (e.g. 1.2.3) AND provide a --tag-increase value (e.g. 1.3).
-The business logic will automatically try to increase the latest TAG (+1) based on his structure.
+Use the given TARGET_IMAGE:[TAG] and increase the TAG version + 1 (e.g. 1.2.3) based on his provided structure.
 
---tag-increase has a value
+--tag-increase value conditions:
 - value has to be greater or equal to the provided IMAGE:[TAG]
 - value is used to count + 1 to the provided IMAGE:[TAG]
 
@@ -24,25 +23,25 @@ _example (--tag-increase=true)_<br>
 TARGET_IMAGE:[TAG] is required
 ```
 ./docker.sh image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2.3 --tag-increase
->> draftmode/base.caddy:1.2.4
+>> docker image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2.4
 
 ./docker.sh image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2 --tag-increase
->> draftmode/base.caddy:1.3
+>> docker image tag draftmode/base.caddy:latest draftmode/base.caddy:1.3
 ```
 
 _example (--tag-increase=1.2)_<br>
 TARGET_IMAGE:[TAG] is not given
 ```
 ./docker.sh image tag draftmode/base.caddy:latest draftmode/base.caddy --tag-increase=1.2.3
->> draftmode/base.caddy:1.2.4
+>> docker image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2.4
 ```
 TARGET_IMAGE:[TAG] is given: the calculated tag will match the same structure (major, minor, patch).
 ```
 ./docker.sh image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2 --tag-increase=1.4
->> draftmode/base.caddy:1.4
+>> docker image tag draftmode/base.caddy:latest draftmode/base.caddy:1.4
 
 ./docker.sh image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2.1 --tag-increase=1.4
->> draftmode/base.caddy:1.4.1
+>> docker image tag draftmode/base.caddy:latest draftmode/base.caddy:1.4.1
 ```
 
 #### option: --tag-level|--tag-level=[LEVEL]
@@ -52,22 +51,22 @@ The SOURCE_IMAGE[TAG] is split by ```.``` and based on the LEVEL the SOURCE_IMAG
 _example (--tag-level not set)_
 ```
 ./docker.sh image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2.3 --tag-level
->> draftmode/base.caddy:1.2.3
+>> docker image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2.3
 ```
 
 _example (--tag-level set to 2)_
 ```
 ./docker.sh image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2.3 --tag-level=2
->> draftmode/base.caddy:1.2.3
->> draftmode/base.caddy:1.2
+>> docker image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2.3
+>> docker image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2
 ```
 
 _example (--tag-level set to 3)_
 ```
 ./docker.sh image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2.3 --tag-level=3
->> draftmode/base.caddy:1.2.3
->> draftmode/base.caddy:1.2
->> draftmode/base.caddy:1
+>> docker image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2.3
+>> docker image tag draftmode/base.caddy:latest draftmode/base.caddy:1.2
+>> docker image tag draftmode/base.caddy:latest draftmode/base.caddy:1
 ```
 
 ### command: image sha
