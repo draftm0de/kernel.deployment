@@ -47,7 +47,7 @@ jobs:
         run: |
           echo "::notice:: Build image..."
                    
-          build_options="--tag ${{ env.IMAGE }} --label commit=${{ github.sha }}"
+          build_options="--tag ${{ env.IMAGE }}"
           echo "::notice::--label: commit=${{ github.sha }}"
           if [ -n "${{ inputs.build_target }}" ]; then
               echo "::notice::--target: ${{ inputs.build_target }}"
@@ -63,8 +63,12 @@ jobs:
             build_options="${build_options} ${build_args}"            
           fi
           docker build ${build_options} ${{ inputs.build_context }}          
-          echo "::notice:: > build successfully"
+          
+          digest=$(docker images --digests ${{ env.IMAGE }} --format "{{.Digest}}")
+          echo "::notice:: digest: $digest"
 
+          echo "::notice:: > build successfully"
+        
       - name: Save Docker Image
         id: image-save
         if: ${{ inputs.artifact }}
