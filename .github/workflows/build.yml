@@ -31,7 +31,11 @@ on:
       artifact:
         description: "artifact name"
         required: false
-        type: string          
+        type: string
+    outputs:
+      built_digest:
+        description: "digest of the built docker image"
+        value: ${{ steps.get-digest.outputs.digest }}
 
 jobs:
   build:
@@ -65,12 +69,14 @@ jobs:
           docker build $build_options ${{ inputs.build_context }}
           echo "::notice:: > build successfully"
           
-      - name: Get Docker Image Digest
+      - name: Get Local Image Digest
+        id: get-digest
         run: |
           echo "::notice:: Get Local Image Digest..."
           docker save ${{ env.IMAGE }} | sha256sum | awk '{ print $1 }' > digest.txt
           digest=$(cat digest.txt)
           echo "::notice:: > digest: $digest"
+          echo "digest=$digest" >> $GITHUB_OUTPUT
           
       - name: Save Docker Image
         id: image-save
@@ -80,10 +86,10 @@ jobs:
           docker save -o ${built_image_file} ${{ env.IMAGE }}
           echo "built_image_file=${built_image_file}" >> $GITHUB_OUTPUT
           
-#      - name: Upload Docker Image Artifact
-#        if: ${{ inputs.artifact }}
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: ${{ inputs.artifact }}
-#          path: ${{ steps.image-save.outputs.built_image_file }}
-#          if-no-files-found: error
+      - name: Upload Docker Image Artifact
+        if: ${{ inputs.artifact }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact }}
+          path: ${{ steps.image-save.outputs.built_image_file }}
+          if-no-files-found: error
