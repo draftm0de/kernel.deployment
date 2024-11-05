@@ -32,10 +32,6 @@ on:
         description: "artifact name"
         required: false
         type: string
-    outputs:
-      built_digest:
-        description: "digest of the built docker image"
-        value: ${{ steps.get-digest.outputs.digest }}
 
 jobs:
   build:
@@ -68,15 +64,6 @@ jobs:
           fi
           docker build $build_options ${{ inputs.build_context }}
           echo "::notice:: > build successfully"
-          
-      - name: Get Local Image Digest
-        id: get-digest
-        run: |
-          echo "::notice:: Get Local Image Digest..."
-          docker save ${{ env.IMAGE }} | sha256sum | awk '{ print $1 }' > digest.txt
-          digest=$(cat digest.txt)
-          echo "::notice:: > digest: $digest"
-          echo "digest=$digest" >> $GITHUB_OUTPUT
           
       - name: Save Docker Image
         id: image-save
