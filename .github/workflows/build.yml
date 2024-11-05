@@ -37,7 +37,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      IMAGE: ${{ inputs.image_namespace }}/{{ inputs.image_name }}:${{ inputs.image_tag }}
+      IMAGE: ${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}
     steps:
       - name: Check Out Repository
         uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
           if [ -n "${{ inputs.build_target }}" ]; then
               echo "::notice::--target: ${{ inputs.build_target }}"
               # leading space required, concatenation in docker build command
-              build_options="${build_options} --target ${{ inputs.build_target }}"            
+              build_options="$build_options --target ${{ inputs.build_target }}"            
           fi    
           
           build_args_file="${{ inputs.build_context }}/${{ inputs.build_args_file }}"
@@ -60,9 +60,9 @@ jobs:
           if [ -f "$build_args_file" ]; then
             echo "::notice::--build-args: $build_args_file"
             build_args=$(cat "$build_args_file" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
-            build_options="${build_options} ${build_args}"            
+            build_options="$build_options $build_args"            
           fi
-          docker build ${build_options} ${{ inputs.build_context }}          
+          docker build $build_options ${{ inputs.build_context }}
           
           digest=$(docker images --digests ${{ env.IMAGE }} --format "{{.Digest}}")
           echo "::notice:: digest: $digest"
