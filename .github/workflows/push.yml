@@ -75,15 +75,15 @@ jobs:
           remote_digest=$(./docker.sh image sha ${{ env.IMAGE }} --remote)
           echo "::notice:: > remote digest: $remote_digest"
           
-#      - name: Push Docker Image
-#        run: |
-#          echo "::notice:: Push Docker Image(s)..."
-#          
-#          tags=()
-#          tags+=("${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}")
-#          for tag in "${tags[@]}"; do
-#            echo "::notice:: push ${tag}"
-#            docker push ${tag}
-#          done
-#          
-#          echo "::notice:: > Pushing image(s) successfully"
+      - name: Push Docker Image
+        run: |
+          echo "::notice:: Push Docker Image(s)..."
+          
+          tags=()
+          tags+=("${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}")
+          for tag in "${tags[@]}"; do
+            echo "::notice:: push ${tag}"
+            docker push ${tag}
+          done
+          
+          echo "::notice:: > Pushing image(s) successfully"
