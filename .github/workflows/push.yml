@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ARTIFACT_PATH: "./artifacts"
-      IMAGE: "${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}"
+      IMAGE: ${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}      
     steps: 
       - name: Check Out Repository
         uses: actions/checkout@v4
@@ -66,26 +66,24 @@ jobs:
       - name: Prevent duplicate SHA
         if: ${{ inputs.protect }}
         run: |
-          echo "::notice:: Get Tags For Commit Label..."
-                            
-          echo "::notice:: > use label.commit: ${{ github.sha }}"
-          tags=$(./docker.sh image tags ${{ inputs.image_namespace }}/${{ inputs.image_name }} --remote --commit=${{ github.sha }} --exists)
-          if [ -n "$tags" ]; then 
-            echo "::error:: > image already provide some tags for given commit label"
-            exit 1
-          else
-            echo "::notice:: > image does not have any tags for given commit label"
-          fi
+          echo "::notice:: Get Local Built Digest..."
+          docker save ${{ env.IMAGE }} | sha256sum | awk '{ print $1 }' > digest.txt
+          local_digest=$(cat digest.txt)
+          echo "::notice:: > local digest: $local_digest"
+
+          echo "::notice:: Get Remote Built Digest..."
+          remote_digest=$(./docker.sh image sha ${{ env.IMAGE }} --remote)
+          echo "::notice:: > remote digest: $remote_digest"
           
-      - name: Push Docker Image
-        run: |
-          echo "::notice:: Push Docker Image(s)..."
-          
-          tags=()
-          tags+=("${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}")
-          for tag in "${tags[@]}"; do
-            echo "::notice:: push ${tag}"
-            docker push ${tag}
-          done
-          
-          echo "::notice:: > Pushing image(s) successfully"
+#      - name: Push Docker Image
+#        run: |
+#          echo "::notice:: Push Docker Image(s)..."
+#          
+#          tags=()
+#          tags+=("${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}")
+#          for tag in "${tags[@]}"; do
+#            echo "::notice:: push ${tag}"
+#            docker push ${tag}
+#          done
+#          
+#          echo "::notice:: > Pushing image(s) successfully"
