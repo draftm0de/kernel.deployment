@@ -256,6 +256,7 @@ docker_get_image_tag_level() {
 handle_image_tags() {
   cmd=${cmd//image tags /}; cmd=${cmd//tags /};
   images=$(docker_get_image_names_from_arguments "$cmd")
+  images="${images[*]}"
 
   tag_list=$(docker_image_tags "$images")
 
@@ -276,9 +277,17 @@ handle_image_tags() {
     ;;
   esac
 
+  output=$(docker_get_option_from_arguments "--with-image-name" "$cmd" "true")
+  tag_pre_fix=""
+  if [ -n "$output" ]; then
+    local image_name
+    image_name="${images%%:*}"
+    tag_pre_fix="${image_name}:"
+  fi
+
   read -r -a tags <<< "$tag_list"
   for tag in "${tags[@]}"; do
-    echo "$tag"
+    echo "${tag_pre_fix}${tag}"
   done
 }
 

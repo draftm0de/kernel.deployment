@@ -2,15 +2,14 @@ name: Scan Docker Image
 
 # parent.yml
 # jobs:
-#    scan-scout:
-#      needs: build 
-#      uses: draftm0de/kernel.deployment/.github/workflows/scan-scout.yml@main
+#    scan:
+#      uses: scan.yml@main
 #      with:
-#        image: "kernel.caddy"    
-#        context: "caddy"
-#        artifact_name: "artifact"
-#        severity: "critical, high" 
-#        scanners: "quickview,cves,recommendations"              
+#        image: "kernel.caddy"
+#        artifact: "artifact"
+#        severity: "critical,high"
+#        scanners: "quickview,cves,recommendations"
+#        ignore-base: true
 #      secrets:
 #        docker_username: ${{ secrets.DOCKER_USERNAME }}
 #        docker_password: ${{ secrets.DOCKER_PASSWORD }}
@@ -19,18 +18,13 @@ on:
   workflow_call:
     inputs:
       image:
-        description: "docker image (name / artifact.file)"
+        description: "docker image (name / file)"
         required: true
-        type: string    
-      context:
-        description: "docker build context (path)"
-        required: false
         type: string
-        default: .    
       artifact:
         description: "artifact name"
         required: false
-        type: string       
+        type: string
       severity:
         description: "Image Scan Severities"
         type: string
@@ -45,57 +39,50 @@ on:
         description: "Ignore base image vulnerabilities"
         required: false
         type: boolean
-        default: false
+        default: true
     secrets:
       docker_username:
-        description: "Docker Login (Username)"
+        description: "Docker Username"
         required: true
-      docker_password:
-        description: "Docker Login (Password)"
+      docker_token:
+        description: "Docker Token"
         required: true
 
-jobs:        
+jobs:
   scan:
     runs-on: ubuntu-latest
     env:
-      ARTIFACT_PATH: "./artifacts"
-    steps: 
-      - name: Check Out Repository
-        uses: actions/checkout@v4
+      ARTIFACT_PATH: "artifact"
 
-      - name: Prepare/Setup Docker Scout
-        id: scan-setup
-        run: |
-          echo "::notice:: Prepare/Setup Docker Scout..."
-
-          if [ -n "${{ inputs.artifact }}" ]; then
-            INPUT="archive://${{ env.ARTIFACT_PATH }}/${{ inputs.image }}.tar"
-          else
-            INPUT="${{ inputs.image }}"
-          fi 
-          echo "input=$INPUT" >> $GITHUB_OUTPUT          
-          echo "::notice:: > use (input): $INPUT"
-          
-          echo "::notice:: > setup successfully"
-        
-      - name: Download the Docker Image From Artifacts
-        if: ${{ inputs.artifact }}
+    steps:
+      - name: Download Docker Image From Artifacts
         uses: actions/download-artifact@v4
+        if: ${{ inputs.artifact }}
         with:
           name: ${{ inputs.artifact }}
           path: ${{ env.ARTIFACT_PATH }}
+
+      - name: Setup Docker Scan
+        id: scan-setup
+        run: |
+          if [ -n "${{ inputs.artifact }}" ]; then
+            image="archive://${{ env.ARTIFACT_PATH }}/${{ inputs.image }}.tar"
+          else
+            image="${{ inputs.image }}"
+          fi 
+          echo "::notice:: > use (image): $image"
+          echo "image=$image" >> $GITHUB_OUTPUT
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.docker_username }}
-          password: ${{ secrets.docker_password }}       
-     
+          password: ${{ secrets.docker_token }}
+
       - name: Scan Docker Image
         uses: docker/scout-action@v1
         with:
           command: quickview,cves,recommendations
-          image: ${{ steps.scan-setup.outputs.input }}
-          only-severities: ${{ inputs.severity }}    
-          ignore-base: ${{ inputs.ingore-base }}
-        
+          image: ${{ steps.scan-setup.outputs.image }}
+          only-severities: ${{ inputs.severity }}
+          ignore-base: ${{ inputs.ignore-base }}

@@ -3,87 +3,75 @@ name: Tag and Push Docker Image
 on:
   workflow_call:
     inputs:
-      image_namespace:
-        description: "Image (Namespace)"
+      image:
+        description: "docker image (name / file)"
         required: true
         type: string
-      image_name:
-        description: "Image (Name)"
-        required: true
-        type: string
-      image_tag:
-        description: "Image (Tag)"
-        required: true
-        type: string
-      protect:
-        description: "Prevent duplicate SHA"
-        required: true
-        type: boolean
       artifact:
         description: "artifact name"
         required: false
         type: string
+      tag:
+        description: "docker image tag"
+        required: false
+        type: string
     secrets:
-      dockerhub_token:
+      docker_username:
+        description: "Docker Username"
+        required: true
+      docker_token:
+        description: "Docker Token"
         required: true
 
-jobs:        
-  scan:
+jobs:
+  push:
     runs-on: ubuntu-latest
     env:
-      ARTIFACT_PATH: "./artifacts"
-      IMAGE: ${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}      
-    steps: 
-      - name: Check Out Repository
-        uses: actions/checkout@v4
+      ARTIFACT_PATH: "artifact"
+    steps:
+      - name: Download Docker Image From Artifacts
+        uses: actions/download-artifact@v4
+        if: ${{ inputs.artifact }}
         with:
-          repository: draftm0de/kernel.deployment
+          name: ${{ inputs.artifact }}
+          path: ${{ env.ARTIFACT_PATH }}
+
+      - name: Load Docker Image
+        id: source
+        run: |
+          if [ -n "${{ inputs.artifact }}" ]; then
+            file="${{ env.ARTIFACT_PATH }}/${{ inputs.image }}.tar"
+            echo "::notice:: > load from: ${file}"               
+            image_name=$(docker load --input ${file} | grep 'Loaded image:' | awk '{print $3}')
+          fi
+          
+          echo "::notice:: > use (image): $image_name"       
+          echo "image_name=$image_name" >> $GITHUB_OUTPUT
+
+      - name: Set Target Image
+        id: target
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            image_name="${{ inputs.image }}:${{ inputs.tag }}"
+          else
+            image_name="${{ inputs.image }}:${{ github.ref_name }}"
+          fi 
+          
+          echo "::notice:: > use (image): $image_name"          
+          echo "image_name=$image_name" >> $GITHUB_OUTPUT
+
+      - name: Tag Docker Image
+        run: |
+          docker tag ${{ steps.source.outputs.image_name }} ${{ steps.target.outputs.image_name }}
+          echo "::notice:: > Image tagged as ${{ steps.target.outputs.image_name }} successfully"
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ inputs.image_namespace }}
-          password: ${{ secrets.dockerhub_token }}
+          username: ${{ secrets.docker_username }}
+          password: ${{ secrets.docker_token }}
 
-      - name: Download Docker Image From Artifacts
-        if: ${{ inputs.artifact }}
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ inputs.artifact }}
-          path: ${{ env.ARTIFACT_PATH }}      
-
-      - name: Load Docker Image From Artifact
-        if: ${{ inputs.artifact }}
-        run: |
-          echo "::notice:: Load Docker Image..."
-
-          input="${{ env.ARTIFACT_PATH }}/${{ inputs.image_name }}-${{ inputs.image_tag }}.tar"
-          echo "::notice:: > load from: ${input}"          
-          docker load --input ${input}        
-       
-          echo "::notice:: > load image successfully"
-
-      - name: Prevent duplicate SHA
-        if: ${{ inputs.protect }}
-        run: |
-          echo "::notice:: Get Local Built Digest..."
-          docker save ${{ env.IMAGE }} | sha256sum | awk '{ print $1 }' > digest.txt
-          local_digest=$(cat digest.txt)
-          echo "::notice:: > local digest: $local_digest"
-
-          echo "::notice:: Get Remote Built Digest..."
-          remote_digest=$(./docker.sh image sha ${{ env.IMAGE }} --remote)
-          echo "::notice:: > remote digest: $remote_digest"
-          
-      - name: Push Docker Image
-        run: |
-          echo "::notice:: Push Docker Image(s)..."
-          
-          tags=()
-          tags+=("${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}")
-          for tag in "${tags[@]}"; do
-            echo "::notice:: push ${tag}"
-            docker push ${tag}
-          done
-          
-          echo "::notice:: > Pushing image(s) successfully"
+#      - name: Docker Push Image
+#        run: |
+#          docker push ${{ steps.target.outputs.image_name }}
+#          echo "::notice:: > Image pushed successfully"

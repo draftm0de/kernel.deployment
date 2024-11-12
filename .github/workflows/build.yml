@@ -3,16 +3,8 @@ name: Build Docker Image
 on:
   workflow_call:
     inputs:
-      image_namespace:
-        description: "Image (Namespace)"
-        required: true
-        type: string      
-      image_name:
-        description: "Image (Name)"
-        required: true
-        type: string
-      image_tag:
-        description: "Image (Tag)"
+      image:
+        description: "docker image name"
         required: true
         type: string
       build_context:
@@ -36,19 +28,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      IMAGE: ${{ inputs.image_namespace }}/${{ inputs.image_name }}:${{ inputs.image_tag }}
     steps:
       - name: Check Out Repository
         uses: actions/checkout@v4
-        
+
       - name: Build Docker Image
         id: image-build
         run: |
           echo "::notice:: Build image..."
-                   
-          build_options="--tag ${{ env.IMAGE }}"
-          echo "::notice::--label: commit=${{ github.sha }}"
+          
+          image_tag="${{ inputs.image }}:${{ github.sha }}"
+          echo "::notice::--tag: $image_tag"
+          echo "image_tag=$image_tag" >> $GITHUB_OUTPUT 
+          
+          build_options="--tag $image_tag"
           if [ -n "${{ inputs.build_target }}" ]; then
               echo "::notice::--target: ${{ inputs.build_target }}"
               # leading space required, concatenation in docker build command
@@ -64,19 +57,19 @@ jobs:
           fi
           docker build $build_options ${{ inputs.build_context }}
           echo "::notice:: > build successfully"
-          
+
       - name: Save Docker Image
-        id: image-save
         if: ${{ inputs.artifact }}
+        id: image-save
         run: |
-          built_image_file="${{ inputs.image_name }}-${{ inputs.image_tag }}.tar"
-          docker save -o ${built_image_file} ${{ env.IMAGE }}
-          echo "built_image_file=${built_image_file}" >> $GITHUB_OUTPUT
-          
+          file="${{ inputs.image }}.tar"
+          docker save -o $file ${{ steps.image-build.outputs.image_tag }}
+          echo "file=$file" >> $GITHUB_OUTPUT   
+
       - name: Upload Docker Image Artifact
         if: ${{ inputs.artifact }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact }}
-          path: ${{ steps.image-save.outputs.built_image_file }}
+          path: ${{ steps.image-save.outputs.file }}
           if-no-files-found: error

@@ -157,6 +157,17 @@ Order all filtered tags and returns only the first (latest) one.<br>
 >> 1
 ```
 
+#### option: --with-image-name
+Prefix the calculated tag(s) with the provided IMAGE_NAME
+
+_example_
+```
+./docker.sh image tags draftmode/caddy.proxy:latest --with-image-name
+>> draftmode/caddy.proxy:1.2.2
+>> draftmode/caddy.proxy:1.2
+>> draftmode/caddy.proxy:1
+```
+
 ### Options
 #### --remote|--remote=[TYPE]
 Execute a docker command remotely. To be a supported COMMAND /docker.sh has to provide an implementation.<br><br>
