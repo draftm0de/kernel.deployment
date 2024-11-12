@@ -29,3 +29,8 @@ jobs:
           else
             echo "artifact_exists=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Log artifact existence output
+        run: |
+          echo "artifact_exists:${{ steps.verify.outputs.artifact_exists }}:"          
+          
