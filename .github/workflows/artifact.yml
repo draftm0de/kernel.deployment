@@ -14,6 +14,9 @@ jobs:
     outputs:
       artifact_exists: ${{ steps.check.outputs.artifact_exists }}
     steps:
+      - name: Set Existence to false
+        run: echo "artifact_exists=false" >> $GITHUB_OUTPUT
+
       - name: Attempt to download artifact
         id: check
         uses: actions/download-artifact@v4
@@ -21,10 +24,6 @@ jobs:
           name: ${{ inputs.artifact }}
         continue-on-error: true
 
-      - name: Set existence output to true
+      - name: Set Existence To True
         if: ${{ success() }}
         run: echo "artifact_exists=true" >> $GITHUB_OUTPUT
-
-      - name: Set existence output to false
-        if: ${{ failure() }}
-        run: echo "artifact_exists=false" >> $GITHUB_OUTPUT
