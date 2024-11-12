@@ -7,6 +7,10 @@ on:
         description: "artifact name"
         required: true
         type: string
+    outputs:
+      artifact_exists:
+        description: "Verify if artifact exists"
+        value: ${{ jobs.check-artifact.outputs.artifact_exists }}
 
 jobs:
   check-artifact:
