@@ -9,10 +9,10 @@ on:
         type: string
 
 jobs:
-  check:
+  check-artifact:
     runs-on: ubuntu-latest
     outputs:
-      exists: ${{ steps.check.outputs.exists }}
+      artifact_exists: ${{ steps.check.outputs.artifact_exists }}
     steps:
       - name: Attempt to download artifact
         id: check
@@ -23,8 +23,8 @@ jobs:
 
       - name: Set existence output to true
         if: ${{ success() }}
-        run: echo "exists=true" >> $GITHUB_OUTPUT
+        run: echo "artifact_exists=true" >> $GITHUB_OUTPUT
 
       - name: Set existence output to false
         if: ${{ failure() }}
-        run: echo "exists=false" >> $GITHUB_OUTPUT
+        run: echo "artifact_exists=false" >> $GITHUB_OUTPUT
