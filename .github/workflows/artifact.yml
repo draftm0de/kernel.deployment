@@ -23,6 +23,7 @@ jobs:
       - name: Verify Artifact Existence
         id: verify
         run: |
+          ls -la
           if [ -d "${{ github.workspace }}/${{ inputs.artifact }}" ]; then
             echo "artifact_exists=true" >> $GITHUB_OUTPUT
           else
