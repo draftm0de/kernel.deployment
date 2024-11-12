@@ -3,6 +3,10 @@ name: Tag and Push Docker Image
 on:
   workflow_call:
     inputs:
+      namespace:
+        description: "docker namespace"
+        required: true
+        type: string
       image:
         description: "docker image (name / file)"
         required: true
@@ -16,9 +20,6 @@ on:
         required: false
         type: string
     secrets:
-      docker_username:
-        description: "Docker Username"
-        required: true
       docker_token:
         description: "Docker Token"
         required: true
@@ -52,9 +53,9 @@ jobs:
         id: target
         run: |
           if [ -n "${{ inputs.tag }}" ]; then
-            image_name="${{ inputs.image }}:${{ inputs.tag }}"
+            image_name="${{ inputs.namespace }}/${{ inputs.image }}:${{ inputs.tag }}"
           else
-            image_name="${{ inputs.image }}:${{ github.ref_name }}"
+            image_name="${{ inputs.namespace }}/${{ inputs.image }}:${{ github.ref_name }}"
           fi 
           
           echo "::notice:: > use (image): $image_name"          
@@ -68,10 +69,10 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.docker_username }}
+          username: ${{ inputs.namespace }}
           password: ${{ secrets.docker_token }}
 
-#      - name: Docker Push Image
-#        run: |
-#          docker push ${{ steps.target.outputs.image_name }}
-#          echo "::notice:: > Image pushed successfully"
+      - name: Docker Push Image
+        run: |
+          docker push ${{ steps.target.outputs.image_name }}
+          echo "::notice:: > Image pushed successfully"
