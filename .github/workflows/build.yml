@@ -70,9 +70,9 @@ jobs:
             --builder default \
             --provenance=false \
             --sbom=false \
-            $build_args
-            --output=type=docker
-            --tag: $image_tag
+            $build_args \
+            --output=type=docker \
+            --tag $image_tag
           sha=$(docker inspect --format='{{index .Id}}' $image_tag)
           echo "::notice:: sha: $sha"
 #
