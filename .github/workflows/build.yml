@@ -59,7 +59,7 @@ jobs:
             build_args=$(cat "$build_args_file" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
             build_options="$build_options $build_args"            
           fi
-          docker build $build_options ${{ inputs.build_context }}
+          docker build $build_options --no-cache ${{ inputs.build_context }}
           echo "::notice:: > build successfully"
           sha=$(docker inspect --format='{{index .Id}}' $image_tag)
           echo "::notice:: sha: $sha"
@@ -67,6 +67,7 @@ jobs:
           image_tag="$image_tag-buildx"
           DOCKER_BUILDKIT=1
           docker buildx build \
+            --no-cache \
             --builder default \
             --provenance=false \
             --sbom=false \
