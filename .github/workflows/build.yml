@@ -76,7 +76,7 @@ jobs:
             ${{ inputs.build_context }}
           sha=$(docker inspect --format='{{index .Id}}' $image_tag)
           echo "::notice:: sha: $sha"
-          sha=$(docker inspect --format='{{index .RepoDigests 0}}' $image_tag)
+          sha=$(docker inspect --format='{{ .Id }}' $image_tag)
           echo "::notice:: sha: $sha"
 
           docker inspect $image_tag
