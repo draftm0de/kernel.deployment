@@ -78,7 +78,9 @@ jobs:
           echo "::notice:: sha: $sha"
           sha=$(docker inspect --format='{{ .Id }}' $image_tag)
           echo "::notice:: sha: $sha"
-
+          docker save $image_tag -o image.tar
+          sha=$(sha256sum image.tar)
+          echo "::notice:: sha: $sha"
           docker inspect $image_tag
 #
 #      - name: Save Docker Image
