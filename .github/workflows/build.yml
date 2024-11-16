@@ -72,7 +72,8 @@ jobs:
             --sbom=false \
             $build_args \
             --output=type=docker \
-            --tag $image_tag
+            --tag $image_tag \
+            ${{ inputs.build_context }}
           sha=$(docker inspect --format='{{index .Id}}' $image_tag)
           echo "::notice:: sha: $sha"
 #
