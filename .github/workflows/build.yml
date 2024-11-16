@@ -32,6 +32,10 @@ jobs:
       - name: Check Out Repository
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        run: |
+          docker buildx version || docker buildx create --use        
+
       - name: Build Docker Image
         id: image-build
         run: |
@@ -57,19 +61,33 @@ jobs:
           fi
           docker build $build_options ${{ inputs.build_context }}
           echo "::notice:: > build successfully"
+          sha=$(docker inspect --format='{{index .Id}}' $image_tag)
+          echo "::notice:: sha: $sha"
 
-      - name: Save Docker Image
-        if: ${{ inputs.artifact }}
-        id: image-save
-        run: |
-          file="${{ inputs.image }}.tar"
-          docker save -o $file ${{ steps.image-build.outputs.image_tag }}
-          echo "file=$file" >> $GITHUB_OUTPUT   
+          image_tag="$image_tag-buildx"
+          DOCKER_BUILDKIT=1
+          docker buildx build \
+            --builder default \
+            --provenance=false \
+            --sbom=false \
+            $build_args
+            --output=type=docker
+            --tag: $image_tag
+          sha=$(docker inspect --format='{{index .Id}}' $image_tag)
+          echo "::notice:: sha: $sha"
+#
+#      - name: Save Docker Image
+#        if: ${{ inputs.artifact }}
+#        id: image-save
+#        run: |
+#          file="${{ inputs.image }}.tar"
+#          docker save -o $file ${{ steps.image-build.outputs.image_tag }}
+#          echo "file=$file" >> $GITHUB_OUTPUT   
 
-      - name: Upload Docker Image Artifact
-        if: ${{ inputs.artifact }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ inputs.artifact }}
-          path: ${{ steps.image-save.outputs.file }}
-          if-no-files-found: error
+#      - name: Upload Docker Image Artifact
+#        if: ${{ inputs.artifact }}
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: ${{ inputs.artifact }}
+#          path: ${{ steps.image-save.outputs.file }}
+#          if-no-files-found: error
