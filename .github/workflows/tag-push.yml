@@ -3,7 +3,7 @@ name: Split and Iterate
 on:
   workflow_call:
     inputs:
-      items:
+      tags:
         description: "Comma-separated list of items to process"
         required: true
         type: string
@@ -20,7 +20,7 @@ jobs:
       - name: Prepare JSON Array from Input
         id: prepare_array
         run: |
-          items="${{ inputs.items }}"
+          items="${{ inputs.tags }}"
           if [[ -z "$items" ]]; then
             echo "Error: Input string is empty" >&2
             exit 1
