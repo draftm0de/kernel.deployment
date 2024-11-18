@@ -27,11 +27,13 @@ jobs:
           
       - name: Download Artifact
         run: |
-          echo "**notice** download artifact"
+          echo "**notice** download artifact..."
+          echo "**notice** artifact downloaded."
 
       - name: Load Artifact
         run: |
-          echo "**notice** load artifact"
+          echo "**notice** load artifact..."
+          echo "**notice** artifact loaded."
 
   tag-and-push:
     needs: preprocessing
@@ -40,9 +42,20 @@ jobs:
       matrix:
         item: ${{ fromJson(needs.preprocessing.outputs.tags) }}    
     steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate with GitHub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"       
+        
       - name: Tag Docker Image
         run: |
-          echo "**notice** Tag Docker Images with ${{ matrix.item }}"
+          echo "**notice** Tagging Docker Image with ${{ matrix.item }}..."
+          echo "**notice** Docker image tagged with ${{ matrix.item }}."
       
       - name: Tag Commit
         run: |
