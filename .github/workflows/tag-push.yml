@@ -32,7 +32,7 @@ jobs:
           echo "**notice** Converting Input.Tags to Array..."
           items="${{ inputs.tags }}"
           if [[ -z "$items" ]]; then
-            echo "**Error** Input string is empty" >&2
+            echo "**error** Input.tags string is empty"
             exit 1
           fi
           tags=$(echo "[\"${items//,/\",\"}\"]")
