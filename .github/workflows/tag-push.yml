@@ -1,4 +1,4 @@
-name: Split and Iterate
+name: Tag Image and Commit
 
 on:
   workflow_call:
@@ -11,12 +11,10 @@ on:
 jobs:
   preprocessing:
     runs-on: ubuntu-latest
-
     outputs:
       tags: ${{ steps.prepare_array.outputs.json_array }}
-
     steps:
-      - name: Prepare JSON Array from Input
+      - name: Convert Tags From Input
         id: prepare_array
         run: |
           items="${{ inputs.tags }}"
@@ -26,9 +24,41 @@ jobs:
           fi
           json_array=$(echo "[\"${items//,/\",\"}\"]")
           echo "tags=$json_array" >> $GITHUB_OUTPUT
+          
+      - name: Download Artifact
+        run: |
+          echo "**notice** download artifact"
 
-  tag-and-push:
+      - name: Load Artifact
+        run: |
+          echo "**notice** load artifact"
+
+  tag:
     needs: preprocessing
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        item: ${{ fromJson(needs.preprocessing.outputs.tags) }}
+    steps:
+      - name: Tag Docker Image
+        run: |
+          echo "**notice** Tag Docker Image with ${{ matrix.item }}"
+      
+      - name: Tag Commit
+        run: |
+          if git ls-remote --heads origin ${{ matrix.item }} | grep -q ${{ matrix.item }}; then
+            echo "tag_is_branch=true" >> $GITHUB_ENV
+          else
+            echo "tag_is_branch=false" >> $GITHUB_ENV
+            
+      - name: Process Tag as Non-Existing Branch
+        if: env.tag_is_branch == 'false'
+        run: |
+          echo "**notice** Tag Commit with ${{ matrix.item }}"
+          echo "**notice** Tag Image with with ${{ matrix.item }}"
+
+  push:
+    needs: tag
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -49,4 +79,4 @@ jobs:
       - name: Process Tag as Non-Existing Branch
         if: env.tag_is_branch == 'false'
         run: |
-          echo "**notice** Branch does not exists for tag: ${{ matrix.item }}. Processing accordingly."
+          echo "**notice** Branch does not exists for tag: ${{ matrix.item }}. Processing accordingly."          
