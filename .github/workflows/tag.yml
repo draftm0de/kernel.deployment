@@ -1,9 +1,16 @@
-name: Tag Branch
+name: Reusable Version Tagging
 
 on:
   workflow_call:
-
- # Trigger for branches matching version-like patterns (e.g., 1.x, 3.2, 4.3)
+    inputs:
+      branch_name:
+        description: "Branch name to operate on"
+        required: true
+        type: string
+      version_pattern:
+        description: "Regex pattern to match version branches (e.g., 4.x, 1.0)"
+        required: false
+        default: "[0-9]+.*"
 
 jobs:
   tag-version:
@@ -27,8 +34,8 @@ jobs:
       - name: Determine Base Version from Branch Name
         id: get_base_version
         run: |
-          # Extract the base version (e.g., 4.3) from the branch name
-          base_version="${GITHUB_REF_NAME}"
+          # Use the branch_name input as the base version
+          base_version="${{ inputs.branch_name }}"
           echo "Base version is $base_version"
           echo "BASE_VERSION=$base_version" >> $GITHUB_ENV
 
