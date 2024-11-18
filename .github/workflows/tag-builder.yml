@@ -20,7 +20,6 @@ on:
 jobs:
   tag-version:
     runs-on: ubuntu-latest
-
     steps:
       - name: Check Out Repository
         uses: actions/checkout@v4
@@ -65,7 +64,7 @@ jobs:
           echo "**notice** use new tag: $new_tag"          
           echo "NEW_TAG=$new_tag" >> $GITHUB_ENV
 
-      - name: Set Tags
+      - name: Set Tag Output
         id: return
         run: |
           # Create a comma-separated output
