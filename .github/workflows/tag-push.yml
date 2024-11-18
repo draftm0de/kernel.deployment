@@ -59,7 +59,9 @@ jobs:
       
       - name: Tag Commit
         run: |
-          if ! git ls-remote --heads origin ${{ matrix.item }} | grep -q ${{ matrix.item }}; then
+          if git ls-remote --heads origin ${{ matrix.item }} | grep -q ${{ matrix.item }}; then
+            echo "**notice** Tag Commit skipped, Tag ${{ matrix.item }} is a branch" 
+          else
             echo "**notice** Tag Commit with ${{ matrix.item }}"
           fi
             
