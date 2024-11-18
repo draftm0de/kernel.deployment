@@ -12,18 +12,18 @@ jobs:
   preprocessing:
     runs-on: ubuntu-latest
     outputs:
-      tags: ${{ steps.prepare_array.outputs.json_array }}
+      tags: ${{ steps.prepare.outputs.tags }}
     steps:
       - name: Convert Tags From Input
-        id: prepare_array
+        id: prepare
         run: |
           items="${{ inputs.tags }}"
           if [[ -z "$items" ]]; then
-            echo "Error: Input string is empty" >&2
+            echo "**Error** Input string is empty" >&2
             exit 1
           fi
-          json_array=$(echo "[\"${items//,/\",\"}\"]")
-          echo "tags=$json_array" >> $GITHUB_OUTPUT
+          tags=$(echo "[\"${items//,/\",\"}\"]")
+          echo "tags=$tags" >> $GITHUB_OUTPUT
           
       - name: Download Artifact
         run: |
