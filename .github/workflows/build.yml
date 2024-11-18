@@ -34,7 +34,7 @@ jobs:
 
       - name: Set up Docker Buildx
         run: |
-          docker buildx version || docker buildx create --use        
+          docker buildx version || docker buildx create --use --driver-opt image=moby/buildkit:v0.13.1 --name buildkit_13_1       
 
       - name: Build Docker Image
         id: image-build
@@ -59,7 +59,7 @@ jobs:
             build_args=$(cat "$build_args_file" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
             build_options="$build_options $build_args"            
           fi
-          build_options="$build_options --build-arg SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)"
+          build_options="$build_options --build-arg SOURCE_DATE_EPOCH=0"
           docker build $build_options --no-cache ${{ inputs.build_context }}
           echo "::notice:: > build successfully"
           sha=$(docker inspect --format='{{index .Id}}' $image_tag)
