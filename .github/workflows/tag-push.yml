@@ -8,13 +8,9 @@ on:
         required: true
         type: string
       image:
-        description: "docker image (name / file)"
+        description: "docker image name"
         required: true
-        type: string    
-      artifact:
-        description: "artifact name"
-        required: true
-        type: string    
+        type: string
       tags:
         description: "Comma-separated list of tags to process"
         required: true
@@ -26,12 +22,9 @@ on:
 
 jobs:
   preprocessing:
-    env:
-      ARTIFACT_PATH: "artifact"  
     runs-on: ubuntu-latest
     outputs:
       tags: ${{ steps.prepare.outputs.tags }}
-      source: ${{ steps.source.outputs.image_name }}
     steps:
       - name: Convert Tags From Input
         id: prepare
@@ -45,21 +38,6 @@ jobs:
           tags=$(echo "[\"${items//,/\",\"}\"]")
           echo "tags=$tags" >> $GITHUB_OUTPUT
           echo "**notice** > Input.Tags converted."
-          
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ inputs.artifact }}
-          path: ${{ env.ARTIFACT_PATH }}
-
-      - name: Load Docker Image
-        id: source
-        run: |
-          echo "::notice:: Loading Docker Image from artifact..."        
-          file="${{ env.ARTIFACT_PATH }}/${{ inputs.image }}.tar"
-          image_name=$(docker load --input ${file} | grep 'Loaded image:' | awk '{print $3}')        
-          echo "image_name=$image_name" >> $GITHUB_OUTPUT
-          echo "::notice:: > Docker Image loaded as $image_name"
 
   tag-and-push:
     needs: preprocessing
@@ -71,6 +49,12 @@ jobs:
       - name: Check Out Repository
         uses: actions/checkout@v4
 
+      - name: Load Docker Image
+        id: load-image
+        uses: draftm0de/kernel.deployment/.github/actions/load-image@main
+        with:
+          image: ${{ inputs.image }}
+
       - name: Authenticate with GitHub
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,8 +65,9 @@ jobs:
       - name: Tag Docker Image
         run: |
           echo "**notice** Tagging Docker Image..."
+          source="${{ steps.load-image.outputs.image }}"
           target="${{ inputs.namespace }}/${{ inputs.image }}:${{ matrix.item }}"
-          docker tag ${{ needs.preprocessing.outputs.source }} $target
+#          docker tag $source $target
           echo "**notice** > Docker image $source tagged with $target"
       
       - name: Tag Commit
@@ -98,5 +83,5 @@ jobs:
         run: |
           echo "**notice** Pushing Docker Image"  
           target="${{ inputs.namespace }}/${{ inputs.image }}:${{ matrix.item }}"
-          docker push $target
+#          docker push $target
           echo "**notice** > Image pushed as $target"

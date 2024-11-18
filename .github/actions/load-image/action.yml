@@ -1,8 +1,8 @@
 name: "Load Docker Image From Artifact"
 description: "Load from a given Artifact a Docker Image"
 inputs:
-  file:
-    description: "image file name"
+  image:
+    description: "image name"
     required: true
 outputs:
   image:
@@ -23,7 +23,12 @@ runs:
       id: load-image
       run: |
         # convert image-name into filename
-        source=".image/${{ inputs.file }}"        
+        source="${{ inputs.image }}"
+        source="${source//\//-}"
+        source="${source//:/-}"
+        source="${source//./-}"
+        source=".image/${source}.tar"
+        
         echo "::notice:: Loading Docker Image from ${source}..."               
         image=$(docker load --input ${source} | grep 'Loaded image:' | awk '{print $3}')
         echo "::notice:: > Docker Image loaded as $image"       
