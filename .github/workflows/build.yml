@@ -65,16 +65,17 @@ jobs:
 
       - name: Save Docker Image
         if: ${{ inputs.artifact }}
-        id: image-save
-        run: |
-          file="${{ inputs.image }}.tar"
-          docker save -o $file ${{ steps.image-build.outputs.image_tag }}
-          echo "file=$file" >> $GITHUB_OUTPUT   
-
-      - name: Upload Docker Image Artifact
-        if: ${{ inputs.artifact }}
-        uses: actions/upload-artifact@v4
+        uses: draftm0de/kernel.deployment/.github/actions/save-image.yml@main
         with:
-          name: ${{ inputs.artifact }}
-          path: ${{ steps.image-save.outputs.file }}
-          if-no-files-found: error
+          artifact: ${{ inputs.artifact }}
+          image: ${{ steps.image-build.outputs.image_tag }}
+#          docker save -o $file ${{ steps.image-build.outputs.image_tag }}
+#          echo "file=$file" >> $GITHUB_OUTPUT
+#
+#      - name: Upload Docker Image Artifact
+#        if: ${{ inputs.artifact }}
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: ${{ inputs.artifact }}
+#          path: ${{ steps.image-save.outputs.file }}
+#          if-no-files-found: error

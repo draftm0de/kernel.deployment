@@ -1,0 +1,35 @@
+name: "Load Docker Image From Artifact"
+description: "Load from a given Artifact a Docker Image"
+inputs:
+  artifact:
+    description: "artifact name"
+    required: true
+    type: string
+  image:
+    description: "image name"
+    required: true
+    type: string
+outputs:
+  docker-image:
+    description: "Loaded Docker Image Name"
+    value: ${{ steps.load-image.outputs.image_name }}
+
+runs:
+  using: "composite"
+  env:
+    ARTIFACT_PATH: "artifact"
+  steps:
+    - name: Download Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact }}
+        path: ${{ env.ARTIFACT_PATH }}
+
+    - name: Load Docker Image
+      id: load-image
+      run: |
+        file="${{ env.ARTIFACT_PATH }}/${{ inputs.image }}.tar"
+        echo "::notice:: Loading Docker Image from ${file}..."               
+        image_name=$(docker load --input ${file} | grep 'Loaded image:' | awk '{print $3}')
+        echo "::notice:: > Docker Image loaded as $image_name"       
+        echo "image_name=$image_name" >> $GITHUB_OUTPUT
