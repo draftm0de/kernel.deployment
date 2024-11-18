@@ -1,0 +1,21 @@
+name: Tag and Push
+
+on:
+  workflow_call:
+    inputs:
+      tags:
+        description: "Tags to be used (comma separated)"
+        required: true
+        type: string
+
+jobs:
+  tagging:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        item: ${{ fromJson('["' + inputs.items.replace(',', '","') + '"]') }}
+    steps:
+      - name: Process Each Item
+        run: |
+          echo "Processing item: ${{ matrix.item }}"
+          
