@@ -11,14 +11,15 @@ on:
         description: "Regex pattern to match version branches (e.g., 4.x, 1.0)"
         required: false
         default: "[0-9]+.*"
+        type: string
 
 jobs:
   tag-version:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+      - name: Check Out Repository
+        uses: actions/checkout@v4
 
       - name: Ensure Current Commit Has No Tag
         id: check_existing_tag
