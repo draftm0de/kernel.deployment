@@ -1,0 +1,62 @@
+name: Version Tagging for Any Version Branch
+
+on:
+  push:
+    branches:
+      - "[0-9]+.*" # Trigger for branches matching version-like patterns (e.g., 1.x, 3.2, 4.3)
+
+jobs:
+  tag-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Ensure Current Commit Has No Tag
+        id: check_existing_tag
+        run: |
+          # Check if the current commit already has a matching version tag
+          existing_tag=$(git tag --points-at HEAD | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" || true)
+          if [ -n "$existing_tag" ]; then
+            echo "Commit already has a tag: $existing_tag. Skipping tagging."
+            exit 0
+          fi
+          echo "No existing tag on this commit."
+
+      - name: Determine Base Version from Branch Name
+        id: get_base_version
+        run: |
+          # Extract the base version (e.g., 4.3) from the branch name
+          base_version="${GITHUB_REF_NAME}"
+          echo "Base version is $base_version"
+          echo "BASE_VERSION=$base_version" >> $GITHUB_ENV
+
+      - name: Find Latest Tag for Base Version
+        id: find_latest_tag
+        run: |
+          # Find the latest tag matching the base version pattern (e.g., 4.3.*)
+          latest_tag=$(git tag --list "${{ env.BASE_VERSION }}.*" --sort=-v:refname | head -n 1)
+          echo "Latest tag: $latest_tag"
+
+          # Determine the new tag
+          if [ -z "$latest_tag" ]; then
+            # No existing tags, start with .1
+            new_tag="${{ env.BASE_VERSION }}.1"
+          else
+            # Increment the patch version
+            patch_version=${latest_tag##*.}
+            new_patch_version=$((patch_version + 1))
+            new_tag="${{ env.BASE_VERSION }}.$new_patch_version"
+          fi
+
+          echo "New tag will be: $new_tag"
+          echo "NEW_TAG=$new_tag" >> $GITHUB_ENV
+
+      - name: Create New Tag
+        run: |
+          # Tag the current commit with the new version
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ env.NEW_TAG }}
+          git push origin ${{ env.NEW_TAG }}
