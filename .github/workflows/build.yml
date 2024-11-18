@@ -20,10 +20,6 @@ on:
         description: "filename to be used for --build-args"
         required: false
         type: string
-      artifact:
-        description: "artifact name"
-        required: false
-        type: string
 
 jobs:
   build:
@@ -68,8 +64,3 @@ jobs:
         uses: draftm0de/kernel.deployment/.github/actions/save-image@main
         with:
           image: ${{ steps.image-build.outputs.image_tag }}
-
-      - name: Load Docker Image
-        uses: draftm0de/kernel.deployment/.github/actions/load-image@main
-        with:
-          file: ${{ steps.save-image.outputs.file }}
