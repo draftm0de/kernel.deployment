@@ -15,11 +15,13 @@ on:
     outputs:
       tags:
         description: "Tags to be used"
-        value: ${{ steps.return.outputs.tags }}        
+        value: ${{ jobs.tag-version.outputs.tags }}        
 
 jobs:
   tag-version:
     runs-on: ubuntu-latest
+    outputs:
+      tags: ${{ steps.return.outputs.tags }}
     steps:
       - name: Check Out Repository
         uses: actions/checkout@v4
