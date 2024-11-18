@@ -20,8 +20,15 @@ runs:
       shell: bash
       run: |
         source="${{ inputs.image }}"
-        target="${{ inputs.image }}.tar"
-        docker images
+        target="${{ inputs.image }}"
+        
+        # replace special chars like / : . with -
+        target="${target//\//-}"
+        target="${target//:/-}"
+        target="${target//./-}"
+        target="${target}.tar"
+        
+        # save docker image to file
         docker save -o $target $source
         echo "file=$target" >> $GITHUB_OUTPUT   
 
