@@ -1,15 +1,12 @@
 name: "Save Docker Image As Artifact"
 description: "Save Built Image as Artifact"
 inputs:
-  artifact:
-    description: "artifact name"
-    required: true
   image:
     description: "image name"
     required: true
 outputs:
   file:
-    description: "Loaded Docker Image Name"
+    description: "image stored as file name"
     value: ${{ steps.image-save.outputs.file }}
 
 runs:
@@ -22,7 +19,7 @@ runs:
         source="${{ inputs.image }}"
         target="${{ inputs.image }}"
         
-        # replace special chars like / : . with -
+        # convert image-name into filename
         target="${target//\//-}"
         target="${target//:/-}"
         target="${target//./-}"
@@ -35,6 +32,6 @@ runs:
     - name: Upload Docker Image Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.artifact }}
+        name: docker-image
         path: ${{ steps.image-save.outputs.file }}
         if-no-files-found: error
