@@ -9,11 +9,24 @@ on:
         type: string
 
 jobs:
-  tagging:
+  preprocess-and-iterate:
     runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Convert Comma-Separated String to JSON Array
+      - name: Prepare JSON Array from Input
+        id: prepare_array
+        run: |
+          items="${{ inputs.items }}"
+          json_array=$(echo "[\"${items//,/\",\"}\"]")
+          echo "json_array=$json_array" >> $GITHUB_OUTPUT
+          
+  process-each-item:
+    runs-on: ubuntu-latest
+    needs: preprocess-and-iterate
     strategy:
       matrix:
-        item: "[${{ inputs.items }}]"
+        item: ${{ fromJson(needs.preprocess-and-iterate.outputs.json_array) }}
     steps:
       - name: Process Each Item
         run: |
