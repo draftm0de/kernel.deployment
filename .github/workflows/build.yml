@@ -34,7 +34,7 @@ jobs:
 
       - name: Set up Docker Buildx
         run: |
-          docker buildx version || docker buildx create --use --driver-opt image=moby/buildkit:v0.13.1 --name buildkit_13_1       
+          docker buildx create --use --driver-opt image=moby/buildkit:v0.13.1 --name buildkit_13_1       
 
       - name: Build Docker Image
         id: image-build
