@@ -4,11 +4,9 @@ inputs:
   artifact:
     description: "artifact name"
     required: true
-    type: string
   image:
     description: "image name"
     required: true
-    type: string
 outputs:
   file:
     description: "Loaded Docker Image Name"
@@ -16,11 +14,10 @@ outputs:
 
 runs:
   using: "composite"
-  env:
-    ARTIFACT_PATH: "artifact"
   steps:
     - name: Save Docker Image
       id: image-save
+      shell: bash
       run: |
         file="${{ inputs.image }}.tar"
         docker save -o $file ${{ inputs.name }}
