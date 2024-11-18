@@ -81,8 +81,8 @@ jobs:
       - name: Tag Docker Image
         run: |
           echo "**notice** Tagging Docker Image..."
-          source=${{ needs.preprocessing.outputs.source }}
           target="${{ inputs.namespace }}/${{ inputs.image }}:${{ matrix.item }}"
+          docker tag ${{ needs.preprocessing.outputs.source }} $target
           echo "**notice** > Docker image $source tagged with $target"
       
       - name: Tag Commit
@@ -98,4 +98,5 @@ jobs:
         run: |
           echo "**notice** Pushing Docker Image"  
           target="${{ inputs.namespace }}/${{ inputs.image }}:${{ matrix.item }}"
+          docker push $target
           echo "**notice** > Image pushed as $target"
