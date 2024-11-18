@@ -4,19 +4,18 @@ on:
   workflow_call:
     inputs:
       tags:
-        description: "Comma-separated list of items to process"
+        description: "Comma-separated list of tags to process"
         required: true
         type: string
 
 jobs:
-  preprocess-and-iterate:
+  preprocessing:
     runs-on: ubuntu-latest
 
     outputs:
-      json_array: ${{ steps.prepare_array.outputs.json_array }}
+      tags: ${{ steps.prepare_array.outputs.json_array }}
 
     steps:
-      # Step 1: Convert Comma-Separated String to JSON Array
       - name: Prepare JSON Array from Input
         id: prepare_array
         run: |
@@ -26,16 +25,28 @@ jobs:
             exit 1
           fi
           json_array=$(echo "[\"${items//,/\",\"}\"]")
-          echo "json_array=$json_array"
-          echo "json_array=$json_array" >> $GITHUB_OUTPUT
+          echo "tags=$json_array" >> $GITHUB_OUTPUT
 
-  process-each-item:
-    needs: preprocess-and-iterate
+  tag-and-push:
+    needs: preprocessing
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        item: ${{ fromJson(needs.preprocess-and-iterate.outputs.json_array) }}
+        item: ${{ fromJson(needs.preprocessing.outputs.tags) }}
     steps:
-      - name: Process Each Item
+      - name: Tag is Branch
         run: |
-          echo "Processing item: ${{ matrix.item }}"
+          if git ls-remote --heads origin ${{ matrix.item }} | grep -q ${{ matrix.item }}; then
+            echo "tag_is_branch=true" >> $GITHUB_ENV
+          else
+            echo "tag_is_branch=false" >> $GITHUB_ENV
+            
+      - name: Process Tag as Existing Branch
+        if: env.tag_is_branch == 'true'
+        run: |
+          echo "**notice** Branch exists for tag: ${{ matrix.item }}. Processing accordingly."
+
+      - name: Process Tag as Non-Existing Branch
+        if: env.tag_is_branch == 'false'
+        run: |
+          echo "**notice** Branch does not exists for tag: ${{ matrix.item }}. Processing accordingly."
