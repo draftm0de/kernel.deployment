@@ -1,9 +1,9 @@
-name: Version Tagging for Any Version Branch
+name: Tag Branch
 
 on:
-  push:
-    branches:
-      - "[0-9]+.*" # Trigger for branches matching version-like patterns (e.g., 1.x, 3.2, 4.3)
+  workflow_call:
+
+ # Trigger for branches matching version-like patterns (e.g., 1.x, 3.2, 4.3)
 
 jobs:
   tag-version:
