@@ -1,10 +1,10 @@
-name: Tag and Push
+name: Split and Iterate
 
 on:
   workflow_call:
     inputs:
-      tags:
-        description: "Tags to be used (comma separated)"
+      items:
+        description: "Comma-separated list of items to process"
         required: true
         type: string
 
@@ -12,18 +12,26 @@ jobs:
   preprocess-and-iterate:
     runs-on: ubuntu-latest
 
+    outputs:
+      json_array: ${{ steps.prepare_array.outputs.json_array }}
+
     steps:
       # Step 1: Convert Comma-Separated String to JSON Array
       - name: Prepare JSON Array from Input
         id: prepare_array
         run: |
           items="${{ inputs.items }}"
+          if [[ -z "$items" ]]; then
+            echo "Error: Input string is empty" >&2
+            exit 1
+          fi
           json_array=$(echo "[\"${items//,/\",\"}\"]")
+          echo "json_array=$json_array"
           echo "json_array=$json_array" >> $GITHUB_OUTPUT
-          
+
   process-each-item:
-    runs-on: ubuntu-latest
     needs: preprocess-and-iterate
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         item: ${{ fromJson(needs.preprocess-and-iterate.outputs.json_array) }}
@@ -31,4 +39,3 @@ jobs:
       - name: Process Each Item
         run: |
           echo "Processing item: ${{ matrix.item }}"
-          
