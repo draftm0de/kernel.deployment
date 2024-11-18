@@ -62,41 +62,19 @@ jobs:
           build_options="$build_options --build-arg SOURCE_DATE_EPOCH=0"
           docker build $build_options --no-cache ${{ inputs.build_context }}
           echo "::notice:: > build successfully"
-          sha=$(docker inspect --format='{{index .Id}}' $image_tag)
-          echo "::notice:: sha: $sha"
 
-          image_tag="$image_tag-buildx"
-          DOCKER_BUILDKIT=1
-          docker buildx build \
-            --no-cache \
-            --builder default \
-            --provenance=false \
-            --sbom=false \
-            $build_args \
-            --output type=image,rewrite-timestamp=true \
-            --tag $image_tag \
-            ${{ inputs.build_context }}
-          sha=$(docker inspect --format='{{index .Id}}' $image_tag)
-          echo "::notice:: sha: $sha"
-          sha=$(docker inspect --format='{{ .Id }}' $image_tag)
-          echo "::notice:: sha: $sha"
-          docker save $image_tag -o image.tar
-          sha=$(sha256sum image.tar)
-          echo "::notice:: sha: $sha"
-          docker inspect $image_tag
-#
-#      - name: Save Docker Image
-#        if: ${{ inputs.artifact }}
-#        id: image-save
-#        run: |
-#          file="${{ inputs.image }}.tar"
-#          docker save -o $file ${{ steps.image-build.outputs.image_tag }}
-#          echo "file=$file" >> $GITHUB_OUTPUT   
+      - name: Save Docker Image
+        if: ${{ inputs.artifact }}
+        id: image-save
+        run: |
+          file="${{ inputs.image }}.tar"
+          docker save -o $file ${{ steps.image-build.outputs.image_tag }}
+          echo "file=$file" >> $GITHUB_OUTPUT   
 
-#      - name: Upload Docker Image Artifact
-#        if: ${{ inputs.artifact }}
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: ${{ inputs.artifact }}
-#          path: ${{ steps.image-save.outputs.file }}
-#          if-no-files-found: error
+      - name: Upload Docker Image Artifact
+        if: ${{ inputs.artifact }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact }}
+          path: ${{ steps.image-save.outputs.file }}
+          if-no-files-found: error
