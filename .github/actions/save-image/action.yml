@@ -16,18 +16,18 @@ runs:
       id: image-save
       shell: bash
       run: |
-        source="${{ inputs.image }}"
-        target="${{ inputs.image }}"
+        image="${{ inputs.image }}"
+        file="${{ inputs.image }}"
         
         # convert image-name into filename
-        target="${target//\//-}"
-        target="${target//:/-}"
-        target="${target//./-}"
-        target="${target}.tar"
+        file="${file%%:*}"  
+        file="${file//\//-}"
+        file="${file//./-}"
+        file="${file}.tar"
         
         # save docker image to file
-        docker save -o $target $source
-        echo "file=$target" >> $GITHUB_OUTPUT   
+        docker save -o $file $image
+        echo "file=$file" >> $GITHUB_OUTPUT   
 
     - name: Upload Docker Image Artifact
       uses: actions/upload-artifact@v4

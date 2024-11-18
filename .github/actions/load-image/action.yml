@@ -23,13 +23,13 @@ runs:
       id: load-image
       run: |
         # convert image-name into filename
-        source="${{ inputs.image }}"
-        source="${source//\//-}"
-        source="${source//:/-}"
-        source="${source//./-}"
-        source=".image/${source}.tar"
+        file="${{ inputs.image }}"
+        file="${file%%:*}"
+        file="${file//\//-}"
+        file="${file//./-}"
+        file=".image/${file}.tar"
         
-        echo "::notice:: Loading Docker Image from ${source}..."               
-        image=$(docker load --input ${source} | grep 'Loaded image:' | awk '{print $3}')
+        echo "::notice:: Loading Docker Image from ${file}..."               
+        image=$(docker load --input ${file} | grep 'Loaded image:' | awk '{print $3}')
         echo "::notice:: > Docker Image loaded as $image"       
         echo "image=$image" >> $GITHUB_OUTPUT

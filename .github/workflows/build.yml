@@ -63,4 +63,4 @@ jobs:
         id: save-image
         uses: draftm0de/kernel.deployment/.github/actions/save-image@main
         with:
-          image: ${{ inputs.image }}
+          image: ${{ steps.image-build.outputs.image_tag }}
