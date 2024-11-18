@@ -3,20 +3,40 @@ name: Tag Image and Commit
 on:
   workflow_call:
     inputs:
+      namespace:
+        description: "docker namespace"
+        required: true
+        type: string
+      image:
+        description: "docker image (name / file)"
+        required: true
+        type: string    
+      artifact:
+        description: "artifact name"
+        required: true
+        type: string    
       tags:
         description: "Comma-separated list of tags to process"
         required: true
         type: string
+    secrets:
+      docker_token:
+        description: "Docker Token"
+        required: true        
 
 jobs:
   preprocessing:
+    env:
+      ARTIFACT_PATH: "artifact"  
     runs-on: ubuntu-latest
     outputs:
       tags: ${{ steps.prepare.outputs.tags }}
+      source: ${{ steps.source.outputs.image_name }}
     steps:
       - name: Convert Tags From Input
         id: prepare
         run: |
+          echo "**notice** Converting Input.Tags to Array..."
           items="${{ inputs.tags }}"
           if [[ -z "$items" ]]; then
             echo "**Error** Input string is empty" >&2
@@ -24,16 +44,22 @@ jobs:
           fi
           tags=$(echo "[\"${items//,/\",\"}\"]")
           echo "tags=$tags" >> $GITHUB_OUTPUT
+          echo "**notice** > Input.Tags converted."
           
       - name: Download Artifact
-        run: |
-          echo "**notice** download artifact..."
-          echo "**notice** artifact downloaded."
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact }}
+          path: ${{ env.ARTIFACT_PATH }}
 
-      - name: Load Artifact
+      - name: Load Docker Image
+        id: source
         run: |
-          echo "**notice** load artifact..."
-          echo "**notice** artifact loaded."
+          echo "::notice:: Loading Docker Image from artifact..."        
+          file="${{ env.ARTIFACT_PATH }}/${{ inputs.image }}.tar"
+          image_name=$(docker load --input ${file} | grep 'Loaded image:' | awk '{print $3}')        
+          echo "image_name=$image_name" >> $GITHUB_OUTPUT
+          echo "::notice:: > Docker Image loaded as $image_name"
 
   tag-and-push:
     needs: preprocessing
@@ -54,17 +80,22 @@ jobs:
         
       - name: Tag Docker Image
         run: |
-          echo "**notice** Tagging Docker Image with ${{ matrix.item }}..."
-          echo "**notice** Docker image tagged with ${{ matrix.item }}."
+          echo "**notice** Tagging Docker Image..."
+          source=${{ needs.preprocessing.outputs.source }}
+          target="${{ inputs.namespace }}/${{ inputs.image }}:${{ matrix.item }}"
+          echo "**notice** > Docker image $source tagged with $target"
       
       - name: Tag Commit
         run: |
+          echo "**notice** Tagging Commit..."
           if git ls-remote --heads origin ${{ matrix.item }} | grep -q ${{ matrix.item }}; then
-            echo "**notice** Tag Commit skipped, Tag ${{ matrix.item }} is a branch" 
+            echo "**notice** > skipped, Tag ${{ matrix.item }} is a branch" 
           else
-            echo "**notice** Tag Commit with ${{ matrix.item }}"
+            echo "**notice** > Commit tagged with ${{ matrix.item }}"
           fi
             
       - name: Push Docker Image
         run: |
-          echo "**notice** Push Docker Image with ${{ matrix.item }}"  
+          echo "**notice** Pushing Docker Image"  
+          target="${{ inputs.namespace }}/${{ inputs.image }}:${{ matrix.item }}"
+          echo "**notice** > Image pushed as $target"
