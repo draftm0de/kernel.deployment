@@ -27,10 +27,10 @@ jobs:
           # Check if the current commit already has a matching version tag
           existing_tag=$(git tag --points-at HEAD | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" || true)
           if [ -n "$existing_tag" ]; then
-            echo "Commit already has a tag: $existing_tag. Skipping tagging."
+            echo "**error* commit already has a tag, skipping tagging."
             exit 0
           fi
-          echo "No existing tag on this commit."
+          echo "**notice* commit does not have any tag, continue tagging"
 
       - name: Determine Base Version from Branch Name
         id: get_base_version
