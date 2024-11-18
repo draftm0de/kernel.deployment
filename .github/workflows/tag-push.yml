@@ -33,50 +33,23 @@ jobs:
         run: |
           echo "**notice** load artifact"
 
-  tag:
+  tag-and-push:
     needs: preprocessing
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        item: ${{ fromJson(needs.preprocessing.outputs.tags) }}
+        item: ${{ fromJson(needs.preprocessing.outputs.tags) }}    
     steps:
       - name: Tag Docker Image
         run: |
-          echo "**notice** Tag Docker Image with ${{ matrix.item }}"
+          echo "**notice** Tag Docker Images with ${{ matrix.item }}"
       
       - name: Tag Commit
         run: |
-          if git ls-remote --heads origin ${{ matrix.item }} | grep -q ${{ matrix.item }}; then
-            echo "tag_is_branch=true" >> $GITHUB_ENV
-          else
-            echo "tag_is_branch=false" >> $GITHUB_ENV
+          if ! git ls-remote --heads origin ${{ matrix.item }} | grep -q ${{ matrix.item }}; then
+            echo "**notice** Tag Commit with ${{ matrix.item }}"
+          fi
             
-      - name: Process Tag as Non-Existing Branch
-        if: env.tag_is_branch == 'false'
+      - name: Push Docker Image
         run: |
-          echo "**notice** Tag Commit with ${{ matrix.item }}"
-          echo "**notice** Tag Image with with ${{ matrix.item }}"
-
-  push:
-    needs: tag
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        item: ${{ fromJson(needs.preprocessing.outputs.tags) }}
-    steps:
-      - name: Tag is Branch
-        run: |
-          if git ls-remote --heads origin ${{ matrix.item }} | grep -q ${{ matrix.item }}; then
-            echo "tag_is_branch=true" >> $GITHUB_ENV
-          else
-            echo "tag_is_branch=false" >> $GITHUB_ENV
-            
-      - name: Process Tag as Existing Branch
-        if: env.tag_is_branch == 'true'
-        run: |
-          echo "**notice** Branch exists for tag: ${{ matrix.item }}. Processing accordingly."
-
-      - name: Process Tag as Non-Existing Branch
-        if: env.tag_is_branch == 'false'
-        run: |
-          echo "**notice** Branch does not exists for tag: ${{ matrix.item }}. Processing accordingly."          
+          echo "**notice** Push Docker Image with ${{ matrix.item }}"  
