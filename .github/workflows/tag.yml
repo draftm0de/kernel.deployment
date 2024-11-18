@@ -53,10 +53,10 @@ jobs:
           echo "New tag will be: $new_tag"
           echo "NEW_TAG=$new_tag" >> $GITHUB_ENV
 
-      - name: Create New Tag
-        run: |
-          # Tag the current commit with the new version
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag ${{ env.NEW_TAG }}
-          git push origin ${{ env.NEW_TAG }}
+#      - name: Create New Tag
+#        run: |
+#          # Tag the current commit with the new version
+#          git config user.name "github-actions[bot]"
+#          git config user.email "github-actions[bot]@users.noreply.github.com"
+#          git tag ${{ env.NEW_TAG }}
+#          git push origin ${{ env.NEW_TAG }}
