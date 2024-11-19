@@ -41,10 +41,10 @@ runs:
           echo "::notice:: > tag as: $target"
           
           docker tag $source $target
-          echo "::notice:: image tagged"
+          echo "::notice:: > image tagged"
           
           docker push $target
-          echo "::notice:: image pushed"
+          echo "::notice:: > image pushed"
         done
         
         echo "::notice:: Image tagged and pushed..."

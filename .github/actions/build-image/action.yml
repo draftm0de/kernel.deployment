@@ -51,7 +51,6 @@ runs:
         build_options="$build_options ${{ inputs.context }}"
 
         echo "::notice:: Build arguments prepared."
-
         echo "build_options=$build_options" >> $GITHUB_OUTPUT        
         echo "image=$tag" >> $GITHUB_OUTPUT
 
