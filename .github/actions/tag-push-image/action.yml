@@ -51,6 +51,8 @@ runs:
       shell: bash
       run: |
         echo "::notice:: Tagging Docker Image..."
+        docker images
+        
         image="${{ inputs.image }}"
         if [ -n "${{ steps.load-image.outputs.image }}" ]; then
           image="${{ steps.load-image.outputs.image }}"
