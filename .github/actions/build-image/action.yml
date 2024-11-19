@@ -60,7 +60,7 @@ runs:
         if [ -n "$target" ]; then
           echo "**notice** > target: $target"
           build_options="$build_options --target $target"
-        if        
+        fi     
         
         echo "**notice** > context: ${{ inputs.context }}"
         build_options="$build_options ${{ inputs.context }}"
