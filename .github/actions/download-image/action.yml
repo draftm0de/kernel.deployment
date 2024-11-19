@@ -22,7 +22,7 @@ runs:
         name: ${{ inputs.artifact }}
         path: .image
 
-    - name: Load Docker Image
+    - name: Load Image from Artifact
       shell: bash
       id: load-image
       run: |

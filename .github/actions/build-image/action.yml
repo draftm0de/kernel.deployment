@@ -63,7 +63,7 @@ runs:
         docker build $options
         echo "::notice:: Image built."
 
-    - name: Upload Build Image as Artifact
+    - name: Upload Build Image to Artifact
       if: ${{ inputs.artifact }}
       uses: draftm0de/kernel.deployment/.github/actions/upload-image@main
       with:

@@ -10,9 +10,6 @@ inputs:
   artifact:
     description: "artifact name"
     required: true
-  DOCKER_TOKEN:
-    description: "docker hub token (push)"
-    required: true
   GITHUB_TOKEN:
     description: "github token (tag)"
     required: true
@@ -20,19 +17,13 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Upload Build Image as Artifact
+    - name: Download Image from Artifact
       if: ${{ inputs.artifact }}
       id: load-image
       uses: draftm0de/kernel.deployment/.github/actions/download-image@main
       with:
         image: ${{ inputs.image }}
         artifact: ${{ inputs.artifact }}
-
-    - name: Log In To Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ inputs.namespace }}
-        password: ${{ inputs.DOCKER_TOKEN }}
 
     - name: Tag And Push Docker Image
       shell: bash
