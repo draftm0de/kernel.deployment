@@ -42,12 +42,13 @@ runs:
         file="${{ steps.arguments.outputs.file }}"
         
         # docker save -o $file $image
+        echo "content" >> $file
          
         echo "::notice:: Docker Image saved as $file."
 
-#    - name: Upload Docker Image Artifact
-#      uses: actions/upload-artifact@v4
-#      with:
-#        name: ${{ inputs.artifact }}
-#        path: ${{ steps.arguments.outputs.file }}
-#        if-no-files-found: error
+    - name: Upload Docker Image Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact }}
+        path: ${{ steps.arguments.outputs.file }}
+        if-no-files-found: error
