@@ -20,7 +20,7 @@ runs:
       shell: bash
       id: arguments
       run: |
-        echo "**notice** Preparing save arguments..."
+        echo "::notice:: Preparing save arguments..."
         # cleanup image name 
         filename="${{ inputs.file }}"
         filename="${filename//\//-}"
@@ -36,7 +36,7 @@ runs:
       id: image-save
       shell: bash
       run: |
-        echo "**notice** Saving Docker Image ${{ inputs.image }} as file..."
+        echo "::notice:: Saving Docker Image ${{ inputs.image }} as file..."
         
         image="${{ inputs.image }}"        
         image_file="${{ steps.arguments.outputs.file }}"
@@ -44,7 +44,7 @@ runs:
         # docker save -o $file $image_file
         echo "file=$image_file" >> $GITHUB_OUTPUT
          
-        echo "**notice** Docker Image saved as $file."
+        echo "::notice:: Docker Image saved as $file."
 
 #    - name: Upload Docker Image Artifact
 #      uses: actions/upload-artifact@v4

@@ -36,36 +36,33 @@ runs:
       id: arguments
       shell: bash
       run: |
-        echo "**notice** Preparing build arguments..."
-        build_options="{{ inputs.options }}"
+        echo "::notice:: Preparing build arguments..."
+        build_options="${{ inputs.options }}"
         
         build_args_file="${{ inputs.context }}/${{ inputs.build_args_file }}"
         if [ -f "$build_args_file" ]; then
-          echo "**notice** > build-args from file: $build_args_file"
+          echo "::notice:: > build-args from file: $build_args_file"
           build_args=$(cat "$build_args_file" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
           build_options="$build_options $build_args"        
         fi    
         
-        tag="${{ inputs.tag }}"
-        image="${{ inputs.image }}"
-        if [ -n "$tag" ]; then          
-          tag="${image}:${tag}"
+        if [ -n "${{ inputs.tag }}" ]; then          
+          tag="${{ inputs.image }}:${{ inputs.tag }}"
         else
-          tag="${image}:${{ github.sha }}"
+          tag="${{ inputs.image }}:${{ github.sha }}"
         fi
-        echo "**notice** > tag: $tag"       
+        echo "::notice:: > tag: $tag"       
         build_options="$build_options --tag $tag"
         
-        target="${{ inputs.target }}"
-        if [ -n "$target" ]; then
-          echo "**notice** > target: $target"
-          build_options="$build_options --target $target"
+        if [ -n "${{ inputs.target }}" ]; then
+          echo "::notice:: > target: ${{ inputs.target }}"
+          build_options="$build_options --target ${{ inputs.target }}"
         fi     
         
-        echo "**notice** > context: ${{ inputs.context }}"
+        echo "::notice:: > context: ${{ inputs.context }}"
         build_options="$build_options ${{ inputs.context }}"
 
-        echo "**notice** Build arguments prepared."
+        echo "::notice:: Build arguments prepared."
 
         echo "build_options=$build_options" >> $GITHUB_OUTPUT        
         echo "image=$tag" >> $GITHUB_OUTPUT
@@ -76,10 +73,10 @@ runs:
     - name: Build Image
       shell: bash
       run: |
-        echo "**notice** Building Docker Image..."
+        echo "::notice:: Building Docker Image..."
         options="${{ steps.arguments.outputs.build_options }}"
-        echo "docker build $options"
-        echo "**notice** Image built."
+        # docker build $options
+        echo "::notice:: Image built."
 
     - name: Upload Build Image as Artifact
       id: save-image
