@@ -2,7 +2,7 @@ name: "Load Docker Image From Artifact"
 description: "Load docker image from a given artifact"
 inputs:
   image:
-    description: "file name"
+    description: "image name"
     required: true
   artifact:
     description: "artifact name"
@@ -31,9 +31,10 @@ runs:
         filename="${filename//\//-}"
         filename="${filename//./-}"
         filename="${filename//:/-}"
+        filename=".image/${filename}.tar"
         
-        echo "::notice:: Loading Docker Image from ${file}..."               
-        image=$(docker load --input ${file} | grep 'Loaded image:' | awk '{print $3}')
+        echo "::notice:: Loading Docker Image from ${filename}..."               
+        image=$(docker load --input ${filename} | grep 'Loaded image:' | awk '{print $3}')
         
-        echo "::notice:: Docker Image loaded as $image"       
+        echo "::notice:: Docker Image loaded as $image"
         echo "image=$image" >> $GITHUB_OUTPUT

@@ -4,9 +4,6 @@ inputs:
   image:
     description: "image name"
     required: true
-  tag:
-    description: "--tag (default github.sha)"
-    required: false
   target:
     description: "build --target option"
     required: false
@@ -24,11 +21,6 @@ inputs:
     description: "artifact name"
     required: false
 
-outputs:
-  image:
-    description: "Loaded Docker Image Name"
-    value: ${{ steps.arguments.outputs.image }}
-
 runs:
   using: "composite"
   steps:
@@ -45,12 +37,8 @@ runs:
           build_args=$(cat "$build_args_file" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
           build_options="$build_options $build_args"        
         fi    
-        
-        if [ -n "${{ inputs.tag }}" ]; then          
-          tag="${{ inputs.image }}:${{ inputs.tag }}"
-        else
-          tag="${{ inputs.image }}:${{ github.sha }}"
-        fi
+               
+        tag="${{ inputs.image }}:latest"
         echo "::notice:: > tag: $tag"       
         build_options="$build_options --tag $tag"
         
@@ -79,5 +67,5 @@ runs:
       if: ${{ inputs.artifact }}
       uses: draftm0de/kernel.deployment/.github/actions/upload-image@main
       with:
-        artifact: ${{ inputs.artifact }}
         image: ${{ steps.arguments.outputs.image }}
+        artifact: ${{ inputs.artifact }}

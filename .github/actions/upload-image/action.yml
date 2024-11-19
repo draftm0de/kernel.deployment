@@ -26,8 +26,6 @@ runs:
         filename="${filename//\//-}"
         filename="${filename//./-}"
         filename="${filename//:/-}"
-      
-        # prepare filename
         filename="${filename}.tar"
       
         echo "::notice:: Arguments prepared."

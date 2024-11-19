@@ -1,9 +1,6 @@
 name: "Tag and Push Docker Image"
 description: "Tag and Push Docker Image"
 inputs:
-  namespace:
-    description: "docker namespace"
-    required: true
   image:
     description: "image name"
     required: true
@@ -23,29 +20,13 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Download Artifact
-      if: ${{ inputs.artifact }}
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ inputs.artifact }}
-        path: .image
-
-    - name: Load Docker Image
+    - name: Upload Build Image as Artifact
       if: ${{ inputs.artifact }}
       id: load-image
-      shell: bash
-      run: |
-        # convert inputs.image to filename 
-        filename="${{ inputs.image }}"
-        filename="${filename//\//-}"
-        filename="${filename//./-}"
-        filename="${filename//:/-}"
-        
-        echo "::notice:: Loading Docker Image from ${file}..."               
-        image=$(docker load --input ${file} | grep 'Loaded image:' | awk '{print $3}')
-        
-        echo "::notice:: Docker Image loaded as $image"       
-        echo "image=$image" >> $GITHUB_OUTPUT
+      uses: draftm0de/kernel.deployment/.github/actions/download-image@main
+      with:
+        image: ${{ inputs.image }}
+        artifact: ${{ inputs.artifact }}
 
     - name: Log In To Docker Hub
       uses: docker/login-action@v3
@@ -57,7 +38,7 @@ runs:
       shell: bash
       run: |
         echo "::notice:: Tagging And Pushing Docker Image..."       
-        source="${{ inputs.image }}"
+        source="${{ inputs.image }}:latest"
         if [ -n "${{ steps.load-image.outputs.image }}" ]; then
           source="${{ steps.load-image.outputs.image }}"
         fi 
@@ -65,7 +46,7 @@ runs:
         
         tags="${{ inputs.tags }}"
         for tag in $tags; do        
-          target="${{ inputs.namespace }}/$tag"
+          target="${{ inputs.image }}:${tag}"
           echo "::notice:: > tag as: $target"
           
           docker tag $source $target
