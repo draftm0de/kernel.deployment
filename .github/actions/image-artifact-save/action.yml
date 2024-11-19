@@ -1,0 +1,54 @@
+name: "Save Image As Artifact"
+description: "Save Built Docker Image as Artifact"
+inputs:
+  file:
+    description: "file name"
+    required: true
+  artifact:
+    description: "artifact path"
+    required: true
+
+outputs:
+  file:
+    description: "image stored as file name"
+    value: ${{ steps.arguments.outputs.file }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Preparing save arguments
+      shell: bash
+      id: arguments
+      run: |
+        echo "**notice** Preparing save arguments..."
+        # cleanup image name 
+        filename="${{ inputs.file }}"
+        filename="${filename//\//-}"
+        filename="${filename//./-}"
+        filename="${filename//:/-}"
+      
+        # prepare filename
+        filename="${filename}.tar"
+      
+        echo "file=$filename" >> $GITHUB_OUTPUT
+
+    - name: Save Docker Image
+      id: image-save
+      shell: bash
+      run: |
+        echo "**notice** Saving Docker Image ${{ inputs.image }} as file..."
+        
+        image="${{ inputs.image }}"        
+        image_file="${{ steps.arguments.outputs.file }}"
+        
+        # docker save -o $file $image_file
+        echo "file=$image_file" >> $GITHUB_OUTPUT
+         
+        echo "**notice** Docker Image saved as $file."
+
+#    - name: Upload Docker Image Artifact
+#      uses: actions/upload-artifact@v4
+#      with:
+#        name: ${{ inputs.artifact }}
+#        path: ${{ steps.arguments.outputs.file }}
+#        if-no-files-found: error

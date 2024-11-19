@@ -1,0 +1,86 @@
+name: "Build Docker Image"
+description: "Build Docker Image"
+inputs:
+  image:
+    description: "image name"
+    required: true
+  tag:
+    description: "--tag (default github.sha)"
+    required: false
+  target:
+    description: "build --target option"
+    required: false
+  context:
+    description: "build context (default: .)"
+    required: false
+    default: "."
+  options:
+    description: "additional build options"
+    required: false
+  build_args_file:
+    description: "--build-args from file"
+    required: false
+  artifact:
+    description: "save built image into an artifact"
+    required: false
+
+outputs:
+  image:
+    description: "Loaded Docker Image Name"
+    value: ${{ steps.arguments.outputs.image }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Preparing Build Arguments
+      id: arguments
+      shell: bash
+      run: |
+        echo "**notice** Preparing build arguments..."
+        build_options="{{ inputs.options }}"
+        
+        build_args_file="${{ inputs.context }}/${{ inputs.build_args_file }}"
+        if [ -f "$build_args_file" ]; then
+          echo "**notice** > build-args from file: $build_args_file"
+          build_args=$(cat "$build_args_file" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
+          build_options="$build_options $build_args"        
+        fi    
+        
+        if [ -n "${{ inputs.tag }}" ]; then          
+          tag="{{ inputs.image }}:${{ input.tag }}"
+        else
+          tag="{{ inputs.image }}:${{ github.sha }}"
+        fi
+        echo "**notice** > tag: $tag"       
+        build_options="$build_options --tag $tag"
+        
+        if [ -n "${{ inputs.target }}" ]; then
+          echo "**notice** > target: ${{ input.target }}"
+          build_options="$build_options --target ${{ input.target }}"
+        if        
+        
+        echo "**notice** > context: ${{ inputs.context }}"
+        build_options="$build_options ${{ inputs.context }}"
+
+        echo "**notice** Build arguments prepared."
+
+        echo "build_options=$build_options" >> $GITHUB_OUTPUT        
+        echo "image=$tag" >> $GITHUB_OUTPUT
+
+    - name: Checkout Source
+      uses: actions/checkout@v4
+
+    - name: Build Image
+      shell: bash
+      run: |
+        echo "**notice** Building Docker Image..."
+        echo "docker build ${{ steps.arguments.outputs.build_options }}"
+        echo "**notice** Image built."
+
+    - name: Upload Build Image as Artifact
+      id: save-image
+      if: ${{ inputs.artifact }}
+      uses: draftm0de/kernel.deployment/.github/actions/image-artifact-save@main
+      with:
+        path: ${{ inputs.artifact }}
+        file: ${{ steps.arguments.outputs.image }}
