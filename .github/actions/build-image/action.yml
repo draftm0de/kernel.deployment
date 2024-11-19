@@ -84,4 +84,4 @@ runs:
       uses: draftm0de/kernel.deployment/.github/actions/image-artifact-save@main
       with:
         artifact: ${{ inputs.artifact }}
-        file: ${{ steps.arguments.outputs.image }}
+        image: ${{ steps.arguments.outputs.image }}

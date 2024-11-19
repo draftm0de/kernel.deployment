@@ -1,7 +1,7 @@
 name: "Save Image As Artifact"
 description: "Save Built Docker Image as Artifact"
 inputs:
-  file:
+  image:
     description: "file name"
     required: true
   artifact:
@@ -16,13 +16,13 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Preparing save arguments
+    - name: Preparing Save Arguments
       shell: bash
       id: arguments
       run: |
-        echo "::notice:: Preparing save arguments..."
+        echo "::notice:: Preparing Save Arguments..."
         # cleanup image name 
-        filename="${{ inputs.file }}"
+        filename="${{ inputs.image }}"
         filename="${filename//\//-}"
         filename="${filename//./-}"
         filename="${filename//:/-}"
@@ -30,19 +30,18 @@ runs:
         # prepare filename
         filename="${filename}.tar"
       
-        echo "file=$filename" >> $GITHUB_OUTPUT
+        echo "::notice:: Arguments prepared."
+        echo "file=$filename" >> $GITHUB_OUTPUT                
 
     - name: Save Docker Image
       id: image-save
       shell: bash
       run: |
         echo "::notice:: Saving Docker Image ${{ inputs.image }} as file..."
+        image="${{ inputs.image }}"           
+        file="${{ steps.arguments.outputs.file }}"
         
-        image="${{ inputs.image }}"        
-        image_file="${{ steps.arguments.outputs.file }}"
-        
-        # docker save -o $file $image_file
-        echo "file=$image_file" >> $GITHUB_OUTPUT
+        # docker save -o $file $image
          
         echo "::notice:: Docker Image saved as $file."
 
