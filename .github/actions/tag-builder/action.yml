@@ -53,7 +53,7 @@ runs:
       shell: bash
       id: get-tags
       run: |
-        echo "::notice:: Approve New Image Tag
+        echo "::notice:: Approve New Image Tag..."
         new_tag="${{ steps.new-tag.outputs.tag }}"
         if git ls-remote --exit-code --heads origin $new_tag; then
           echo "::error:: tag $new_tag already exists as a branch"
