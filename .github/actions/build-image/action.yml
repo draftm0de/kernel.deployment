@@ -46,17 +46,20 @@ runs:
           build_options="$build_options $build_args"        
         fi    
         
-        if [ -n "${{ inputs.tag }}" ]; then          
-          tag="{{ inputs.image }}:${{ inputs.tag }}"
+        tag="${{ inputs.tag }}"
+        image="${{ inputs.image }}"
+        if [ -n "$tag" ]; then          
+          tag="{image}:${tag}"
         else
-          tag="{{ inputs.image }}:${{ github.sha }}"
+          tag="${image}:${{ github.sha }}"
         fi
         echo "**notice** > tag: $tag"       
         build_options="$build_options --tag $tag"
         
-        if [ -n "${{ inputs.target }}" ]; then
-          echo "**notice** > target: ${{ inputs.target }}"
-          build_options="$build_options --target ${{ inputs.target }}"
+        target="${{ inputs.target }}"
+        if [ -n "$target" ]; then
+          echo "**notice** > target: $target"
+          build_options="$build_options --target $target"
         if        
         
         echo "**notice** > context: ${{ inputs.context }}"
@@ -74,7 +77,8 @@ runs:
       shell: bash
       run: |
         echo "**notice** Building Docker Image..."
-        echo "docker build ${{ steps.arguments.outputs.build_options }}"
+        options="${{ steps.arguments.outputs.build_options }}"
+        echo "docker build $options"
         echo "**notice** Image built."
 
     - name: Upload Build Image as Artifact
