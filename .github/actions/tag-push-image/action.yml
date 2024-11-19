@@ -47,27 +47,52 @@ runs:
         echo "::notice:: Docker Image loaded as $image"       
         echo "image=$image" >> $GITHUB_OUTPUT
 
-    - name: Tag Docker Image
+    - name: Log In To Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ inputs.namespace }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+
+    - name: Tag And Push Docker Image
       shell: bash
       run: |
-        echo "::notice:: Tagging Docker Image..."
+        echo "::notice:: Tagging And Pushing Docker Image..."
         docker images
         
-        image="${{ inputs.image }}"
+        source="${{ inputs.image }}"
         if [ -n "${{ steps.load-image.outputs.image }}" ]; then
-          image="${{ steps.load-image.outputs.image }}"
+          source="${{ steps.load-image.outputs.image }}"
         fi 
-        echo "::notice:: > image: $image"
+        echo "::notice:: > source: $source"
         
         tags="${{ steps.arguments.outputs.tags }}"
-        echo "::notice:: > tags: $tags"
+        for tag in $tags; do        
+          target="${{ inputs.namespace }}/$tag"
+          echo "::notice:: > tag as: $target"
+          
+          docker tag $source $target
+          echo "::notice:: image tagged"
+          
+          docker push $target
+          echo "::notice:: image pushed"
+        done
         
-        echo "::notice:: Image tagged..."
+        echo "::notice:: Image tagged and pushed..."
+
+    - name: Authenticate With GitHub
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"             
 
     - name: Tag Git Commit
       shell: bash
       run: |
         echo "::notice:: Tagging Commit..."     
         tags="${{ steps.arguments.outputs.tags }}"
-        echo "::notice:: > tags: $tags"        
+        for tag in $tags; do
+          echo "::notice:: > tags: $tags"
+        done
         echo "::notice:: Commit tagged..."
