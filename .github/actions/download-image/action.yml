@@ -26,6 +26,8 @@ runs:
       shell: bash
       id: load-image
       run: |
+        ls -la
+        ls .image -la
         # convert inputs.image to filename 
         filename="${{ inputs.image }}"
         filename="${filename//\//-}"
