@@ -75,13 +75,12 @@ runs:
       run: |
         echo "::notice:: Building Docker Image..."
         options="${{ steps.arguments.outputs.build_options }}"
-        # docker build $options
+        docker build $options
         echo "::notice:: Image built."
 
     - name: Upload Build Image as Artifact
-      id: save-image
       if: ${{ inputs.artifact }}
-      uses: draftm0de/kernel.deployment/.github/actions/image-artifact-save@main
+      uses: draftm0de/kernel.deployment/.github/actions/upload-image@main
       with:
         artifact: ${{ inputs.artifact }}
         image: ${{ steps.arguments.outputs.image }}

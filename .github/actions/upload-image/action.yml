@@ -41,9 +41,8 @@ runs:
         image="${{ inputs.image }}"           
         file="${{ steps.arguments.outputs.file }}"
         
-        # docker save -o $file $image
-        echo "content" >> $file
-         
+        docker save -o $file $image
+        
         echo "::notice:: Docker Image saved as $file."
 
     - name: Upload Docker Image Artifact
