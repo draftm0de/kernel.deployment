@@ -67,5 +67,5 @@ runs:
       if: ${{ inputs.artifact }}
       uses: draftm0de/kernel.deployment/.github/actions/upload-image@main
       with:
-        image: ${{ steps.arguments.outputs.image }}
+        image: ${{ inputs.image }}
         artifact: ${{ inputs.artifact }}
