@@ -26,7 +26,7 @@ runs:
         echo "::notice:: current commit has no tag, continue tagging"
 
     - name: Find Latest Tag for Base Version
-      if: ! ${{ steps.check-tag.outputs.tag }}
+      if: "! ${{ steps.check-tag.outputs.tag }}"
       shell: bash
       id: get-tags
       run: |
