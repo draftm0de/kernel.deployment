@@ -6,7 +6,7 @@ inputs:
     required: true
   artifact:
     description: "artifact name"
-    required: true
+    required: false
   severity:
     description: "Image Scan Severities"
     required: false
