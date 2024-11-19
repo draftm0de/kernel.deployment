@@ -1,0 +1,71 @@
+name: "Tag and Push Docker Image"
+description: "Tag and Push Docker Image"
+inputs:
+  namespace:
+    description: "docker namespace"
+    required: true
+  image:
+    description: "image name"
+    required: true
+  artifact:
+    description: "artifact name"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Preparing Tag Arguments
+      id: arguments
+      shell: bash
+      run: |
+        tags=()
+        tags+=("1.1.0")
+        tags+=("1.1")
+        echo "tags=${tags[*]}" >> $GITHUB_OUTPUT
+
+    - name: Download Artifact
+      if: ${{ inputs.artifact }}
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact }}
+        path: .image
+
+    - name: Load Docker Image
+      if: ${{ inputs.artifact }}
+      id: load-image
+      shell: bash
+      run: |
+        # convert inputs.image to filename 
+        filename="${{ inputs.image }}"
+        filename="${filename//\//-}"
+        filename="${filename//./-}"
+        filename="${filename//:/-}"
+        
+        echo "::notice:: Loading Docker Image from ${file}..."               
+        image=$(docker load --input ${file} | grep 'Loaded image:' | awk '{print $3}')
+        
+        echo "::notice:: Docker Image loaded as $image"       
+        echo "image=$image" >> $GITHUB_OUTPUT
+
+    - name: Tag Docker Image
+      shell: bash
+      run: |
+        echo "::notice:: Tagging Docker Image..."
+        image="${{ inputs.image }}"
+        if [ -n "${{ steps.load-image.outputs.image }}" ]; then
+          image="${{ steps.load-image.outputs.image }}"
+        fi 
+        echo "::notice:: > image: $image"
+        
+        tags="${{ steps.arguments.outputs.tags }}"
+        echo "::notice:: > tags: $tags"
+        
+        echo "::notice:: Image tagged..."
+
+    - name: Tag Git Commit
+      shell: bash
+      run: |
+        echo "::notice:: Tagging Commit..."     
+        tags="${{ steps.arguments.outputs.tags }}"
+        echo "::notice:: > tags: $tags"        
+        echo "::notice:: Commit tagged..."

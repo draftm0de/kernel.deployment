@@ -1,11 +1,11 @@
-name: "Save Image As Artifact"
-description: "Save Built Docker Image as Artifact"
+name: "Save Docker Image As Artifact"
+description: "Upload built docker images as artifact"
 inputs:
   image:
-    description: "file name"
+    description: "image name"
     required: true
   artifact:
-    description: "artifact path"
+    description: "artifact name"
     required: true
 
 outputs:
@@ -21,7 +21,7 @@ runs:
       id: arguments
       run: |
         echo "::notice:: Preparing Save Arguments..."
-        # cleanup image name 
+        # convert inputs.image to filename
         filename="${{ inputs.image }}"
         filename="${filename//\//-}"
         filename="${filename//./-}"
