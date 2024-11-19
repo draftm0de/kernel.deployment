@@ -1,0 +1,49 @@
+name: "Calculate Tags"
+description: "Calculate Docker Image Tags"
+inputs:
+  target_branch:
+    description: "target branch name"
+    required: true
+
+outputs:
+  tags:
+    description: "Tags to be use for Docker and Git"
+    value: ${{ steps.get-tags.outputs.tags }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Ensure Current Commit Has No Tag
+      shell: bash
+      id: check-tag
+      run: |
+        # Check if the current commit already has a matching version tag
+        tag=$(git tag --points-at HEAD | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" || true)        
+        if [ -n "$tag" ]; then
+          echo "::error:: commit already has a tag, skipping tagging."        
+        fi
+        echo "tag=$tag" >> $GITHUB_OUTPUT
+        echo "::notice:: current commit has no tag, continue tagging"
+
+    - name: Find Latest Tag for Base Version
+      if: ! ${{ steps.check-tag.outputs.tag }}
+      shell: bash
+      id: get-tags
+      run: |
+        # Find the latest tag matching the base version pattern (e.g., 4.3.*)
+        latest_tag=$(git tag --list "${{ inputs.target_branch }}.*" --sort=-v:refname | head -n 1)
+        
+        # Determine the new tag
+        if [ -z "$latest_tag" ]; then
+          echo "::notice:: latest base version tag: no latest tag"          
+          # No existing tags, start with .1
+          new_tag="${{ inputs.target_branch }}.1"
+        else
+          echo "::notice:: latest base version tag: $latest_tag"          
+          # Increment the patch version
+          patch_version=${latest_tag##*.}
+          new_patch_version=$((patch_version + 1))
+          new_tag="${{ inputs.target_branch }}.$new_patch_version"
+        fi
+        echo "::notice:: new tag: $new_tag"          
+        echo "tags=${{ inputs.target_branch }} ${new_tag}" >> $GITHUB_OUTPUT
