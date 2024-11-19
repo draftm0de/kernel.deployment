@@ -50,9 +50,7 @@ runs:
     - name: Tag And Push Docker Image
       shell: bash
       run: |
-        echo "::notice:: Tagging And Pushing Docker Image..."
-        docker images
-        
+        echo "::notice:: Tagging And Pushing Docker Image..."       
         source="${{ inputs.image }}"
         if [ -n "${{ steps.load-image.outputs.image }}" ]; then
           source="${{ steps.load-image.outputs.image }}"
