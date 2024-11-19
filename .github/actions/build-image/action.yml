@@ -49,7 +49,7 @@ runs:
         tag="${{ inputs.tag }}"
         image="${{ inputs.image }}"
         if [ -n "$tag" ]; then          
-          tag="{image}:${tag}"
+          tag="${image}:${tag}"
         else
           tag="${image}:${{ github.sha }}"
         fi
