@@ -47,7 +47,7 @@ runs:
         fi    
         
         if [ -n "${{ inputs.tag }}" ]; then          
-          tag="{{ inputs.image }}:${{ input.tag }}"
+          tag="{{ inputs.image }}:${{ inputs.tag }}"
         else
           tag="{{ inputs.image }}:${{ github.sha }}"
         fi
@@ -55,8 +55,8 @@ runs:
         build_options="$build_options --tag $tag"
         
         if [ -n "${{ inputs.target }}" ]; then
-          echo "**notice** > target: ${{ input.target }}"
-          build_options="$build_options --target ${{ input.target }}"
+          echo "**notice** > target: ${{ inputs.target }}"
+          build_options="$build_options --target ${{ inputs.target }}"
         if        
         
         echo "**notice** > context: ${{ inputs.context }}"
