@@ -3,70 +3,113 @@ name: Reusable Version Tagging
 on:
   workflow_call:
     inputs:
-      branch_name:
-        description: "Branch name to operate on"
+      source:
+        description: "Source Branch"
         required: true
         type: string
-      version_pattern:
-        description: "Regex pattern to match version branches (e.g., 4.x, 1.0)"
-        required: false
-        default: "[0-9]+.*"
+      target:
+        description: "Target Branch"
+        required: true
         type: string
+
+    outputs:
+      image_tags:
+        description: "Tags to be use for Docker and Git"
+        value: ${{ steps.commit-tag.outputs.tags }}
+      commit_tag:
+        description: "Tags to be use for Docker and Git"
+        value: ${{ steps.get-commit-tag.outputs.tag }}
 
 jobs:
   tag-version:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check Out Repository
-        uses: actions/checkout@v4
+      - name: "Extract Target Branch"
+        id: target
+        uses: draftm0de/kernel.deployment/.github/actions/branch-version@main
+        with:
+          branch: ${{ inputs.target }}
 
-      - name: Ensure Current Commit Has No Tag
-        id: check_existing_tag
+      - name: "Extract Source Branch"
+        id: source
+        uses: draftm0de/kernel.deployment/.github/actions/branch-version@main
+        with:
+          branch: ${{ inputs.source }}
+
+      - name: "Commit: Build Tag"
+        # source branch does not match version patterns
+        # target matches version patterns
+        if: ${{ steps.source.outputs.branch }} == "-" && ${{ steps.target.outputs.branch }} == ${{ inputs.target }}
+        id: build-commit-tag
         run: |
-          # Check if the current commit already has a matching version tag
-          existing_tag=$(git tag --points-at HEAD | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" || true)
-          if [ -n "$existing_tag" ]; then
-            echo "**error* commit already has a tag, skipping tagging."
-            exit 0
+          if [ -n "${{ steps.target.outputs.patch }}" ]; then
+            echo "**error** Merging into ${{ inputs.target }} failure, already includes a patch version"
+            exit 1
           fi
-          echo "**notice* current commit has no tag, continue tagging"
-
-      - name: Determine Base Version from Branch Name
-        id: get_base_version
-        run: |
-          # Use the branch_name input as the base version
-          base_version="${{ inputs.branch_name }}"
-          echo "**notice** used base version: $base_version"
-          echo "BASE_VERSION=$base_version" >> $GITHUB_ENV
-
-      - name: Find Latest Tag for Base Version
-        id: find_latest_tag
-        run: |
-          # Find the latest tag matching the base version pattern (e.g., 4.3.*)
-          latest_tag=$(git tag --list "${{ env.BASE_VERSION }}.*" --sort=-v:refname | head -n 1)
-
-          # Determine the new tag
-          if [ -z "$latest_tag" ]; then
-            echo "**notice** latest base version tag: no latest tag"          
-            # No existing tags, start with .1
-            new_tag="${{ env.BASE_VERSION }}.1"            
+          echo "::notice:: Build Commit Tag..."
+          
+          pattern="${{ steps.target.outputs.prefix }}${{ steps.target.outputs.major }}"
+          if [ -n "${{ steps.target.outputs.minor }}" ]; then
+            pattern="${pattern}.${{ steps.target.outputs.minor }}"
+          fi
+          commit_tag="$pattern"
+          if [ -n "${{ steps.target.outputs.postfix }}" ]; then
+            pattern="${pattern}.*-${{ steps.target.outputs.minor }}"
           else
-            echo "**notice** latest base version tag: $latest_tag"          
+            pattern="${pattern}.*"
+          fi        
+          echo "**notice** > search pattern: $pattern"
+          
+          latest_tag=$(git tag --list "${pattern}" --sort=-v:refname | head -n 1)
+          
+          # determine the new tag
+          if [ -z "$latest_tag" ]; then
+            echo "::notice:: > latest tag: no latest tag"          
+            commit_tag="${commit_tag}.1${{ steps.target.outputs.postfix }}"
+          else
+            echo "::notice:: > latest tag: $latest_tag"
+          
             # Increment the patch version
             patch_version=${latest_tag##*.}
-            new_patch_version=$((patch_version + 1))
-            new_tag="${{ env.BASE_VERSION }}.$new_patch_version"
+            new_patch_version=$((patch_version + 1))        
+            commit_tag="${commit_tag}.${patch_version}${{ steps.target.outputs.postfix }}"
           fi
-          echo "**notice** use new tag: $new_tag"          
-          echo "NEW_TAG=$new_tag" >> $GITHUB_ENV
+          echo "::notice:: Commit tag built: $commit_tag"
+          echo "tag=${commit_tag}" >> $GITHUB_OUTPUT
 
-      - name: Apply New Tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use the default GitHub token      
+      - name: "Commit: Ensure Tag is not a Branch"
+        if: ${{ steps.build-commit-tag.tag }}
+        id: get-commit-tag
         run: |
-          # Tag the current commit with the new version
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag ${{ env.NEW_TAG }}
-          git push origin ${{ env.NEW_TAG }}
+          echo "::notice:: Approving Commit Tag..."
+          tag="${{ steps.build-commit-tag.tag }}"
+          if git ls-remote --exit-code --heads origin $tag; then
+            echo "::error:: commit tag $tag already exists as branch"
+          else
+            echo "::notice:: Commit tag approved."
+            echo "tag=${tag}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: "Image: Build Tags"
+        id: commit-tag
+        run: |
+          echo "::notice:: Building Image Tags..."
+          tag=()
+          # source branch is a valid versioned name
+          if [ "${{ steps.source.outputs.branch }}" == "${{ inputs.source }}" ]; then
+            echo "**notice** > source is a branch"
+            tag+=("${{ inputs.source }}")
+          elif [ -n "${{ steps.get-commit-tag.outputs.tag }}" ]; then
+            echo "**notice** > commit tag set"
+            tag+=("${{ steps.get-commit-tag.outputs.tag }}")               
+          fi
+          
+          # target branch is a valid versioned name
+          if [ "${{ steps.target.outputs.branch }}" == "${{ inputs.target }}" ]; then
+            echo "**notice** > target is a branch"
+            tag+=("${{ inputs.target }}")
+          fi
+          
+          echo "::notice:: Image tags built."
+          echo "tags=${tag[*]}" >> $GITHUB_OUTPUT
