@@ -31,7 +31,7 @@ runs:
       run: |
         echo "::notice:: Get Latest Tag..."    
         pattern="${{ inputs.prefix }}${{ inputs.major }}"
-        if [ -n "${{ inputs..minor }}" ]; then
+        if [ -n "${{ inputs.minor }}" ]; then
           pattern="${pattern}.${{ inputs.minor }}"
         fi
         tag="$pattern"

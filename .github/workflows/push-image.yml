@@ -1,0 +1,61 @@
+name: Push Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "Docker Image Name"
+        required: true
+        type: string
+      artifact:
+        description: "Artifact for Docker Image"
+        required: false
+        type: string
+      target_branch:
+        description: "Branch to be merged Into"
+        required: false
+        type: string
+
+jobs:
+  push-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v4
+
+      - name: "Preparing Arguments"
+        run: |
+          echo "::notice:: Preparing Arguments"
+          if [ -n "${{ inputs.target_branch }}" ]; then
+            target="${{ inputs.target_branch }}"
+            echo "::notice:: > target base on argument: $target"
+          elif [ -n "${{ github.event.pull_request.base.ref }}" ]; then
+            target="${{ github.event.pull_request.base.ref }}"
+            echo "::notice:: > target based on pull.event: $target"
+          else
+            echo "::warning:: no target branch given"
+            exit 0
+          fi
+          
+          if [ -n "${{ github.event.pull_request.head.ref }}" ]; then
+            source="${{ github.event.pull_request.head.ref }}"
+            echo "::notice:: > source branch based on pull.event: $source"
+          elif [ -n "${{ github.ref_name }}" ]; then
+            source="${{ github.ref_name }}"
+            echo "::notice:: > source branch based on github.ref_name: $source"          
+          else
+            echo "::warning:: no source branch given"
+            exit 0                    
+          fi
+          
+          echo "::notice:: Arguments prepared."
+          echo "SOURCE_BRANCH=$source" >> $GITHUB_ENV
+          echo "TARGET_BRANCH=$target" >> $GITHUB_ENV
+
+      - name: Download Image from Artifact
+        if: ${{ inputs.artifact }}
+        id: load-image
+        uses: draftm0de/kernel.deployment/.github/actions/download-image@main
+        with:
+          image: ${{ inputs.image }}
+          artifact: ${{ inputs.artifact }}

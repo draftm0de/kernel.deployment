@@ -9,7 +9,7 @@ on:
         type: string
 
 jobs:
-  tag:
+  tag-commit:
     runs-on: ubuntu-latest
     steps:
       - name: Check Out Repository
