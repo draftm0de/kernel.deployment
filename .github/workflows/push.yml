@@ -52,7 +52,7 @@ jobs:
             exit 0                    
           fi
           
-          echo "::notice:: arguments prepared."
+          echo "::notice:: Arguments prepared."
           echo "SOURCE_BRANCH=$source" >> $GITHUB_ENV
           echo "TARGET_BRANCH=$target" >> $GITHUB_ENV
 
@@ -121,7 +121,7 @@ jobs:
           echo "::notice:: Increasing Latest Tag..."
           tag="${{ steps.explode-latest-tag.outputs.prefix }}{{ steps.explode-latest-tag.outputs.major }}"
           if [ -n "{{ steps.explode-latest-tag.outputs.patch }}" ]; then
-            tag="${{ steps.explode-latest-tag.outputs.minor }}"
+            tag="${tag}.${{ steps.explode-latest-tag.outputs.minor }}"
             echo "::notice:: > increase patch"
             latest_patch="${{ steps.explode-latest-tag.outputs.patch }}"
             patch=$((latest_patch + 1))        
@@ -162,6 +162,6 @@ jobs:
           echo "::notice:: Tagging Commit..."
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # git tag ${{ steps.increase.outputs.tag }}
-          # git push origin ${{ steps.increase.outputs.tag }}
+          # git tag ${{ steps.set-commit-tag.outputs.tag }}
+          # git push origin ${{ steps.set-commit-tag.outputs.tag }}
           echo "::notice:: Commit Tagged."
