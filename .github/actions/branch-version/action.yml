@@ -1,0 +1,59 @@
+name: "Extract Version from Branch"
+description: "Get Major, Minor, Patch, Pre- and Postfix of a given branch"
+inputs:
+  branch:
+    description: "branch name"
+    required: true
+
+outputs:
+  branch:
+    description: "In case of matching patterns identically with given branch"
+    value: ${{ steps.extract.outputs.branch }}
+  major:
+    description: "Major version for given branch"
+    value: ${{ steps.extract.outputs.major }}
+  minor:
+    description: "Minor version for given branch"
+    value: ${{ steps.extract.outputs.minor }}
+  patch:
+    description: "Patch version for given branch"
+    value: ${{ steps.extract.outputs.patch }}
+  prefix:
+    description: "Prefix for given branch"
+    value: ${{ steps.extract.outputs.major }}
+  postfix:
+    description: "Postfix for given branch"
+    value: ${{ steps.extract.outputs.postfix }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Extract Branch Name
+      id: extract
+      shell: bash
+      run: |
+        # Extract the target branch name
+        branch="${{ inputs.branch }}"
+
+        # Regex pattern to capture major, minor, patch, and optional postfix
+        REGEX="^(v)?([0-9]+)(?:\.([0-9]+))?(?:\.([0-9]+))?(-[a-zA-Z0-9]+)?$"
+
+        # Match branch name against the regex
+        if [[ "$branch" =~ $REGEX ]]; then
+          # Extract components from the match groups
+          PREFIX="${BASH_REMATCH[1]}"
+          MAJOR="${BASH_REMATCH[2]}"
+          MINOR="${BASH_REMATCH[3]:-0}"
+          PATCH="${BASH_REMATCH[4]:-0}"
+          POSTFIX="${BASH_REMATCH[5]}"
+
+          echo "prefix=$PREFIX" >> $GITHUB_OUTPUT
+          echo "major=$MAJOR" >> $GITHUB_OUTPUT
+          echo "minor=$MINOR" >> $GITHUB_OUTPUT
+          echo "patch=$PATCH" >> $GITHUB_OUTPUT
+          echo "postfix=$POSTFIX" >> $GITHUB_OUTPUT
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+        else
+          branch="-"
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+        fi
