@@ -30,7 +30,7 @@ runs:
       shell: bash
       run: |
         echo "::notice:: Get Latest Tag..."    
-        pattern="${{ inputs.prefix }}${{ inputs..major }}"
+        pattern="${{ inputs.prefix }}${{ inputs.major }}"
         if [ -n "${{ inputs..minor }}" ]; then
           pattern="${pattern}.${{ inputs.minor }}"
         fi
