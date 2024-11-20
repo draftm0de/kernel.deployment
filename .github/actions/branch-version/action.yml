@@ -37,9 +37,11 @@ runs:
 
         # Regex pattern to capture major, minor, patch, and optional postfix
         REGEX="^(v)?([0-9]+)(?:\.([0-9]+))?(?:\.([0-9]+))?(-[a-zA-Z0-9]+)?$"
-
+        echo "**notice** branch:$branch:"
+        
         # Match branch name against the regex
         if [[ "$branch" =~ $REGEX ]]; then
+          echo "**notice** matches"
           # Extract components from the match groups
           PREFIX="${BASH_REMATCH[1]}"
           MAJOR="${BASH_REMATCH[2]}"
@@ -54,6 +56,7 @@ runs:
           echo "postfix=$POSTFIX" >> $GITHUB_OUTPUT
           echo "branch=$branch" >> $GITHUB_OUTPUT
         else
+          echo "**notice** does not match"
           branch="-"
           echo "branch=$branch" >> $GITHUB_OUTPUT
         fi
