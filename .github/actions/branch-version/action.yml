@@ -9,6 +9,9 @@ outputs:
   branch:
     description: "In case of matching patterns identically with given branch"
     value: ${{ steps.extract.outputs.branch }}
+  prefix:
+    description: "Prefix for given branch"
+    value: ${{ steps.extract.outputs.prefix }}
   major:
     description: "Major version for given branch"
     value: ${{ steps.extract.outputs.major }}
@@ -18,9 +21,6 @@ outputs:
   patch:
     description: "Patch version for given branch"
     value: ${{ steps.extract.outputs.patch }}
-  prefix:
-    description: "Prefix for given branch"
-    value: ${{ steps.extract.outputs.major }}
   postfix:
     description: "Postfix for given branch"
     value: ${{ steps.extract.outputs.postfix }}
