@@ -1,0 +1,67 @@
+name: "Increase Tag Version"
+description: "Increase given tag version"
+inputs:
+  prefix:
+    description: "Version: prefix"
+    required: false
+  major:
+    description: "Version: major"
+    required: true
+  minor:
+    description: "Version: minor"
+    required: false
+  patch:
+    description: "Version: patch"
+    required: false
+  postfix:
+    description: "Version: postfix"
+    required: false
+
+outputs:
+  tag:
+    description: "Increased Tag"
+    value: ${{ steps.set.outputs.tag }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Increase Latest Tag"
+      id: increase
+      shell: bash
+      run: |
+        echo "::notice:: Increasing Latest Tag..."
+        tag="${{ inputs.prefix }}${{ inputs.major }}"
+        if [ -n "{{ inputs.patch }}" ]; then
+          tag="${tag}.${{ inputs.minor }}"
+          echo "::notice:: > increase patch"
+          latest_patch="${{ inputs.patch }}"
+          patch=$((latest_patch + 1))        
+          tag="${tag}.${patch}"
+        elif [ -n "{{ inputs.minor }}" ]; then
+          if [ "{{ inputs.minor }}" == "0" ]; then
+            echo "::notice:: > use minor version 0"
+            minor="0"
+          else
+            echo "::notice:: > increase minor"
+            latest_minor="${{ inputs.minor }}"
+            minor=$((latest_minor + 1))
+          fi
+          tag="${tag}.${minor}"
+        fi
+        tag="${tag}${{ inputs.postfix }}"
+        echo "::notice:: Lasted Commit Tag increased: $tag"
+        echo "tag=${tag}" >> $GITHUB_OUTPUT
+
+    - name: "Approve Increased Tag"
+      shell: bash
+      if: ${{ steps.increase.outputs.tag }}
+      id: set
+      run: |
+        echo "::notice:: Approving Increased Commit Tag..."
+        tag="${{ steps.increase.outputs.tag }}"
+        if git ls-remote --exit-code --heads origin $tag; then
+          echo "::warning:: Increased commit tag exists as branch"
+        else
+          echo "::notice:: Increased commit tag approved."
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+        fi

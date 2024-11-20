@@ -1,0 +1,56 @@
+name: "Get Latest Tag"
+description: "Get latest tag for a given branch"
+inputs:
+  prefix:
+    description: "Version: prefix"
+    required: false
+  major:
+    description: "Version: major"
+    required: true
+  minor:
+    description: "Version: minor"
+    required: false
+  patch:
+    description: "Version: patch"
+    required: false
+  postfix:
+    description: "Version: postfix"
+    required: false
+
+outputs:
+  tag:
+    description: "Latest Tag"
+    value: ${{ steps.set.outputs.tag }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Get Latest Tag"
+      id: increase
+      shell: bash
+      run: |
+        echo "::notice:: Get Latest Tag..."    
+        pattern="${{ inputs.prefix }}${{ inputs..major }}"
+        if [ -n "${{ inputs..minor }}" ]; then
+          pattern="${pattern}.${{ inputs.minor }}"
+        fi
+        tag="$pattern"
+        if [ -n "${{ inputs.postfix }}" ]; then
+          pattern="${pattern}.*-${{ inputs.minor }}"
+        else
+          pattern="${pattern}.*"
+        fi        
+        echo "::notice:: > search pattern: $pattern"
+      
+        latest_tag=$(git tag --list "${pattern}" --sort=-v:refname | head -n 1)
+      
+        # determine the new tag
+        if [ -z "$latest_tag" ]; then
+          tag="${tag}.0${{ inputs.postfix }}"
+          echo "::notice:: > build latest tag"          
+        else
+          tag="$latest_tag"
+          echo "::notice:: > use latest tag"
+        fi
+        echo "::notice:: Latest Tag: $tag"
+        echo "tag=${tag}" >> $GITHUB_OUTPUT
