@@ -33,7 +33,7 @@ jobs:
           if [ -n "${{ inputs.target_branch }}" ]; then
             target="${{ inputs.target_branch }}"
             echo "::notice:: > target base on argument: $target"
-          elfi [ -n "${{ github.event.pull_request.base.ref }}" ]; then
+          elif [ -n "${{ github.event.pull_request.base.ref }}" ]; then
             target="${{ github.event.pull_request.base.ref }}"
             echo "::notice:: > target based on pull.event: $target"
           else
@@ -44,7 +44,7 @@ jobs:
           if [ -n "${{ github.event.pull_request.head.ref }}" ]; then
             source="${{ github.event.pull_request.head.ref }}"
             echo "::notice:: > source branch based on pull.event: $source"
-          elfi [ -n "${{ github.ref_name }}" ]; then
+          elif [ -n "${{ github.ref_name }}" ]; then
             source="${{ github.ref_name }}"
             echo "::notice:: > source branch based on github.ref_name: $source"          
           else
@@ -126,7 +126,7 @@ jobs:
             latest_patch="${{ steps.explode-latest-tag.outputs.patch }}"
             patch=$((latest_patch + 1))        
             tag="${tag}.${patch}"
-          elfi [ -n "{{ steps.explode-latest-tag.outputs.minor }}" ]; then
+          elif [ -n "{{ steps.explode-latest-tag.outputs.minor }}" ]; then
             if [ "{{ steps.explode-latest-tag.outputs.minor }}" == "0" ]; then
               echo "::notice:: > use minor version 0"
               minor="0"
