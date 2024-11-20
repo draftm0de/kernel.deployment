@@ -42,8 +42,8 @@ runs:
         if [[ "$branch" =~ $REGEX ]]; then
           prefix="${BASH_REMATCH[1]}"
           major="${BASH_REMATCH[2]}"
-          minor="${BASH_REMATCH[3]:-0}"
-          patch="${BASH_REMATCH[4]:-0}"
+          minor="${BASH_REMATCH[3]}"
+          patch="${BASH_REMATCH[4]}"
           postfix="${BASH_REMATCH[5]}"
         
           # remove leading .
