@@ -1,0 +1,164 @@
+name: Push And Tag
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "Docker Image Name"
+        required: true
+        type: string
+      artifact:
+        description: "Artifact for Docker Image"
+        required: false
+        type: string
+      target_branch:
+        description: "Branch to be merged Into"
+        required: false
+        type: string
+
+jobs:
+  tag-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Preparing Arguments"
+        run: |
+          echo "::notice:: Preparing Arguments"
+          if [ -n "$(git tag --contains HEAD)" ]; then
+            echo "::warning:: commit already has a tag"
+            exit 0
+          fi
+          if [ -n "${{ input.target_branch }}" ]; then
+            target="${{ input.target_branch }}"
+            echo "::notice:: > target base on argument: $target"
+          elfi [ -n "${{ github.event.pull_request.base.ref }}" ]; then
+            target="${{ github.event.pull_request.base.ref }}"
+            echo "::notice:: > target based on pull.event: $target"
+          else
+            echo "::warning:: no target branch given"
+            exit 0
+          fi
+          
+          if [ -n "${{ github.event.pull_request.head.ref }}" ]; then
+            source="${{ github.event.pull_request.head.ref }}"
+            echo "::notice:: > source branch based on pull.event: $source"
+          elfi [ -n "${{ github.ref_name }}" ]; then
+            source="${{ github.ref_name }}"
+            echo "::notice:: > source branch based on github.ref_name: $source"          
+          else
+            echo "::warning:: no source branch given"
+            exit 0                    
+          fi
+          
+          echo "::notice:: arguments prepared."
+          echo "SOURCE_BRANCH=$source" >> $GITHUB_ENV
+          echo "TARGET_BRANCH=$target" >> $GITHUB_ENV
+
+      - name: "Explode Target Branch"
+        if: ${{ env.TARGET_BRANCH }}
+        id: explode-target
+        uses: draftm0de/kernel.deployment/.github/actions/branch-version@main
+        with:
+          branch: ${{ env.TARGET_BRANCH }}
+
+      - name: "Explode Source Branch"
+        if: ${{ env.SOURCE_BRANCH }}
+        id: explode-source
+        uses: draftm0de/kernel.deployment/.github/actions/branch-version@main
+        with:
+          branch: ${{ env.SOURCE_BRANCH }}
+
+      - name: "Commit: Get Latest Tag"
+        # source branch does not match version patterns
+        # target matches version patterns
+        if: ${{ steps.explode-target.outputs.branch && !steps.explode-source.outputs.branch }}
+        id: latest-tag
+        run: |
+          echo "::notice:: Get Latest Commit Tag..."
+          if [ -n "${{ steps.explode-target.outputs.patch }}" ]; then
+            echo "::error:: Merging into ${{ steps.explode-target.outputs.branch }} failure, already includes a patch version"
+            exit 1
+          fi
+          
+          pattern="${{ steps.explode-target.outputs.prefix }}${{ steps.explode-target.outputs.major }}"
+          if [ -n "${{ steps.explode-target.outputs.minor }}" ]; then
+            pattern="${pattern}.${{ steps.explode-target.outputs.minor }}"
+          fi
+          tag="$pattern"
+          if [ -n "${{ steps.explode-target.outputs.postfix }}" ]; then
+            pattern="${pattern}.*-${{ steps.explode-target.outputs.minor }}"
+          else
+            pattern="${pattern}.*"
+          fi        
+          echo "::notice:: > search pattern: $pattern"
+          
+          latest_tag=$(git tag --list "${pattern}" --sort=-v:refname | head -n 1)
+          
+          # determine the new tag
+          if [ -z "$latest_tag" ]; then
+            tag="${tag}.0${{ steps.explode-target.outputs.postfix }}"
+            echo "::notice:: > build latest tag"          
+          else
+            tag="$latest_tag"
+            echo "::notice:: > use latest tag"
+          fi
+          echo "::notice:: Latest Commit Tag: $tag"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+
+      - name: "Commit: Explode Latest Tag"
+        if: ${{ steps.latest-tag.outputs.tag }}
+        id: explode-latest-tag
+        uses: draftm0de/kernel.deployment/.github/actions/branch-version@main
+        with:
+          branch: ${{ steps.latest-tag.outputs.tag }}
+
+      - name: "Commit: Increase Latest Tag"
+        if: ${{ steps.explode-latest-tag.outputs.branch }}
+        id: build-commit-tag
+        run: |
+          echo "::notice:: Increasing Latest Tag..."
+          tag="${{ steps.explode-latest-tag.outputs.prefix }}{{ steps.explode-latest-tag.outputs.major }}"
+          if [ -n "{{ steps.explode-latest-tag.outputs.patch }}" ]; then
+            tag="${{ steps.explode-latest-tag.outputs.minor }}"
+            echo "::notice:: > increase patch"
+            latest_patch="${{ steps.explode-latest-tag.outputs.patch }}"
+            patch=$((latest_patch + 1))        
+            tag="${tag}.${patch}"
+          elfi [ -n "{{ steps.explode-latest-tag.outputs.minor }}" ]; then
+            if [ "{{ steps.explode-latest-tag.outputs.minor }}" == "0" ]; then
+              echo "::notice:: > use minor version 0"
+              minor="0"
+            else
+              echo "::notice:: > increase minor"
+              latest_minor="${{ steps.explode-latest-tag.outputs.minor }}"
+              minor=$((latest_minor + 1))
+            fi
+            tag="${tag}.${minor}"
+          fi
+          tag="${tag}${{ steps.explode-latest-tag.outputs.postfix }}"
+          echo "::notice:: Lasted Commit Tag increased: $tag"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+
+      - name: "Commit: Ensure Tag is not a Branch"
+        if: ${{ steps.build-commit-tag.outputs.tag }}
+        id: set-commit-tag
+        run: |
+          echo "::notice:: Approving Commit Tag..."
+          tag="${{ steps.build-commit-tag.outputs.tag }}"
+          if git ls-remote --exit-code --heads origin $tag; then
+            echo "::warning:: Commit Tag not approved, exists as branch"
+          else
+            echo "::notice:: Commit tag approved."
+            echo "tag=${tag}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: "Commit: Apply Tag"
+        if: ${{ steps.set-commit-tag.outputs.tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "::notice:: Tagging Commit..."
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # git tag ${{ steps.increase.outputs.tag }}
+          # git push origin ${{ steps.increase.outputs.tag }}
+          echo "::notice:: Commit Tagged."
