@@ -119,7 +119,7 @@ jobs:
         id: build-commit-tag
         run: |
           echo "::notice:: Increasing Latest Tag..."
-          tag="${{ steps.explode-latest-tag.outputs.prefix }}{{ steps.explode-latest-tag.outputs.major }}"
+          tag="${{ steps.explode-latest-tag.outputs.prefix }}${{ steps.explode-latest-tag.outputs.major }}"
           if [ -n "{{ steps.explode-latest-tag.outputs.patch }}" ]; then
             tag="${tag}.${{ steps.explode-latest-tag.outputs.minor }}"
             echo "::notice:: > increase patch"
