@@ -27,8 +27,8 @@ jobs:
             echo "::warning:: commit already has a tag"
             exit 0
           fi
-          if [ -n "${{ input.target_branch }}" ]; then
-            target="${{ input.target_branch }}"
+          if [ -n "${{ inputs.target_branch }}" ]; then
+            target="${{ inputs.target_branch }}"
             echo "::notice:: > target base on argument: $target"
           elfi [ -n "${{ github.event.pull_request.base.ref }}" ]; then
             target="${{ github.event.pull_request.base.ref }}"
