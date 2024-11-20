@@ -20,6 +20,9 @@ jobs:
   tag-commit:
     runs-on: ubuntu-latest
     steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v4
+
       - name: "Preparing Arguments"
         run: |
           echo "::notice:: Preparing Arguments"
