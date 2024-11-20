@@ -59,14 +59,14 @@ jobs:
       - name: "Explode Target Branch"
         if: ${{ env.TARGET_BRANCH }}
         id: explode-target
-        uses: draftm0de/kernel.deployment/.github/actions/branch-version@main
+        uses: draftm0de/kernel.deployment/.github/actions/explode-branch@main
         with:
           branch: ${{ env.TARGET_BRANCH }}
 
       - name: "Explode Source Branch"
         if: ${{ env.SOURCE_BRANCH }}
         id: explode-source
-        uses: draftm0de/kernel.deployment/.github/actions/branch-version@main
+        uses: draftm0de/kernel.deployment/.github/actions/explode-branch@main
         with:
           branch: ${{ env.SOURCE_BRANCH }}
 
@@ -110,7 +110,7 @@ jobs:
       - name: "Commit: Explode Latest Tag"
         if: ${{ steps.latest-tag.outputs.tag }}
         id: explode-latest-tag
-        uses: draftm0de/kernel.deployment/.github/actions/branch-version@main
+        uses: draftm0de/kernel.deployment/.github/actions/explode-branch@main
         with:
           branch: ${{ steps.latest-tag.outputs.tag }}
 

@@ -1,4 +1,4 @@
-name: "Extract Version from Branch"
+name: "Explode Branch Into Version"
 description: "Get Major, Minor, Patch, Pre- and Postfix of a given branch"
 inputs:
   branch:
@@ -55,8 +55,5 @@ runs:
           echo "minor=$minor" >> $GITHUB_OUTPUT
           echo "patch=$patch" >> $GITHUB_OUTPUT
           echo "postfix=$postfix" >> $GITHUB_OUTPUT
-          echo "branch=$branch" >> $GITHUB_OUTPUT
-        else
-          branch="-"
           echo "branch=$branch" >> $GITHUB_OUTPUT
         fi
