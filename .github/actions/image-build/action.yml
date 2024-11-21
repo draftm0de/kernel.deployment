@@ -17,14 +17,11 @@ inputs:
   build_args_file:
     description: "--build-args from file"
     required: false
-  artifact:
-    description: "artifact name"
-    required: false
 
 runs:
   using: "composite"
   steps:
-    - name: Preparing Build Arguments
+    - name: "Prepare Build Arguments"
       id: arguments
       shell: bash
       run: |
@@ -54,17 +51,12 @@ runs:
         echo "build_options=$build_options" >> $GITHUB_OUTPUT        
         echo "image=$tag" >> $GITHUB_OUTPUT
 
-    - name: Build Image
+    - name: "Build Image"
       shell: bash
       run: |
-        echo "::notice:: Building Docker Image..."
+        echo "::notice:: Building docker image..."
+        
         options="${{ steps.arguments.outputs.build_options }}"
         docker build $options
+        
         echo "::notice:: Image built."
-
-    - name: Upload Build Image to Artifact
-      if: ${{ inputs.artifact }}
-      uses: draftm0de/kernel.deployment/.github/actions/upload-image@main
-      with:
-        image: ${{ inputs.image }}
-        artifact: ${{ inputs.artifact }}

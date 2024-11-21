@@ -1,0 +1,43 @@
+name: "Save Docker Image To Artifact"
+description: "Save docker image to a artifact"
+inputs:
+  image:
+    description: "image name"
+    required: true
+  artifact:
+    description: "artifact name"
+    required: true
+
+outputs:
+  file:
+    description: "Loaded Docker Image Name"
+    value: ${{ steps.load-image.outputs.image }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Convert Image Name"
+      id: get-file-name
+      uses: ./github/actions/convert-image-to-file-name@main
+      with:
+        image: ${{ inputs.image }}
+
+    - name: "Save Docker Image"
+      shell: bash
+      run: |
+        echo "::notice:: Saving Docker Image..."
+        
+        image="${{ inputs.image }}"           
+        file="${{ steps.get-file-name.outputs.file }}"       
+        docker save -o $file $image
+        echo "::notice:: > image: $image"
+        echo "::notice:: > file: $file"
+        
+        echo "::notice:: Docker image saved."
+
+    - name: "Upload To Artifact"
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact }}
+        path: ${{ steps.get-file-name.outputs.file }}
+        if-no-files-found: error

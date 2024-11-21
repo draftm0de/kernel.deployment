@@ -1,0 +1,61 @@
+name: Scan Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "image name"
+        type: string
+        required: true
+      artifact:
+        description: "artifact name"
+        type: string
+        required: false
+      severity:
+        description: "Image Scan Severities"
+        type: string
+        required: false
+        default: "critical,high"
+      scanners:
+        description: "Image Scan Scanners"
+        type: string
+        required: false
+        default: "quickview,cves,recommendations"
+      ignore-base:
+        description: "Ignore base image vulnerabilities"
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Load Docker Image From Artifact"
+        id: load-image
+        if: ${{ inputs.artifact }}
+        uses: ./github/actions/image-load@main
+        with:
+          image: ${{ inputs.image }}
+          artifact: ${{ inputs.artifact }}
+
+      - name: "Prepare Scan Arguments"
+        id: arguments
+        run: |
+          echo "::notice:: Preparing Scan Arguments..."
+          if [ -n "${{ steps.load-image.outputs.image }}" ]; then
+            $image = "archive://${{ steps.load-image.outputs.image }}"
+          else
+            $image = "${{ inputs.image }}"
+          fi
+          
+          echo "::notice:: Scan arguments prepared."
+          echo "image=$image" >> $GITHUB_OUTPUT
+
+      - name: "Scan Docker Image"
+        uses: docker/scout-action@v1
+        with:
+          image: ${{ steps.arguments.outputs.image }}
+          only-severities: ${{ inputs.severity }}
+          command: ${{ inputs.scanners }}
+          ignore-base: ${{ inputs.ignore-base }}

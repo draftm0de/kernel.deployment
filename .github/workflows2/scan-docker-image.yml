@@ -1,0 +1,67 @@
+name: Scan Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "image name"
+        type: string
+        required: true
+      target:
+        description: "build --target"
+        type: string
+        required: false
+      context:
+        description: "build context"
+        type: string
+        required: true
+      options:
+        description: "additional build options"
+        type: string
+        required: false
+      build_args_file:
+        description: "--build-args from file"
+        type: string
+        required: false
+      artifact:
+        description: "artifact name"
+        type: string
+        required: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Image from Artifact
+        if: ${{ inputs.artifact }}
+        id: load-image
+        uses: draftm0de/kernel.deployment/.github/actions/artifact-download@main
+        with:
+          image: ${{ inputs.image }}
+          artifact: ${{ inputs.artifact }}
+
+      - name: Load Image from Artifact
+        if: ${{ inputs.artifact }}
+        id: load-image
+        uses: draftm0de/kernel.deployment/.github/actions/artifact-download@main
+        with:
+          image: ${{ inputs.image }}
+          artifact: ${{ inputs.artifact }}
+
+      - name: Build Docker Image
+        id: build-image
+        uses: draftm0de/kernel.deployment/.github/actions/docker-build@main
+        with:
+          image: ${{ inputs.image }}
+          target: ${{ inputs.target }}
+          context: ${{ inputs.context }}
+          options: ${{ inputs.options }}
+          build_args_file: ${{ inputs.build_args_file }}
+          artifact: ${{ inputs.artifact }}
+
+      - name: Upload Build Image to Artifact
+        if: ${{ inputs.artifact }}
+        uses: draftm0de/kernel.deployment/.github/actions/artifact-upload@main
+        with:
+          image: ${{ inputs.image }}
+          artifact: ${{ inputs.artifact }}
