@@ -26,6 +26,9 @@ on:
         required: false
         type: boolean
         default: true
+    secrets:
+      DOCKER_TOKEN:
+        required: true
 
 jobs:
   build:

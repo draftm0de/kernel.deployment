@@ -1,0 +1,40 @@
+name: "Scan Docker Image"
+description: "Scan Vulnerability for Docker Image"
+inputs:
+  image:
+    description: "image name"
+    required: true
+  artifact:
+    description: "artifact name"
+    required: false
+  severity:
+    description: "Image Scan Severities"
+    required: false
+    default: "critical,high"
+  scanners:
+    description: "Image Scan Scanners"
+    required: false
+    default: "quickview,cves,recommendations"
+  ignore-base:
+    description: "Ignore base image vulnerabilities"
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Load Image from Artifact"
+      if: ${{ inputs.artifact }}
+      id: load-image
+      uses: draftm0de/kernel.deployment/.github/actions/image-load@main
+      with:
+        image: ${{ inputs.image }}
+        artifact: ${{ inputs.artifact }}
+
+    - name: "Scan Docker Image"
+      uses: docker/scout-action@v1
+      with:
+        image: ${{ steps.load-image.outputs.image || inputs.image }}
+        only-severities: ${{ inputs.severity }}
+        command: ${{ inputs.scanners }}
+        ignore-base: true
