@@ -11,7 +11,7 @@ inputs:
 outputs:
   image:
     description: "Loaded Docker Image Name"
-    value: ${{ steps.load-image.outputs.image }}
+    value: ${{ steps.get-image.outputs.image }}
 
 runs:
   using: "composite"
@@ -28,14 +28,15 @@ runs:
       with:
         image: ${{ inputs.image }}
 
-    - name: "Load Image from Artifact"
+    - name: "Loading Docker Image"
       shell: bash
-      id: load-image
-      run: |       
-        echo "::notice:: Loading docker image from file..."               
-        
-        image=$(docker load --input .image/${{ steps.get-file-name.outputs.file }} | grep 'Loaded image:' | awk '{print $3}')
-        echo "::notice:: > image: $image"
-        
+      id: get-image
+      run: |
+        echo "::notice:: Loading docker image from file..."
+
+        file=".image/${{ steps.get-file-name.outputs.file }}"
+        image=$(docker load --input ${file} | grep 'Loaded image:' | awk '{print $3}')
+        echo "::notice:: > loaded image: $image"        
+                
         echo "::notice:: Docker image loaded."
         echo "image=$image" >> $GITHUB_OUTPUT
