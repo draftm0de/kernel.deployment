@@ -44,9 +44,9 @@ jobs:
         run: |
           echo "::notice:: Preparing Scan Arguments..."
           if [ -n "${{ steps.load-image.outputs.image }}" ]; then
-            $image = "${{ steps.load-image.outputs.image }}"
+            image = "${{ steps.load-image.outputs.image }}"
           else
-            $image = "${{ inputs.image }}"
+            image = "${{ inputs.image }}"
           fi
           
           if [[ "${{ inputs.image }}" == */* ]]; then
