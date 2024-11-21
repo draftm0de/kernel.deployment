@@ -8,9 +8,16 @@ on:
         required: false
         type: string
 
+    outputs:
+      tag:
+        description: "Commit Tags"
+        value: ${{ jobs.tag-commit.outputs.tag }}
+
 jobs:
   tag-commit:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.increase-commit-tag.outputs.tag }}
     steps:
       - name: Check Out Repository
         uses: actions/checkout@v4
@@ -103,5 +110,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # git tag ${{ steps.increase-commit-tag.outputs.tag }}
-          # git push origin ${{ steps.increase-commit-tag.outputs.tag }}
+          # git push origin ${{ steps.increase-commit-tag.outputs.tag }}          
           echo "::notice:: Commit Tagged."
+          

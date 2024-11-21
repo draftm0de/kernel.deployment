@@ -11,6 +11,10 @@ on:
         description: "Artifact for Docker Image"
         required: false
         type: string
+      commit_tag:
+        description: "Commit Tag"
+        required: false
+        type: string
       target_branch:
         description: "Branch to be merged Into"
         required: false

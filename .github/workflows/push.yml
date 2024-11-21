@@ -23,8 +23,10 @@ jobs:
       target_branch: ${{ inputs.target_branch }}
 
   push-image:
+    needs: tag-commit
     uses: draftm0de/kernel.deployment/.github/workflows/push-image.yml@main
     with:
       image: ${{ inputs.image }}
       # artifact: ${{ inputs.artifact }}
+      commit_tag: ${{ jobs.tag-commit.outputs.tag }}
       target_branch: ${{ inputs.target_branch }}
