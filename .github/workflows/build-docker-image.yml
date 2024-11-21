@@ -48,7 +48,7 @@ jobs:
             echo ":: > image from inputs: ${{ inputs.image }}"
             image="${{ inputs.image }}"
           else
-            echo "::error:: image ENV or inputs missing"
+            echo "::error:: image does not exists in either ENV or inputs"
             exit 1
           fi
           
