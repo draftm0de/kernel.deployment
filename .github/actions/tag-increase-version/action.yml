@@ -30,18 +30,15 @@ runs:
       shell: bash
       run: |
         echo "::notice:: Increasing Latest Tag..."
-        echo "::notice:: major:${{ inputs.major }}:"
-        echo "::notice:: minor:${{ inputs.minor }}:"
-        echo "::notice:: patch:${{ inputs.patch }}:"
         tag="${{ inputs.prefix }}${{ inputs.major }}"
-        if [ -n "{{ inputs.patch }}" ]; then
+        if [ -n "${{ inputs.patch }}" ]; then
           tag="${tag}.${{ inputs.minor }}"
           echo "::notice:: > increase patch"
           latest_patch="${{ inputs.patch }}"
           patch=$((latest_patch + 1))        
           tag="${tag}.${patch}"
-        elif [ -n "{{ inputs.minor }}" ]; then
-          if [ "{{ inputs.minor }}" == "0" ]; then
+        elif [ -n "${{ inputs.minor }}" ]; then
+          if [ "${{ inputs.minor }}" == "0" ]; then
             echo "::notice:: > use minor version 0"
             minor="0"
           else
