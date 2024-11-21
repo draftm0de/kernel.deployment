@@ -7,7 +7,6 @@ on:
         description: "Branch to be merged Into"
         required: false
         type: string
-
     outputs:
       tag:
         description: "Commit Tags"

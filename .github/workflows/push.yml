@@ -28,5 +28,5 @@ jobs:
     with:
       image: ${{ inputs.image }}
       # artifact: ${{ inputs.artifact }}
-      commit_tag: ${{ jobs.tag-commit.outputs.tag }}
+      commit_tag: ${{ needs.tag-commit.outputs.tag }}
       target_branch: ${{ inputs.target_branch }}
