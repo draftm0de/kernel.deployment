@@ -33,7 +33,7 @@ runs:
       run: |       
         echo "::notice:: Loading docker image from ${filename}..."               
         
-        image=$(docker load --input .image/${{ steps.get-file-name.outputs.filename} | grep 'Loaded image:' | awk '{print $3}')
+        image=$(docker load --input .image/${{ steps.get-file-name.outputs.filename }} | grep 'Loaded image:' | awk '{print $3}')
         echo "::notice:: > image: $image"
         
         echo "::notice:: Docker image loaded."
