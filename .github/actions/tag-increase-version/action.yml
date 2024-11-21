@@ -30,6 +30,9 @@ runs:
       shell: bash
       run: |
         echo "::notice:: Increasing Latest Tag..."
+        echo "::notice:: major:${{ inputs.major }}:"
+        echo "::notice:: minor:${{ inputs.minor }}:"
+        echo "::notice:: patch:${{ inputs.patch }}:"
         tag="${{ inputs.prefix }}${{ inputs.major }}"
         if [ -n "{{ inputs.patch }}" ]; then
           tag="${tag}.${{ inputs.minor }}"
