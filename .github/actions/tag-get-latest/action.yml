@@ -20,13 +20,13 @@ inputs:
 outputs:
   tag:
     description: "Latest Tag"
-    value: ${{ steps.set.outputs.tag }}
+    value: ${{ steps.latest.outputs.tag }}
 
 runs:
   using: "composite"
   steps:
     - name: "Get Latest Tag"
-      id: increase
+      id: latest
       shell: bash
       run: |
         echo "::notice:: Get Latest Tag..."    
