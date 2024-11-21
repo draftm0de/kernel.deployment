@@ -20,6 +20,7 @@ runs:
       uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.artifact }}
+        path: ".image"
 
     - name: "Convert Image Name"
       id: get-file-name
