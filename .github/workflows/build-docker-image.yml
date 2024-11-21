@@ -38,7 +38,7 @@ jobs:
 
       - name: "Build Docker Image"
         id: build-image
-        uses: ./github/actions/image-build@main
+        uses: draftm0de/kernel.deployment/github/actions/image-build@main
         with:
           image: ${{ inputs.image }}
           target: ${{ inputs.target }}
@@ -48,7 +48,7 @@ jobs:
 
       - name: "Save Docker Image"
         if: ${{ inputs.artifact }}
-        uses: ./github/actions/image-save@main
+        uses: draftm0de/kernel.deployment/github/actions/image-save@main
         with:
           image: ${{ inputs.image }}
           artifact: ${{ inputs.artifact }}

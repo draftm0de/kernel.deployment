@@ -34,7 +34,7 @@ jobs:
       - name: "Load Docker Image From Artifact"
         id: load-image
         if: ${{ inputs.artifact }}
-        uses: ./github/actions/image-load@main
+        uses: draftm0de/kernel.deployment/github/actions/image-load@main
         with:
           image: ${{ inputs.image }}
           artifact: ${{ inputs.artifact }}
