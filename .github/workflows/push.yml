@@ -23,7 +23,7 @@ jobs:
       target_branch: ${{ inputs.target_branch }}
 
   push-image:
-    uses: draftm0de/kernel.deployment/.github/workflows/push-tag.yml@main
+    uses: draftm0de/kernel.deployment/.github/workflows/push-image.yml@main
     with:
       image: ${{ inputs.image }}
       # artifact: ${{ inputs.artifact }}
