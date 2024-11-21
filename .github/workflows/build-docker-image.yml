@@ -6,7 +6,7 @@ on:
       image:
         description: "image name"
         type: string
-        required: false
+        required: true
       target:
         description: "build --target"
         type: string
@@ -36,47 +36,19 @@ jobs:
       - name: Check Out Repository
         uses: actions/checkout@v4
 
-      - name: "Prepare Build Arguments"
-        id: arguments
-        run: |
-          echo "::notice:: Preparing Build Arguments..."
-          
-          if [ -n "${{ env.IMAGE }}" ]; then
-            echo ":: > image from env: ${{ env.IMAGE }}"
-            image="${{ env.IMAGE }}"
-          elif [ -n "${{ inputs.image }}" ]; then
-            echo ":: > image from inputs: ${{ inputs.image }}"
-            image="${{ inputs.image }}"
-          else
-            echo "::error:: image does not exists in either ENV or inputs"
-            exit 1
-          fi
-          
-          if [ -n "${{ env.IMAGE }}" ]; then
-            echo "::notice:: > artifact from env: ${{ env.ARTIFACT }}"
-            artifact="${{ env.ARTIFACT }}"
-          elif [ -n "${{ inputs.artifact }}" ]; then
-          echo "::notice:: > artifact from inputs: ${{ inputs.artifact }}"
-            artifact="${{ inputs.artifact }}"
-          fi
-          
-          echo "::notice:: Build arguments prepared."
-          echo "image=$image" >> $GITHUB_OUTPUT
-          echo "artifact=$artifact" >> $GITHUB_OUTPUT
-
       - name: "Build Docker Image"
         id: build-image
         uses: ./github/actions/image-build@main
         with:
-          image: ${{ steps.arguments.outputs.image }}
+          image: ${{ inputs.image }}
           target: ${{ inputs.target }}
           context: ${{ inputs.context }}
           options: ${{ inputs.options }}
           build_args_file: ${{ inputs.build_args_file }}
 
       - name: "Save Docker Image"
-        if: ${{ steps.arguments.outputs.artifact }}
+        if: ${{ inputs.artifact }}
         uses: ./github/actions/image-save@main
         with:
-          image: ${{ steps.arguments.outputs.image }}
-          artifact: ${{ steps.arguments.outputs.artifact }}
+          image: ${{ inputs.image }}
+          artifact: ${{ inputs.artifact }}
