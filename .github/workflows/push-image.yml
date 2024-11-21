@@ -51,6 +51,7 @@ jobs:
             echo "::warning:: no source branch given"
             exit 0                    
           fi
+          echo "::notice:: > commit tag: ${{ inputs.commit_tag }}"
           
           echo "::notice:: Arguments prepared."
           echo "SOURCE_BRANCH=$source" >> $GITHUB_ENV
