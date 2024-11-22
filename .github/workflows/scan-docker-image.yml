@@ -11,21 +11,14 @@ on:
         description: "artifact name"
         type: string
         required: false
-      severity:
-        description: "Image Scan Severities"
+      scanner:
+        description: "scanner to be used"
+        type: string
+        required: true
+      config:
+        description: "scanner config file"
         type: string
         required: false
-        default: "critical,high"
-      scanners:
-        description: "Image Scan Scanners"
-        type: string
-        required: false
-        default: "quickview,cves,recommendations"
-      ignore-base:
-        description: "Ignore base image vulnerabilities"
-        required: false
-        type: boolean
-        default: true
     secrets:
       DOCKER_TOKEN:
         required: true
@@ -34,6 +27,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v4
+
       - name: "Load Docker Image From Artifact"
         id: load-image
         if: ${{ inputs.artifact }}
@@ -46,37 +42,61 @@ jobs:
         id: arguments
         run: |
           echo "::notice:: Preparing Scan Arguments..."
+          
+          # set image name
           if [ -n "${{ steps.load-image.outputs.image }}" ]; then
             image="${{ steps.load-image.outputs.image }}"
           else
             image="${{ inputs.image }}"
           fi
+                   
+          # verify scanner                
+          case "${{ inputs.scanner }}" in
+            scout)
+              echo "::notice:: > use scanner ${{ inputs.scanner }}"
+              echo "docker-login-required=true" >> $GITHUB_OUTPUT
+              if [[ "${{ inputs.image }}" == */* ]]; then
+                image="${{ inputs.image }}"
+                namespace="${image%%/*}"                                
+              else
+                echo "::error:: cannot extract any namespace from inputs.image"
+                exit 1
+              fi
+              echo "::notice:: > namespace: $namespace"          
+              echo "namespace=$namespace" >> $GITHUB_OUTPUT 
+              ;;
+            *)
+              echo "::error:: given scanner ${{ inputs.scanner }} is not supported"
+              exit 1
+              ;;
+          esac
           
-          echo "::notice:: given secret ${{ secrets.DOCKER_TOKEN }}"
-          
-          if [[ "${{ inputs.image }}" == */* ]]; then
-            image="${{ inputs.image }}"
-            namespace="${image%%/*}"
-            echo "::notice:: > namespace: $namespace"
+          # verify config file
+          if [ -n "${{ inputs.config }}" ]; then
+            config="${{ inputs.config }}"
           else
-            echo "::error:: cannot extract any namespace from inputs.image"
+            config=".${{ inputs.scanner }}.config"
+          fi          
+          if [ ! -f "${config}" ]; then
+            echo "::error:: config file ${config} not found"
             exit 1
-          fi         
-          
+          fi
+                    
           echo "::notice:: Scan arguments prepared."
           echo "image=$image" >> $GITHUB_OUTPUT
-          echo "namespace=$namespace" >> $GITHUB_OUTPUT
+          echo "config=$config" >> $GITHUB_OUTPUT        
 
-      - name: "Login to Docker Hub"
+      - name: "Login To Docker Hub"
+        if: ${{ steps.arguments.outputs.docker-login-required }}
         uses: docker/login-action@v3
         with:
           username: ${{ steps.arguments.outputs.namespace }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: "Scan Docker Image"
-        uses: docker/scout-action@v1
+      - name: "Scan Image With Docker Scout"
+        if: ${{ inputs.scanner == "scout" }}
+        uses: draftm0de/kernel.deployment/.github/actions/image-scan-scout@main
         with:
           image: ${{ steps.arguments.outputs.image }}
-          only-severities: ${{ inputs.severity }}
-          command: ${{ inputs.scanners }}
-          ignore-base: ${{ inputs.ignore-base }}
+          config: ${{ steps.arguments.outputs.config }}
+

@@ -4,37 +4,33 @@ inputs:
   image:
     description: "image name"
     required: true
-  artifact:
-    description: "artifact name"
-    required: false
-  severity:
-    description: "Image Scan Severities"
-    required: false
-    default: "critical,high"
-  scanners:
-    description: "Image Scan Scanners"
-    required: false
-    default: "quickview,cves,recommendations"
-  ignore-base:
-    description: "Ignore base image vulnerabilities"
-    required: false
-    default: "true"
+  config:
+    description: "config file"
+    required: true
 
 runs:
   using: "composite"
   steps:
-    - name: "Load Image from Artifact"
-      if: ${{ inputs.artifact }}
-      id: load-image
-      uses: draftm0de/kernel.deployment/.github/actions/image-load@main
-      with:
-        image: ${{ inputs.image }}
-        artifact: ${{ inputs.artifact }}
+    - name: "Prepare Scout Arguments"
+      shell: bash
+      id: arguments
+      run: |
+        echo "::notice:: Preparing Scout Arguments..."
+        source ${{ inputs.config }}
+        
+        echo "severity=${severity:-critical,high}" >> $GITHUB_OUTPUT
+        echo "command=${command:-quickview}" >> $GITHUB_OUTPUT
+        if [[ "$ignore_base" == "true" ]]; then
+          echo "ignore_base=true" >> $GITHUB_OUTPUT
+        else
+          echo "ignore_base=false" >> $GITHUB_OUTPUT
+        fi
+        echo "::notice:: Scout arguments prepared."
 
-    - name: "Scan Docker Image"
+    - name: "Scan With Docker Scout"
       uses: docker/scout-action@v1
       with:
-        image: ${{ steps.load-image.outputs.image || inputs.image }}
-        only-severities: ${{ inputs.severity }}
-        command: ${{ inputs.scanners }}
-        ignore-base: true
+        image: ${{ inputs.image }}
+        only-severities: ${{ steps.arguments.outputs.severity }}
+        command: ${{ steps.arguments.outputs.command }}
+        ignore-base: ${{ steps.arguments.outputs.ignore_base }}
