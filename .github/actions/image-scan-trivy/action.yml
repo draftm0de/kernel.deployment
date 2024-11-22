@@ -1,0 +1,55 @@
+name: "Scan Docker Image"
+description: "Scan Vulnerability for Docker Image"
+inputs:
+  image:
+    description: "image name"
+    required: true
+  config:
+    description: "config file"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Prepare Trivy Arguments"
+      shell: bash
+      id: arguments
+      run: |
+        echo "::notice:: Preparing Trivy Arguments..."
+        source ${{ inputs.config }}
+        
+        echo "::notice:: > receive arguments"
+        echo "::notice:: > > format: ${format}"
+        echo "::notice:: > > severity: ${severity}"
+        echo "::notice:: > > scanners: ${scanners}"
+        echo "::notice:: > > exit_code: ${exit_code}"
+        echo "::notice:: > > trivyignores: ${trivyignores}"
+        
+        format="${format:-table}"
+        severity="${severity:-CRITICAL,HIGH}"
+        scanners="${scanners:-vuln,secret}"
+        exit_code="${exit_code:-1}"
+        echo "::notice:: > taken arguments"
+        echo "::notice:: > > format: ${format}"
+        echo "::notice:: > > severity: ${severity}"
+        echo "::notice:: > > scanners: ${scanners}"        
+        echo "::notice:: > > exit_code: ${exit_code}"
+        echo "::notice:: > > trivyignores: ${trivyignores}"
+              
+        echo "format=$format" >> $GITHUB_OUTPUT
+        echo "severity=$severity" >> $GITHUB_OUTPUT
+        echo "scanners=$scanners" >> $GITHUB_OUTPUT
+        echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+        echo "trivyignores=$trivyignores" >> $GITHUB_OUTPUT
+        
+        echo "::notice:: Trivy arguments prepared."
+
+    - name: Scan Docker Image
+      uses: aquasecurity/trivy-action@0.20.0
+      with:
+        input: ${{ inputs.image }}
+        format: ${{ steps.arguments.outputs.format }}
+        severity: ${{ steps.arguments.outputs.severity }}
+        scanners: ${{ steps.arguments.outputs.scanners }}
+        exit-code: ${{ steps.arguments.outputs.exit_code }}
+        trivyignores: ${{ steps.arguments.outputs.trivyignores }}
