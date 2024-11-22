@@ -22,7 +22,7 @@ on:
     secrets:
       DOCKER_USERNAME:
         required: false
-      DOCKER_TOKEN:
+      DOCKER_PASSWORD:
         required: false
 
 jobs:
