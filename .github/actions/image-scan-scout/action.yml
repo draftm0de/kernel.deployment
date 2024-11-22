@@ -45,7 +45,6 @@ runs:
         echo "::notice:: Scout arguments prepared."
 
     - name: "Login To Docker Hub"
-      if: ${{ steps.arguments.outputs.docker-login-required }}
       uses: docker/login-action@v3
       with:
         username: ${{ inputs.docker_username }}
