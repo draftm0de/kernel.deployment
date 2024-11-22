@@ -23,18 +23,30 @@ runs:
         echo "::notice:: > > severity: ${severity}"
         echo "::notice:: > > scanners: ${scanners}"
         echo "::notice:: > > exit_code: ${exit_code}"
+        echo "::notice:: > > trivyignore: ${trivyignore}"
         echo "::notice:: > > trivyignores: ${trivyignores}"
         
-        format="${format:-table}"
-        severity="${severity:-CRITICAL,HIGH}"
-        scanners="${scanners:-vuln,secret}"
-        exit_code="${exit_code:-1}"
-        echo "::notice:: > taken arguments"
-        echo "::notice:: > > format: ${format}"
-        echo "::notice:: > > severity: ${severity}"
-        echo "::notice:: > > scanners: ${scanners}"        
-        echo "::notice:: > > exit_code: ${exit_code}"
-        echo "::notice:: > > trivyignores: ${trivyignores}"
+        if [ -z "${format}" ]; then
+          format="table"
+          echo "::notice:: > > table: ${trivyignores}"
+        fi
+        if [ -z "${severity}" ]; then
+          severity="CRITICAL,HIGH"
+          echo "::notice:: > > severity: ${severity}"
+        fi        
+        if [ -z "${scanners}" ]; then
+          scanners="vuln,secret"
+          echo "::notice:: > > scanners: ${scanners}"
+        fi        
+        if [ -z "${exit_code}" ]; then
+          exit_code="1"
+          echo "::notice:: > > exit_code: ${exit_code}"
+        fi        
+        if [ -n "${trivyignore}" ]; then
+          trivyignores=".trivyignores"
+          echo "::notice:: > > move trivyignore into ${trivyignores}"
+          echo "${trivyignore}" > ${trivyignores}
+        fi 
               
         echo "format=$format" >> $GITHUB_OUTPUT
         echo "severity=$severity" >> $GITHUB_OUTPUT
