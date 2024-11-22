@@ -21,7 +21,7 @@ on:
         required: false
     secrets:
       DOCKER_TOKEN:
-        required: true
+        required: false
 
 jobs:
   build:
@@ -69,6 +69,9 @@ jobs:
               echo "::notice:: > namespace: $namespace"          
               echo "namespace=$namespace" >> $GITHUB_OUTPUT 
               ;;
+            trivy)
+              echo "::notice:: > use scanner ${{ inputs.scanner }}"
+              ;;
             *)
               echo "::error:: given scanner ${{ inputs.scanner }} is not supported"
               exit 1
@@ -106,3 +109,9 @@ jobs:
           image: ${{ steps.arguments.outputs.image }}
           config: ${{ steps.arguments.outputs.config }}
 
+      - name: "Scan Image With Trivy"
+        if: ${{ inputs.scanner }} == "trivy"
+        uses: draftm0de/kernel.deployment/.github/actions/image-scan-trivy@main
+        with:
+          image: ${{ steps.arguments.outputs.image }}
+          config: ${{ steps.arguments.outputs.config }}
