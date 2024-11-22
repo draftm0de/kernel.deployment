@@ -20,6 +20,8 @@ on:
         type: string
         required: false
     secrets:
+      DOCKER_USERNAME:
+        required: false
       DOCKER_TOKEN:
         required: false
 
@@ -52,32 +54,6 @@ jobs:
             image="${{ inputs.image }}"
           fi
           
-          # ---------------------------------------------      
-          # verify scanner                
-          # ---------------------------------------------
-          case "${{ inputs.scanner }}" in
-            scout)
-              echo "::notice:: > use scanner ${{ inputs.scanner }}"
-              echo "docker-login-required=true" >> $GITHUB_OUTPUT
-              if [[ "${{ inputs.image }}" == */* ]]; then
-                image="${{ inputs.image }}"
-                namespace="${image%%/*}"                                
-              else
-                echo "::error:: cannot extract any namespace from inputs.image"
-                exit 1
-              fi
-              echo "::notice:: > namespace: $namespace"          
-              echo "namespace=$namespace" >> $GITHUB_OUTPUT 
-              ;;
-            trivy)
-              echo "::notice:: > use scanner ${{ inputs.scanner }}"
-              ;;
-            *)
-              echo "::error:: given scanner ${{ inputs.scanner }} is not supported"
-              exit 1
-              ;;
-          esac
-          
           # ---------------------------------------------
           # verify config file
           # ---------------------------------------------
@@ -95,19 +71,14 @@ jobs:
           echo "image=$image" >> $GITHUB_OUTPUT
           echo "config=$config" >> $GITHUB_OUTPUT        
 
-      - name: "Login To Docker Hub"
-        if: ${{ steps.arguments.outputs.docker-login-required }}
-        uses: docker/login-action@v3
-        with:
-          username: ${{ steps.arguments.outputs.namespace }}
-          password: ${{ secrets.DOCKER_TOKEN }}
-
       - name: "Scan Image With Docker Scout"
         if: ${{ inputs.scanner }} == "scout"
         uses: draftm0de/kernel.deployment/.github/actions/image-scan-scout@main
         with:
           image: ${{ steps.arguments.outputs.image }}
           config: ${{ steps.arguments.outputs.config }}
+          docker_username: ${{ secrets.DOCKER_USERNAME }}
+          docker_password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: "Scan Image With Trivy"
         if: ${{ inputs.scanner }} == "trivy"
