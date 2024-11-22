@@ -72,7 +72,7 @@ jobs:
           echo "config=$config" >> $GITHUB_OUTPUT        
 
       - name: "Scan Image With Docker Scout"
-        if: ${{ inputs.scanner == "scout" }}
+        if: ${{ inputs.scanner == 'scout' }}
         uses: draftm0de/kernel.deployment/.github/actions/image-scan-scout@main
         with:
           image: ${{ steps.arguments.outputs.image }}
@@ -81,7 +81,7 @@ jobs:
           docker_password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: "Scan Image With Trivy"
-        if: ${{ inputs.scanner == "trivy" }}
+        if: ${{ inputs.scanner == 'trivy' }}
         uses: draftm0de/kernel.deployment/.github/actions/image-scan-trivy@main
         with:
           image: ${{ steps.arguments.outputs.image }}
