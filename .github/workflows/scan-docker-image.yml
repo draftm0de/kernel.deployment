@@ -43,14 +43,18 @@ jobs:
         run: |
           echo "::notice:: Preparing Scan Arguments..."
           
+          # ---------------------------------------------
           # set image name
+          # ---------------------------------------------
           if [ -n "${{ steps.load-image.outputs.image }}" ]; then
             image="${{ steps.load-image.outputs.image }}"
           else
             image="${{ inputs.image }}"
           fi
-                   
+          
+          # ---------------------------------------------      
           # verify scanner                
+          # ---------------------------------------------
           case "${{ inputs.scanner }}" in
             scout)
               echo "::notice:: > use scanner ${{ inputs.scanner }}"
@@ -71,7 +75,9 @@ jobs:
               ;;
           esac
           
+          # ---------------------------------------------
           # verify config file
+          # ---------------------------------------------
           if [ -n "${{ inputs.config }}" ]; then
             config="${{ inputs.config }}"
           else

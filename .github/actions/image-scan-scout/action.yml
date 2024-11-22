@@ -18,6 +18,10 @@ runs:
         echo "::notice:: Preparing Scout Arguments..."
         source ${{ inputs.config }}
         
+        echo "::notice:: > severity: ${severity}"
+        echo "::notice:: > command: ${command}"
+        echo "::notice:: > ignore_base: ${ignore_base}"
+        
         echo "severity=${severity:-critical,high}" >> $GITHUB_OUTPUT
         echo "command=${command:-quickview}" >> $GITHUB_OUTPUT
         if [[ "$ignore_base" == "true" ]]; then
