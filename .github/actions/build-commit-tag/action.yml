@@ -31,7 +31,7 @@ runs:
     - name: "Validate source and target branch"
       shell: bash
       run: |
-        if [ "${{ steps.source.outputs.branch }}" == "${{ source.target }}" ]; then
+        if [ "${{ steps.source.outputs.branch }}" == "${{ inputs.source }}" ]; then
           echo "::warning:: source branch matches version patterns, skip commit tagging"
           exit 0
         fi 
