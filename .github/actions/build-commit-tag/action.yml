@@ -9,7 +9,7 @@ inputs:
     required: true
 
 outputs:
-  commit_tag:
+  tag:
     description: "tag to be use for commit"
     value: ${{ steps.get-commit-tag.outputs.tag }}
 
