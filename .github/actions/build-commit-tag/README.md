@@ -1,14 +1,20 @@
 # action/build-commit-tag
 
+## description
 Calculate the next version based on the given target branch.<br>
-The target branch is extracted into
-- Prefix
-- Major
-- Minor
-- Patch
-- Postfix
 
-**Next version rules**
+_related actions_
+- [action/convert-branch-to-version](../convert-branch-to-version/README.md)
+
+### input
+- source branch name [required]
+- target branch name [required]
+
+### output
+- tags [string | empty]
+
+### next version rules
+
 - If the target branch has no patch version:
   - Retrieve the latest tag for the given target branch.<br>
   _Filter ``{Prefix}.{Major}.{Minor}.*{Postfix}``_
@@ -18,12 +24,12 @@ The target branch is extracted into
     _Filter ``{Prefix}.{Major}.*{Postfix}``_
   - Increment the minor version.
 
-**Version patterns**
+### version patterns
 ```
 regex="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
 ```
 
-## verifications
+### verifications
 - Source branch name does not match the version patterns
 - Source branch has no tag matches the version patterns
 - Target branch has to match the version patterns
@@ -31,7 +37,7 @@ regex="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
 
 If any verification fails, a warning is displayed, and no output tag is set.
 
-## examples
+### examples
 ```
 source: DM12021
 target: 1.0
