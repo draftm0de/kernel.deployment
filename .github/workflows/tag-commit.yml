@@ -3,14 +3,10 @@ name: Tag Commit Version
 on:
   workflow_call:
     inputs:
-      source:
-        description: "source branch"
-        type: string
-        required: true
       target:
         description: "target branch"
         type: string
-        required: true
+        required: false
     outputs:
       tag:
         description: "commit tag"
@@ -29,8 +25,8 @@ jobs:
         id: get-commit-tag
         uses: draftm0de/kernel.deployment/.github/actions/build-commit-tag@main
         with:
-          source: ${{ inputs.source }}
-          target: ${{ inputs.target }}
+          source: ${{ github.ref_name }}
+          target: ${{ inputs.target || github.event.pull_request.base.ref }}
 
       - name: "Apply Commit Tag"
         if: ${{ steps.get-commit-tag.outputs.tag }}
