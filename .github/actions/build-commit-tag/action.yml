@@ -34,12 +34,14 @@ runs:
         echo "::notice::Validating source and target branch..."
         if [ -n "${{ steps.source.outputs.branch }}" ]; then
           echo "::warning::source branch matches version patterns, skip commit tagging"
+          echo "SKIP_STEP=true" >> $GITHUB_ENV
           exit 0
         else
           echo "::notice::> source branch does not match version pattern"
         fi 
         if [ -z "${{ steps.target.outputs.branch }}" ]; then
           echo "::warning::target branch does not match version patterns, skip commit tagging"
+          echo "SKIP_STEP=true" >> $GITHUB_ENV
           exit 0
         else
           echo "::notice::> target branch matches version patterns"
@@ -47,6 +49,7 @@ runs:
         echo "::notice::source and target branch validated."
 
     - name: "Ensure commit does not have any version tag"
+      if: ${{ env.SKIP_STEP != 'true' }}
       shell: bash
       run: |
         echo "::notice::Protecting version tags..."
@@ -68,6 +71,7 @@ runs:
         echo "::notice::Version tags protected."
 
     - name: "Build commit tag"
+      if: ${{ env.SKIP_STEP != 'true' }}
       shell: bash
       id: build-commit-tag
       run: |
