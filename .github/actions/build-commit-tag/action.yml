@@ -103,7 +103,7 @@ runs:
         echo "tag=${commit_tag}" >> $GITHUB_OUTPUT
 
     - name: "Ensure tag is not an existing branch"
-      if: ${{ steps.build-commit-tag.tag }}
+      if: ${{ steps.build-commit-tag.outputs.tag }}
       shell: bash
       id: get-commit-tag
       run: |
