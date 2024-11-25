@@ -1,6 +1,6 @@
 # action/build-commit-tag
 
-Based on a given target branch calculate next version.<br>
+Calculate the next version based on the given target branch.<br>
 The target branch is extracted into
 - Prefix
 - Major
@@ -9,14 +9,14 @@ The target branch is extracted into
 - Postfix
 
 **Next version rules**
-- target has no patch version
-  - get latest tag for given target branch<br>
+- If the target branch has no patch version:
+  - Retrieve the latest tag for the given target branch.<br>
   _Filter ``{Prefix}.{Major}.{Minor}.*{Postfix}``_
-  - increase patch version
-- target has no minor version
-  - get latest tag for given target branch<br>
+  - Increment the patch version.
+- If the target branch has no minor version:
+  - Retrieve the latest tag for the given target branch.<br>
     _Filter ``{Prefix}.{Major}.*{Postfix}``_
-  - increase minor version
+  - Increment the minor version.
 
 **Version patterns**
 ```
@@ -28,6 +28,8 @@ regex="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
 - Source branch has no tag matches the version patterns
 - Target branch has to match the version patterns
 - Calculated tag does not exist as a branch name
+
+If any verification fails, a warning is displayed, and no output tag is set.
 
 ## examples
 ```
