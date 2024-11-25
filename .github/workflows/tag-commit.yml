@@ -37,11 +37,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "::notice:: Tagging Commit..."
+          echo "::notice::Tagging Commit..."
           tag="${{ steps.get-commit-tag.outputs.tag }}"
-          echo "::notice:: > tag: $tag"
+          echo "::notice::> tag: $tag"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # git tag ${{ steps.get-commit-tag.outputs.tag }}
           # git push origin ${{ steps.get-commit-tag.outputs.tag }}          
-          echo "::notice:: Commit Tagged."
+          echo "::notice::Commit Tagged."

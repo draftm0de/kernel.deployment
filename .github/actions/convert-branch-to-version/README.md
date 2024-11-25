@@ -1,4 +1,4 @@
-# action/convert-branch-to-version
+# actions/convert-branch-to-version
 
 ## description
 Explode given branch name into version

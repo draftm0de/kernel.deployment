@@ -1,10 +1,10 @@
-# action/build-commit-tag
+# actions/build-commit-tag
 
 ## description
 Calculate the next version based on the given target branch.<br>
 
 _related actions_
-- [action/convert-branch-to-version](../convert-branch-to-version/README.md)
+- [actions/convert-branch-to-version](../convert-branch-to-version/README.md)
 
 ### input
 - source branch name [required]
