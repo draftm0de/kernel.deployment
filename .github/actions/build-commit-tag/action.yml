@@ -32,13 +32,13 @@ runs:
       shell: bash
       run: |
         echo "::notice::Validating source and target branch..."
-        if [ "${{ steps.source.outputs.branch }}" == "${{ inputs.source }}" ]; then
+        if [ -n "${{ steps.source.outputs.branch }}" ]; then
           echo "::warning::source branch matches version patterns, skip commit tagging"
           exit 0
         else
           echo "::notice::> source branch does not match version pattern"
         fi 
-        if [ "${{ steps.target.outputs.branch }}" == "-" ]; then
+        if [ -z "${{ steps.target.outputs.branch }}" ]; then
           echo "::warning::target branch does not match version patterns, skip commit tagging"
           exit 0
         else
