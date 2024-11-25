@@ -5,7 +5,7 @@ inputs:
     description: "source branch name"
     required: true
   target:
-    description: "target branch name"
+    description: "branch to be merged into"
     required: true
 
 outputs:

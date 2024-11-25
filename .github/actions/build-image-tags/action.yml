@@ -5,7 +5,7 @@ inputs:
     description: "source branch"
     required: true
   target:
-    description: "target branch"
+    description: "branch to be merged into"
     required: true
 
 outputs:
@@ -16,14 +16,14 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: "Extract Version from Target Branch"
+    - name: "Convert target branch into version"
       shell: bash
       id: target
       uses: draftm0de/kernel.deployment/.github/actions/convert-branch-to-version@main
       with:
         branch: ${{ inputs.target }}
 
-    - name: "Extract Version from Source Branch"
+    - name: "Convert source branch into version"
       shell: bash
       id: source
       uses: draftm0de/kernel.deployment/.github/actions/convert-branch-to-version@main
@@ -34,16 +34,17 @@ runs:
       shell: bash
       id: get-image-tags
       run: |
-        echo "::notice:: Build Image Tags..."
+        echo "::notice:: Building Image Tags..."
         
         tags=()
         if [ "${{ steps.target.outputs.branch }}" == "${{ inputs.target }}" ]; then
-          echo "::notice:: > target branch matches version"
+          echo "::notice::> use target branch (matches version patterns)"
           tags+=("${{ inputs.target }}")
         fi
         
         if [ "${{ steps.source.outputs.branch }}" == "${{ inputs.source }}" ]; then
-          echo "::notice:: > source branch matches version"
+          echo "::notice::> use source branch (matches version patterns)"
           tags+=("${{ inputs.source }}")
         fi
         echo "tags=${tags[*]}" >> $GITHUB_OUTPUT
+        echo "::notice::Image tags built.

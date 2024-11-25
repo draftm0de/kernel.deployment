@@ -8,4 +8,5 @@
 # Actions
 
 - [actions/build-commit-tag](actions/build-commit-tag/README.md)
+- [actions/build-image-tags](actions/build-image-tags/README.md)
 - [actions/convert-branch-to-version](actions/convert-branch-to-version/README.md)

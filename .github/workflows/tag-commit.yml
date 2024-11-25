@@ -8,7 +8,7 @@ on:
         type: string
         required: false
       target:
-        description: "target branch"
+        description: "branch to be merged into"
         type: string
         required: false
     outputs:

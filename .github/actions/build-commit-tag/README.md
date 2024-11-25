@@ -1,7 +1,7 @@
 # actions/build-commit-tag
 
 ## description
-Calculate the next version based on the given target branch.<br>
+Determine the next version number by analyzing the specified target branch. The process evaluates existing tags and versioning patterns to increment the appropriate component (major, minor, or patch) based on the rules and current state of the repository.<br>
 
 _related actions_
 - [actions/convert-branch-to-version](../convert-branch-to-version/README.md)
