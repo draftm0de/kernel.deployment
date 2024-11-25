@@ -1,7 +1,7 @@
-# actions/convert-branch-to-version
+# Action: Convert Branch Name to Version Components
 
 ## description
-Explode given branch name into version
+Parse the provided branch name into its version components, including:
 
 - Prefix
 - Major
@@ -9,67 +9,75 @@ Explode given branch name into version
 - Patch
 - Postfix
 
-base on version patterns
+This action uses version patterns to extract and identify these components.
 
 ### inputs
-- branch [required]
+- ``branch`` _(required)_: The branch name to be processed.
 
 ### outputs
-- branch<br>
-In case of matching patterns identically with given branch
-- prefix<br>
-Prefix for given branch 
-- major<br>
-Major version for given branch 
-- minor<br>
-Minor version for given branch 
-- patch<br>
-Patch version for given branch
-- postfix<br>
-Postfix for given branch
+- ``branch``: Returned if the given branch matches the version patterns.
+- ``prefix``: Extracted prefix from the branch name.
+- ``major``: Major version component.
+- ``minor``: Minor version component.
+- ``patch``: Patch version component.
+- ``postfix``: Postfix string, if available.
 
 ### version patterns
+
+This regex identifies version strings with an optional prefix (v), numerical components, and an optional postfix.
 ```
 regex="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
 ```
 
 ### examples
 ```
+**Input**:  
 branch: DM12021
-> branch:
-> prefix:
-> major:
-> minor:
-> patch:
-> postfix:
+
+**Output**:
+branch:
+prefix:
+major:
+minor:
+patch:
+postfix:
 ```
 
 ```
+**Input**:
 branch: v1.0
-> branch: v1.0
-> prefix: v
-> major: 1
-> minor: 0
-> patch:
-> postfix:
+
+**Output**:
+branch: v1.0
+prefix: v
+major: 1
+minor: 0
+patch:
+postfix:
 ```
 
 ```
+**Input**:
 branch: v1.0.2
-> branch: v1.0
-> prefix: v
-> major: 1
-> minor: 0
-> patch: 2
-> postfix:
+
+**Output**:
+branch: v1.0
+prefix: v
+major: 1
+minor: 0
+patch: 2
+postfix:
 ```
 
 ```
+**Input**:
 branch: v1.0.2-prod
-> branch: v1.0
-> prefix: v
-> major: 1
-> minor: 0
-> patch: 2
-> postfix: prod
+
+**Output**:
+branch: v1.0
+prefix: v
+major: 1
+minor: 0
+patch: 2
+postfix: prod
 ```

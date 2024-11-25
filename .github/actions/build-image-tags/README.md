@@ -3,12 +3,12 @@
 ## description
 ...<br>
 
-_related actions_
-- [actions/convert-branch-to-version](../convert-branch-to-version/README.md)
+_Related Actions_
+- [actions/convert-branch-to-version](../convert-branch-to-version/README.md): Extracts version components from a branch name.
 
 ### input
-- source branch name [required]
-- target branch name [required]
+- ``source`` _(required)_: Specifies the source branch of the merge request.
+- ``target`` _(required)_: Specifies the target branch of the merge request.
 
 ### output
-- tags [string | empty]
+- ``tags`` _(string | empty)_: Returns calculated image tags
