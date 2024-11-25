@@ -108,9 +108,10 @@ runs:
       id: get-commit-tag
       run: |
         echo "::notice::Approving Commit Tag..."
-        tag="${{ steps.build-commit-tag.tag }}"
+        tag="${{ steps.build-commit-tag.outputs.tag }}"
+        echo "::notice::> tag: $tag"
         if git ls-remote --exit-code --heads origin $tag; then
-          echo "::error::commit tag $tag already exists as branch"
+          echo "::error::commit tag already exists as branch"
         else
           echo "::notice::Commit tag approved."
           echo "tag=${tag}" >> $GITHUB_OUTPUT
