@@ -1,0 +1,61 @@
+name: Push Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "image name"
+        required: true
+        type: string
+      artifact:
+        description: "artifact name"
+        required: false
+        type: string
+      commit_tag:
+        description: "commit tag"
+        required: false
+        type: string
+      source:
+        description: "source branch"
+        required: true
+        type: string
+      target:
+        description: "branch to be merged into"
+        required: true
+        type: string
+
+jobs:
+  push-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v4
+
+      - name: "Build Branch Tags"
+        id: get-image-tags
+        uses: draftm0de/kernel.deployment/.github/actions/build-image-tags@main
+        with:
+          source: ${{ inputs.source }}
+          target: ${{ inputs.target }}
+
+      - name: "Load Docker Image From Artifact"
+        id: load-image
+        if: ${{ inputs.artifact }}
+        uses: draftm0de/kernel.deployment/.github/actions/image-load@main
+        with:
+          image: ${{ inputs.image }}
+          artifact: ${{ inputs.artifact }}
+
+      - name: "Tag and Push Image"
+
+        run: |
+          echo "::notice:: Tagging and Pushing Image..."
+          tags="${{ )
+          if [ "${{ inputs.commit_tag }}" ]; then
+            tag+("${{ inputs.commit_tag }}"}
+            echo "::notice:: use commit tag" 
+          fi
+          if [ "${{ steps.get-image-tags.outputs.target }}" ]; then
+            tag+("${{ inputs.commit_tag }}"}
+            echo "::notice:: use commit tag" 
+          fi

@@ -1,0 +1,39 @@
+name: Push Docker Image And Tag Commit
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "Docker Image Name"
+        required: true
+        type: string
+      artifact:
+        description: "Artifact for Docker Image"
+        required: false
+        type: string
+      target:
+        description: "branch to be merged into"
+        required: false
+        type: string
+    secrets:
+      DOCKER_USERNAME:
+        required: false
+      DOCKER_PASSWORD:
+        required: false
+
+jobs:
+  push-tag:
+    uses: draftm0de/kernel.deployment/.github/workflows/push-tag.yml@main
+    with:
+      source: ${{ github.ref_name }}
+      target: ${{ inputs.target || github.event.pull_request.base.ref }}
+
+  push-image:
+    needs: commit-tag
+    uses: draftm0de/kernel.deployment/.github/workflows/push-image.yml@main
+    with:
+      image: ${{ inputs.image }}
+      artifact: ${{ inputs.artifact }}
+      commit_tag: ${{ needs.tag-commit.outputs.tag }}
+      source: ${{ github.ref_name }}
+      target: ${{ inputs.target || github.event.pull_request.base.ref }}

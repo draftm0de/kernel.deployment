@@ -1,0 +1,47 @@
+name: Tag Commit Version
+
+on:
+  workflow_call:
+    inputs:
+      source:
+        description: "source branch"
+        type: string
+        required: true
+      target:
+        description: "target branch"
+        type: string
+        required: true
+    outputs:
+      tag:
+        description: "commit tag"
+        value: ${{ jobs.tag-commit.outputs.tag }}
+
+jobs:
+  tag-commit:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.get-commit-tag.outputs.tag }}
+    steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v4
+
+      - name: "Build Commit Tag"
+        id: get-commit-tag
+        uses: draftm0de/kernel.deployment/.github/actions/build-commit-tag@main
+        with:
+          source: ${{ inputs.source }}
+          target: ${{ inputs.target }}
+
+      - name: "Apply Commit Tag"
+        if: ${{ steps.get-commit-tag.outputs.tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "::notice:: Tagging Commit..."
+          tag="${{ steps.get-commit-tag.outputs.tag }}"
+          echo "::notice:: > tag: $tag"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # git tag ${{ steps.get-commit-tag.outputs.tag }}
+          # git push origin ${{ steps.get-commit-tag.outputs.tag }}          
+          echo "::notice:: Commit Tagged."

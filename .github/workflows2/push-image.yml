@@ -57,10 +57,10 @@ jobs:
           echo "SOURCE_BRANCH=$source" >> $GITHUB_ENV
           echo "TARGET_BRANCH=$target" >> $GITHUB_ENV
 
-      - name: Download Image from Artifact
+      - name: "Load Docker Image From Artifact"
         if: ${{ inputs.artifact }}
         id: load-image
-        uses: draftm0de/kernel.deployment/.github/actions/download-image@main
+        uses: draftm0de/kernel.deployment/.github/actions/image-load@main
         with:
           image: ${{ inputs.image }}
           artifact: ${{ inputs.artifact }}
