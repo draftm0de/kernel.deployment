@@ -37,17 +37,17 @@ runs:
           echo "::notice::> source and target matches version patterns"
           # source: 1.2.2 => target: 1.2.3
           if [ -n "${{ steps.source.outputs.patch }}" ] && [ -n "${{ steps.target.outputs.patch }}" ] ; then
-            echo "::error::> source and target branches having a patch version"
+            echo "::error::> source and target branches having the same version depth (patch)"
             exit 1
           fi
           # source: 1.2 => target: 1.3
           if [ -z "${{ steps.source.outputs.patch }}" ] && [ -z "${{ steps.target.outputs.patch }}" ] && [ -n "${{ steps.source.outputs.minor }}" ] && [ -n "${{ steps.target.outputs.minor }}" ] ; then
-            echo "::error::> source and target branches have no patch version and both have a minor version"
+            echo "::error::> source and target branches having the same version depth (minor)"
             exit 1
           fi  
           # source: 1 => target: 2
           if [ -z "${{ steps.source.outputs.minor }}" ] && [ -z "${{ steps.target.outputs.minor }}" ] && [ -n "${{ steps.source.outputs.major }}" ] && [ -n "${{ steps.target.outputs.major }}" ] ; then
-            echo "::error::> source and target branches have no minor/patch version and both have a major version"
+            echo "::error::> source and target branches having the same version depth (major)"
             exit 1
           fi         
           # source: 1.2.3 => target: 1.1.?
@@ -65,13 +65,22 @@ runs:
             echo "::error::> target branch already has a patch version"
             exit 1
           fi
+          # source: 1.2.1 => target: 1
+          if [ -n "${{ steps.source.outputs.patch }}" ] && [ -z "${{ steps.target.outputs.minor }}" ]; then
+            echo "::error::> source branch with patch version requires target branch with minor version"
+            exit 1
+          fi        
           # source: 1.2.2 => target: 1.2 (1.2.1 exists)
           if [ -n "${{ steps.target.outputs.minor }}" ] && [ -z "${{ steps.source.outputs.minor }}" ]; then
             pattern="${{ steps.target.outputs.prefix }}${{ steps.target.outputs.major }}"
             if [ -n "${{ steps.target.outputs.minor }}" ]; then
               pattern="${pattern}.${{ steps.target.outputs.minor }}"
             fi
-            echo "::notice::> search pattern: $pattern"
+            if [ -n "${{ steps.target.outputs.postfix }}" ]; then
+              pattern="${pattern}.*-${{ steps.target.outputs.minor }}"
+            else
+              pattern="${pattern}.*"
+            fi            
             latest_branch=$(git branch -r | grep -E "${pattern}" | sed 's|origin/||' | sort -Vr | head -n 1)
             if [ -n "$latest_branch" ]; then
               echo "::notice::> latest branch: $latest_branch"
