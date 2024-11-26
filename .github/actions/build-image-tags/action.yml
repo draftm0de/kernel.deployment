@@ -20,7 +20,6 @@ runs:
       shell: bash
       run: |
         git fetch origin
-        # regex="^(v)?([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
         regex='^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$'
         echo "REGEX=$regex" >> $GITHUB_ENV
 
@@ -36,11 +35,11 @@ runs:
       with:
         branch: ${{ inputs.source }}
 
-    - name: "Protect Branch Integrity"
+    - name: "Protect Branch By Name"
       if: ${{ steps.source.outputs.branch }} && ${{ steps.target.outputs.branch }}
       shell: bash
       run: |
-        echo "::notice::Protecting branch integrity..."
+        echo "::notice::Protecting branch by name..."
 
         # source: 1.2.2 => target: 1.2.3
         if [ -n "${{ steps.source.outputs.patch }}" ] && [ -n "${{ steps.target.outputs.patch }}" ] ; then
@@ -77,6 +76,13 @@ runs:
           echo "::error::> source branch with patch version requires target branch with minor version"
           exit 1
         fi  
+        echo "::notice::Branch by name protected..."
+
+    - name: "Protect Branch Via Git"
+      if: ${{ steps.source.outputs.branch }} && ${{ steps.target.outputs.branch }}
+      shell: bash
+      run: |
+        echo "::notice::Protecting branch via git..."
         
         # source: 1.0.1 => target: 1.0 (1.0.2 exists)
         # source: 1.0 => target: 1 (1.1 exists)
@@ -92,16 +98,12 @@ runs:
         fi  
         
         # git fetch origin
-        echo "::notice::> search pattern: $pattern" 
+        echo "::notice::> git branch pattern: $pattern" 
         found_branch=$(git branch -r | grep -E "${pattern}" | sed 's|origin/||;s/^[ \t]*//g' | sort -Vr | head -n 1)                    
         if [ -n "$found_branch" ]; then
-          echo "::notice::> latest branch: $found_branch"
-          REGEX="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
+          echo "::notice::> target branch related latest branch: $found_branch"
           regex="${{ env.REGEX }}"
-          if [[ "$found_branch" =~ $REGEX ]]; then
-            echo "::notice::> found with env."
-          fi
-          if [[ "$found_branch" =~ $REGEX ]]; then
+          if [[ "$found_branch" =~ $regex ]]; then
             minor="${BASH_REMATCH[3]}"
             patch="${BASH_REMATCH[4]}"
             # remove leading .
@@ -118,14 +120,15 @@ runs:
             fi
           fi
         else
-          echo "::notice::> no latest branch found"
+          echo "::notice::> target branch related latest found"
         fi
+        echo "::notice::Branch via git protected..."
 
-    - name: "Retrieve Versioned Branch Tags"
+    - name: "Adding Versioned Branch Tags"
       id: get-branch-tags
       shell: bash
       run: |
-        echo "::notice::Retrieving versioned branch tags..."
+        echo "::notice::Adding versioned branch tags..."
         image_tags=()
         if [ -n "${{ steps.source.outputs.branch }}" ]; then
           echo "::notice::> use versioned source branch: ${{ steps.source.outputs.branch }}"
@@ -136,7 +139,7 @@ runs:
           image_tags+=("${{ steps.target.outputs.branch }}")
         fi
         
-        echo "::notice::Versioned branch tags retrieved."
+        echo "::notice::Versioned branch tags added."
         echo "tags=${image_tags[*]}" >> $GITHUB_OUTPUT
 
     - name: "Adding Versioned Commit Tags"
@@ -151,7 +154,7 @@ runs:
         tags=$(git tag --contains "$commit")
         
         # Filter tags matching the regex
-        regex="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
+        regex="${{ env.REGEX }}"
         image_tags=()
         while IFS= read -r tag; do
           if [[ $tag =~ $regex ]]; then
