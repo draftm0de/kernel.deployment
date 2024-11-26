@@ -35,7 +35,7 @@ jobs:
       - name: "Load Docker Image From Artifact"
         id: load-image
         if: ${{ inputs.artifact }}
-        uses: draftm0de/kernel.deployment/github/actions/image-load@main
+        uses: draftm0de/kernel.deployment/.github/actions/image-load@main
         with:
           image: ${{ inputs.image }}
           artifact: ${{ inputs.artifact }}
@@ -73,7 +73,7 @@ jobs:
 
       - name: "Scan Image With Docker Scout"
         if: ${{ inputs.scanner == 'scout' }}
-        uses: draftm0de/kernel.deployment/github/actions/image-scan-scout@main
+        uses: draftm0de/kernel.deployment/.github/actions/image-scan-scout@main
         with:
           image: ${{ steps.arguments.outputs.image }}
           config: ${{ steps.arguments.outputs.config }}
@@ -82,7 +82,7 @@ jobs:
 
       - name: "Scan Image With Trivy"
         if: ${{ inputs.scanner == 'trivy' }}
-        uses: draftm0de/kernel.deployment/github/actions/image-scan-trivy@main
+        uses: draftm0de/kernel.deployment/.github/actions/image-scan-trivy@main
         with:
           image: ${{ steps.arguments.outputs.image }}
           config: ${{ steps.arguments.outputs.config }}
