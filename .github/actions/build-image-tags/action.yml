@@ -72,7 +72,7 @@ runs:
           fi        
           # source: 1.0.1 => target: 1.0 (1.0.2 exists)
           # minor/patch version conflict
-          if [ -n "${{ steps.target.outputs.minor }}" ] && [ -n "${{ steps.source.outputs.patch }}" ]; then
+          if [ -n "${{ steps.target.outputs.minor }}" ]; then
             pattern="${{ steps.target.outputs.prefix }}${{ steps.target.outputs.major }}"
             if [ -n "${{ steps.target.outputs.minor }}" ]; then
               pattern="${pattern}.${{ steps.target.outputs.minor }}"
@@ -82,8 +82,10 @@ runs:
             else
               pattern="${pattern}.*"
             fi            
+            echo "::notice::> search patterns: $pattern" 
             latest=$(git branch -r | grep -E "${pattern}" | sed 's|origin/||' | sort -Vr | head -n 1)                    
             if [ -n "$latest" ]; then
+              echo "::notice::> latest branch: $latest"
               REGEX="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
               if [[ "$latest" =~ $REGEX ]]; then
                 echo "::notice::> latest branch: $latest"
@@ -93,7 +95,9 @@ runs:
                   echo "::error:: source patch version is lower than latest available patch version"
                   exit 1
                 fi
-              fi              
+              fi
+            else
+              echo "::notice::> no latest branch found"
             fi
           fi
         fi
