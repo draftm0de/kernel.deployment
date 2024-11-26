@@ -87,7 +87,7 @@ runs:
         
           if [ -n "${pattern}" ]; then
             echo "::notice::> git fetch"
-            fetch=$(git fetch)
+            # fetch=$(git fetch)
             echo "::notice::> search pattern: $pattern" 
             latest_matched_branch=$(git branch -r | grep -E "${pattern}" | sed 's|origin/||;s/^[ \t]*//g' | sort -Vr | head -n 1)                    
             if [ -n "$latest_matched_branch" ]; then
@@ -103,7 +103,7 @@ runs:
                 echo "::notice::> latest.minor: $minor"        
                 echo "::notice::> latest.patch: $patch"
                 if [ -n "${patch}" ] && (( ${{ steps.source.outputs.patch }} < $patch )); then
-                  echo "::error:: source patch version is lower than latest available patch version"
+                  echo "::error:: source branch has a lower version than latest target related branch"
                   exit 1
                 fi
               fi
