@@ -1,6 +1,6 @@
-# Action: Convert Branch Name to Version Components
+# actions/convert-branch-to-version
 
-## description
+## Description
 Parse the provided branch name into its version components, including:
 
 - Prefix
@@ -11,10 +11,10 @@ Parse the provided branch name into its version components, including:
 
 This action uses version patterns to extract and identify these components.
 
-### inputs
+### Inputs
 - ``branch`` _(required)_: The branch name to be processed.
 
-### outputs
+### Outputs
 - ``branch``: Returned if the given branch matches the version patterns.
 - ``prefix``: Extracted prefix from the branch name.
 - ``major``: Major version component.
@@ -22,62 +22,24 @@ This action uses version patterns to extract and identify these components.
 - ``patch``: Patch version component.
 - ``postfix``: Postfix string, if available.
 
-### version patterns
+### Version patterns
 
-This regex identifies version strings with an optional prefix (v), numerical components, and an optional postfix.
+This regex identifies version strings in the following format:
+- Optional `v` prefix (e.g., `v1.2.3`)
+- Numeric components separated by dots (e.g., `1.2.3`)
+- Optional postfix (e.g., `-beta` or `-rc1`).
+
 ```
 regex="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
 ```
 
-### examples
-```
-**Input**:  
-branch: DM12021
+### Examples
 
-**Output**:
-branch:
-prefix:
-major:
-minor:
-patch:
-postfix:
-```
-
-```
-**Input**:
-branch: v1.0
-
-**Output**:
-branch: v1.0
-prefix: v
-major: 1
-minor: 0
-patch:
-postfix:
-```
-
-```
-**Input**:
-branch: v1.0.2
-
-**Output**:
-branch: v1.0
-prefix: v
-major: 1
-minor: 0
-patch: 2
-postfix:
-```
-
-```
-**Input**:
-branch: v1.0.2-prod
-
-**Output**:
-branch: v1.0
-prefix: v
-major: 1
-minor: 0
-patch: 2
-postfix: prod
-```
+| Input         | Branch | Prefix | Major | Minor | Patch | Postfix |
+|---------------|------|--------|-------|-------|-------|---------|
+| `DM12021`     |      |        |       |       |       |         |
+| `v1`          |    `v1`  | `v`      | `1`     |       |       |         |
+| `v1.0`        |    `v1.0` | `v`      | `1`     | `0`     |       |         |
+| `v1.0.2`      |    `v1.0` | `v`      | `1`     | `0`     | `2`   |         |
+| `v1.0.2-prod` |    `v1.0` | `v`      | `1`     | `0`     | `2`   | `prod`    |
+| `1.0.2-prod` |    `v1.0` |      | `1`     | `0`     | `2`   | `prod`    |

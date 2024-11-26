@@ -19,10 +19,6 @@ on:
         description: "artifact name"
         required: false
         type: string
-      commit_tag:
-        description: "commit tag"
-        required: false
-        type: string
     secrets:
       DOCKER_USERNAME:
         required: false

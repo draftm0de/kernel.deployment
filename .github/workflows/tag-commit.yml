@@ -11,10 +11,6 @@ on:
         description: "branch to be merged into"
         type: string
         required: false
-    outputs:
-      tag:
-        description: "commit tag"
-        value: ${{ jobs.tag-commit.outputs.tag }}
 
 jobs:
   tag-commit:

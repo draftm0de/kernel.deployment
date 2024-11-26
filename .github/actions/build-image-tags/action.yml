@@ -56,12 +56,12 @@ runs:
           echo "::error::> source and target branches having the same version depth (major)"
           exit 1
         fi         
-        # source: 1.2.3 => target: 1.1.?
+        # source: 1.2.3 => target: 1.1.2
         if [ -n "${{ steps.source.outputs.minor }}" ] && [ -n "${{ steps.target.outputs.minor }}" ] && (( ${{ steps.source.outputs.minor }} > ${{ steps.target.outputs.minor }} )); then
           echo "::error::> source minor version is greater than target minor version"
           exit 1        
         fi
-        # source: 2.2.3 => target: 1.1
+        # source: 2.2.3 => target: 1.1.1
         if [ -n "${{ steps.source.outputs.major }}" ] && [ -n "${{ steps.target.outputs.major }}" ] && (( ${{ steps.source.outputs.major }} > ${{ steps.target.outputs.major }} )); then
            echo "::error::> source major version is greater than target major version"
            exit 1
