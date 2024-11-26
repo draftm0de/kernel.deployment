@@ -73,8 +73,8 @@ runs:
           # source: 1.0.1 => target: 1.0 (1.0.2 exists)
           # minor/patch version conflict
           if [ -n "${{ steps.target.outputs.minor }}" ]; then
-            pattern="origin/"
-            pattern="${{ steps.target.outputs.prefix }}${{ steps.target.outputs.major }}"
+            pattern="origin"
+            pattern="${pattern}/${{ steps.target.outputs.prefix }}${{ steps.target.outputs.major }}"
             if [ -n "${{ steps.target.outputs.minor }}" ]; then
               pattern="${pattern}.${{ steps.target.outputs.minor }}"
             fi
