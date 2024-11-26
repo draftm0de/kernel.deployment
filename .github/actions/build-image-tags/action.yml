@@ -87,15 +87,13 @@ runs:
         
           if [ -n "${pattern}" ]; then
             echo "::notice::> git fetch"
-            # fetch=$(git fetch)
+            fetch=$(git fetch)
             echo "::notice::> search pattern: $pattern" 
-            latest=$(git branch -r | grep -E "${pattern}" | sed 's|origin/||' | sort -Vr | head -n 1)                    
-            if [ -n "$latest" ]; then
-              echo "::notice::> latest branch: $latest"
+            latest_matched_branch=$(git branch -r | grep -E "${pattern}" | sed 's|origin/||' | sort -Vr | head -n 1)                    
+            if [ -n "$latest_matched_branch" ]; then
+              echo "::notice::> latest branch: $latest_matched_branch"
               REGEX="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
-              if [[ "$latest" =~ $REGEX ]]; then
-                latest_matched_branch="${latest#origin/}"
-                echo "::notice::> latest matching branch: $latest_matched_branch"
+              if [[ "$latest_matched_branch" =~ $REGEX ]]; then
                 latest_minor="${BASH_REMATCH[3]}"
                 latest_patch="${BASH_REMATCH[4]}"
                 echo "::notice::> latest.minor: $latest_minor"        
