@@ -11,7 +11,7 @@ inputs:
 outputs:
   tags:
     description: "tags to be use for image"
-    value: ${{ steps.get-image-tags.outputs.tags }}
+    value: ${{ steps.get-tags.outputs.tags }}
 
 runs:
   using: "composite"
@@ -28,10 +28,11 @@ runs:
       with:
         branch: ${{ inputs.source }}
 
-    - name: "Validate source and target branch"
+    - name: "Retrieve Versioned Branch Tags"
+      id: get-branch-tags
       shell: bash
       run: |
-        echo "::notice::Validating source and target branches..."
+        echo "::notice::Retrieving versioned branch tags..."
         if [ -n "${{ steps.source.outputs.branch }}" ] && [ -n "${{ steps.target.outputs.branch }}" ] ; then
           echo "::notice::> source and target matches version patterns"
           # source: 1.2.2 => target: 1.2.3
@@ -77,10 +78,55 @@ runs:
             fi
           fi
         fi
+        image_tags=()
         if [ -n "${{ steps.source.outputs.branch }}" ]; then
-          echo "::notice::> use source branch"
+          echo "::notice::> use versioned source branch: ${{ steps.source.outputs.branch }}"
+          image_tags+=("${{ steps.source.outputs.branch }}")
         fi
         if [ -n "${{ steps.target.outputs.branch }}" ]; then
-          echo "::notice::> use target branch"
+          echo "::notice::> use versioned target branch: ${{ steps.target.outputs.branch }}"
+          image_tags+=("${{ steps.target.outputs.branch }}")
         fi
-        echo "::notice::source and target branches are validated."
+        
+        echo "::notice::Versioned branch tags retrieved."
+        echo "tags=${image_tags[*]}" >> $GITHUB_OUTPUT
+
+    - name: "Retrieve Versioned Commit Tags"
+      id: get-commit-tags
+      shell: bash
+      run: |
+        echo "::notice::Retrieving versioned commit tags..."
+        git fetch --tags
+        
+        # Get all tags for the current commit
+        commit=$(git rev-parse HEAD)
+        tags=$(git tag --contains "$commit")
+        
+        # Filter tags matching the regex
+        regex="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
+        image_tags=()
+        while IFS= read -r tag; do
+          if [[ $tag =~ $regex ]]; then
+            echo "::notice::> use versioned commit tag: $tag"
+            image_tags+=("$tag")
+          fi
+        done <<< "$tags"  
+        
+        echo "::notice::Versioned commit tags retrieved."
+        echo "tags=${image_tags[*]}" >> $GITHUB_OUTPUT
+
+    - name: "Combine Versioned Image Tags"
+      id: get-tags
+      shell: bash
+      run: |
+        echo "::notice::Combining image tags..."
+        image_tags=()
+        while IFS= read -r tag; do
+          image_tags+=("$tag")
+        done <<< "${{ steps.get-commit-tags.outputs.tags }}" 
+        while IFS= read -r tag; do
+          image_tags+=("$tag")
+        done <<< "${{ steps.get-branch-tags.outputs.tags }}"
+        
+        echo "::notice::Image tags combined."
+        echo "tags=${image_tags[*]}" >> $GITHUB_OUTPUT
