@@ -20,7 +20,8 @@ runs:
       shell: bash
       run: |
         git fetch origin
-        regex="^(v)?([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
+        # regex="^(v)?([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
+        regex='^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$'
         echo "REGEX=$regex" >> $GITHUB_ENV
 
     - name: "Convert target branch into version"
@@ -96,7 +97,7 @@ runs:
         if [ -n "$found_branch" ]; then
           echo "::notice::> latest branch: $found_branch"
           REGEX="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
-          regex="${{ env.REGEX }}
+          regex="${{ env.REGEX }}"
           if [[ "$found_branch" =~ $REGEX ]]; then
             echo "::notice::> found with env."
           fi
