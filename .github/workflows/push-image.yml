@@ -52,12 +52,12 @@ jobs:
           artifact: ${{ inputs.artifact }}
 
       - name: "Tag and Push Image"
+        if: ${{ steps.get-image-tags.outputs.tags }}
         run: |
           echo "::notice::Tagging and Pushing Image..."
-          tags=()
-          if [ -n "${{ inputs.commit_tag }}" ]; then
-            echo "::notice::> use commit tag" 
-          fi
-          if [ -n "${{ steps.get-image-tags.outputs.tags }}" ]; then
-            echo "::notice::> use image tags" 
-          fi
+          while IFS= read -r tag; do
+            image="${{ secrets.DOCKER_USERNAME }}/${tag}"
+            echo "::notice::$tag"
+            echo "::notice::> tag image: $tag"
+            echo "::notice::> push image: $image"
+          done <<< "${{ steps.get-image-tags.outputs.tags }}"         

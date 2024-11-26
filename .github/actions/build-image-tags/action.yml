@@ -75,7 +75,7 @@ runs:
         if [ -n "${{ steps.source.outputs.patch }}" ] && [ -z "${{ steps.target.outputs.minor }}" ]; then
           echo "::error::> source branch with patch version requires target branch with minor version"
           exit 1
-        fi  
+        fi         
         echo "::notice::Branch by name protected..."
 
     - name: "Protect Branch Via Git"
@@ -101,7 +101,7 @@ runs:
         echo "::notice::> git branch pattern: $pattern" 
         found_branch=$(git branch -r | grep -E "${pattern}" | sed 's|origin/||;s/^[ \t]*//g' | sort -Vr | head -n 1)                    
         if [ -n "$found_branch" ]; then
-          echo "::notice::> target branch related latest branch: $found_branch"
+          echo "::notice::> latest related target branch: $found_branch"
           regex="${{ env.REGEX }}"
           if [[ "$found_branch" =~ $regex ]]; then
             minor="${BASH_REMATCH[3]}"
@@ -111,16 +111,16 @@ runs:
             patch="${patch#.}"
             #
             if [ -n "${minor}" ] && (( ${{ steps.source.outputs.minor }} < $minor )); then
-              echo "::error:: source branch has a lower minor version than latest target related branch"
+              echo "::error:: source branch has a lower minor version than latest related target branch"
               exit 1
             fi        
             if [ -n "${patch}" ] && (( ${{ steps.source.outputs.patch }} < $patch )); then
-              echo "::error:: source branch has a lower patch version than latest target related branch"
+              echo "::error:: source branch has a lower patch version than latest related target branch"
               exit 1
             fi
           fi
         else
-          echo "::notice::> target branch related latest found"
+          echo "::notice::> no latest related target branch found"
         fi
         echo "::notice::Branch via git protected..."
 
