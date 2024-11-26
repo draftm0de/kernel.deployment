@@ -23,14 +23,14 @@ on:
 
 jobs:
   push-tag:
-    uses: draftm0de/kernel.deployment/.github/workflows/push-tag.yml@main
+    uses: draftm0de/kernel.deployment/github/workflows/push-tag.yml@main
     with:
       source: ${{ github.ref_name }}
       target: ${{ inputs.target || github.event.pull_request.base.ref }}
 
   push-image:
     needs: commit-tag
-    uses: draftm0de/kernel.deployment/.github/workflows/push-image.yml@main
+    uses: draftm0de/kernel.deployment/github/workflows/push-image.yml@main
     with:
       image: ${{ inputs.image }}
       artifact: ${{ inputs.artifact }}

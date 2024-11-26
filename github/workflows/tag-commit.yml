@@ -23,7 +23,7 @@ jobs:
 
       - name: "Build Commit Tag"
         id: get-commit-tag
-        uses: draftm0de/kernel.deployment/.github/actions/build-commit-tag@main
+        uses: draftm0de/kernel.deployment/github/actions/build-commit-tag@main
         with:
           source: ${{ inputs.source || github.ref_name }}
           target: ${{ inputs.target || github.event.pull_request.base.ref }}
