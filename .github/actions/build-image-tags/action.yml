@@ -70,9 +70,10 @@ runs:
             echo "::error::> source branch with patch version requires target branch with minor version"
             exit 1
           fi        
+        
           # source: 1.0.1 => target: 1.0 (1.0.2 exists)
-          # minor/patch version conflict
-          if [ -n "${{ steps.target.outputs.minor }}" ]; then
+          # source: 1.0 => target: 1 (1.1 exists)
+          if [ -n "${{ steps.target.outputs.branch }}" ]; then
             pattern="origin"
             pattern="${pattern}/${{ steps.target.outputs.prefix }}${{ steps.target.outputs.major }}"
             if [ -n "${{ steps.target.outputs.minor }}" ]; then
@@ -86,24 +87,27 @@ runs:
           fi
         
           if [ -n "${pattern}" ]; then
-            echo "::notice::> git fetch"
-            # fetch=$(git fetch)
+            git fetch origin
             echo "::notice::> search pattern: $pattern" 
-            latest_matched_branch=$(git branch -r | grep -E "${pattern}" | sed 's|origin/||;s/^[ \t]*//g' | sort -Vr | head -n 1)                    
-            if [ -n "$latest_matched_branch" ]; then
-              echo "::notice::> latest branch: $latest_matched_branch"
+            found_branch=$(git branch -r | grep -E "${pattern}" | sed 's|origin/||;s/^[ \t]*//g' | sort -Vr | head -n 1)                    
+            if [ -n "$found_branch" ]; then
+              echo "::notice::> latest branch: $found_branch"
               REGEX="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
-              if [[ "$latest_matched_branch" =~ $REGEX ]]; then
+              if [[ "$found_branch" =~ $REGEX ]]; then
                 minor="${BASH_REMATCH[3]}"
                 patch="${BASH_REMATCH[4]}"
                 # remove leading .
                 minor="${minor#.}"
                 patch="${patch#.}"
                 #
-                echo "::notice::> latest.minor: $minor"        
-                echo "::notice::> latest.patch: $patch"
+                echo "::notice::> latest branch (minor): $minor"        
+                echo "::notice::> latest branch (patch): $patch"
+                if [ -n "${minor}" ] && (( ${{ steps.source.outputs.minor }} < $patch )); then
+                  echo "::error:: source branch has a lower minor version than latest target related branch"
+                  exit 1
+                fi        
                 if [ -n "${patch}" ] && (( ${{ steps.source.outputs.patch }} < $patch )); then
-                  echo "::error:: source branch has a lower version than latest target related branch"
+                  echo "::error:: source branch has a lower patch version than latest target related branch"
                   exit 1
                 fi
               fi
