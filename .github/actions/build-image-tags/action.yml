@@ -71,7 +71,8 @@ runs:
             exit 1
           fi        
           # source: 1.0.1 => target: 1.0 (1.0.2 exists)
-          if [ -n "${{ steps.target.outputs.minor }}" ] && [ -n "${{ steps.source.outputs.branch }}" ] && [ -z "${{ steps.source.outputs.minor }}" ]; then
+          # minor/patch version conflict
+          if [ -n "${{ steps.target.outputs.minor }}" ] && [ -n "${{ steps.source.outputs.patch }}" ]; then
             pattern="${{ steps.target.outputs.prefix }}${{ steps.target.outputs.major }}"
             if [ -n "${{ steps.target.outputs.minor }}" ]; then
               pattern="${pattern}.${{ steps.target.outputs.minor }}"
@@ -81,9 +82,18 @@ runs:
             else
               pattern="${pattern}.*"
             fi            
-            latest_branch=$(git branch -r | grep -E "${pattern}" | sed 's|origin/||' | sort -Vr | head -n 1)
-            if [ -n "$latest_branch" ]; then
-              echo "::notice::> latest branch: $latest_branch"
+            latest=$(git branch -r | grep -E "${pattern}" | sed 's|origin/||' | sort -Vr | head -n 1)                    
+            if [ -n "$latest" ]; then
+              REGEX="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
+              if [[ "$latest" =~ $REGEX ]]; then
+                echo "::notice::> latest branch: $latest"
+                latest_patch="${BASH_REMATCH[4]}"
+                echo "::notice::> latest branch/patch: $latest_patch"
+                if (( ${{ steps.source.outputs.patch }} < $latest_patch )); then
+                  echo "::error:: source patch version is lower than latest available patch version"
+                  exit 1
+                fi
+              fi              
             fi
           fi
         fi
