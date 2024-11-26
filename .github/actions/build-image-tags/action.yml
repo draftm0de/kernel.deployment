@@ -94,11 +94,15 @@ runs:
               echo "::notice::> latest branch: $latest_matched_branch"
               REGEX="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
               if [[ "$latest_matched_branch" =~ $REGEX ]]; then
-                latest_minor="${BASH_REMATCH[3]}"
-                latest_patch="${BASH_REMATCH[4]}"
-                echo "::notice::> latest.minor: $latest_minor"        
-                echo "::notice::> latest.patch: $latest_patch"
-                if (( ${{ steps.source.outputs.patch }} < $latest_patch )); then
+                minor="${BASH_REMATCH[3]}"
+                patch="${BASH_REMATCH[4]}"
+                # remove leading .
+                minor="${minor#.}"
+                patch="${patch#.}"
+                #
+                echo "::notice::> latest.minor: $minor"        
+                echo "::notice::> latest.patch: $patch"
+                if [ -n "${patch}" ] && (( ${{ steps.source.outputs.patch }} < $patch )); then
                   echo "::error:: source patch version is lower than latest available patch version"
                   exit 1
                 fi
