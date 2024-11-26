@@ -34,7 +34,6 @@ runs:
       run: |
         echo "::notice::Retrieving versioned branch tags..."
         if [ -n "${{ steps.source.outputs.branch }}" ] && [ -n "${{ steps.target.outputs.branch }}" ] ; then
-          echo "::notice::> source and target matches version patterns"
           # source: 1.2.2 => target: 1.2.3
           if [ -n "${{ steps.source.outputs.patch }}" ] && [ -n "${{ steps.target.outputs.patch }}" ] ; then
             echo "::error::> source and target branches having the same version depth (patch)"
@@ -100,8 +99,6 @@ runs:
                 minor="${minor#.}"
                 patch="${patch#.}"
                 #
-                echo "::notice::> latest branch (minor): $minor"        
-                echo "::notice::> latest branch (patch): $patch"
                 if [ -n "${minor}" ] && (( ${{ steps.source.outputs.minor }} < $minor )); then
                   echo "::error:: source branch has a lower minor version than latest target related branch"
                   exit 1
