@@ -17,14 +17,12 @@ runs:
   using: "composite"
   steps:
     - name: "Convert target branch into version"
-      shell: bash
       id: target
       uses: draftm0de/kernel.deployment/.github/actions/convert-branch-to-version@main
       with:
         branch: ${{ inputs.target }}
 
     - name: "Convert source branch into version"
-      shell: bash
       id: source
       uses: draftm0de/kernel.deployment/.github/actions/convert-branch-to-version@main
       with:
