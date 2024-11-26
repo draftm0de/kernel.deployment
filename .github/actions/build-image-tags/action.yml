@@ -70,8 +70,8 @@ runs:
             echo "::error::> source branch with patch version requires target branch with minor version"
             exit 1
           fi        
-          # source: 1.2.2 => target: 1.2 (1.2.1 exists)
-          if [ -n "${{ steps.target.outputs.minor }}" ] && [ -z "${{ steps.source.outputs.minor }}" ]; then
+          # source: 1.0.1 => target: 1.0 (1.0.2 exists)
+          if [ -n "${{ steps.target.outputs.minor }}" ] && [ -n "${{ steps.source.outputs.branch }}" ] && [ -z "${{ steps.source.outputs.minor }}" ]; then
             pattern="${{ steps.target.outputs.prefix }}${{ steps.target.outputs.major }}"
             if [ -n "${{ steps.target.outputs.minor }}" ]; then
               pattern="${pattern}.${{ steps.target.outputs.minor }}"
