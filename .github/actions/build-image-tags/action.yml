@@ -81,16 +81,23 @@ runs:
               pattern="${pattern}.*-${{ steps.target.outputs.minor }}"
             else
               pattern="${pattern}.*"
-            fi            
-            echo "::notice::> search patterns: $pattern" 
+            fi  
+          fi
+        
+          if [ -n "${pattern}" ]; then
+            echo "::notice::> git fetch"
+            fetch=$(git fetch)
+            echo "::notice::> search pattern: $pattern" 
             latest=$(git branch -r | grep -E "${pattern}" | sed 's|origin/||' | sort -Vr | head -n 1)                    
             if [ -n "$latest" ]; then
               echo "::notice::> latest branch: $latest"
               REGEX="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
               if [[ "$latest" =~ $REGEX ]]; then
                 echo "::notice::> latest branch: $latest"
+                latest_minor="${BASH_REMATCH[3]}"
                 latest_patch="${BASH_REMATCH[4]}"
-                echo "::notice::> latest branch/patch: $latest_patch"
+                echo "::notice::> latest.minor: $latest_minor"        
+                echo "::notice::> latest.patch: $latest_patch"
                 if (( ${{ steps.source.outputs.patch }} < $latest_patch )); then
                   echo "::error:: source patch version is lower than latest available patch version"
                   exit 1
@@ -101,6 +108,7 @@ runs:
             fi
           fi
         fi
+        
         image_tags=()
         if [ -n "${{ steps.source.outputs.branch }}" ]; then
           echo "::notice::> use versioned source branch: ${{ steps.source.outputs.branch }}"
