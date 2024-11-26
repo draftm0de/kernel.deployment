@@ -55,11 +55,9 @@ jobs:
         run: |
           echo "::notice::Tagging and Pushing Image..."
           tags=()
-          if [ "${{ inputs.commit_tag }}" ]; then
-            tag+=("${{ inputs.commit_tag }}"}
+          if [ -n "${{ inputs.commit_tag }}" ]; then
             echo "::notice::> use commit tag" 
           fi
-          if [ "${{ steps.get-image-tags.outputs.tags }}" ]; then
-            # tag+("${{ inputs.commit_tag }}"}
+          if [ -n "${{ steps.get-image-tags.outputs.tags }}" ]; then
             echo "::notice::> use image tags" 
           fi
