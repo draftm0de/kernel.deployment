@@ -57,6 +57,11 @@ runs:
           echo "patch=$patch" >> $GITHUB_OUTPUT
           echo "postfix=$postfix" >> $GITHUB_OUTPUT
           echo "branch=$branch" >> $GITHUB_OUTPUT
+          echo "::notice::> prefix: $prefix"
+          echo "::notice::> major: $major"
+          echo "::notice::> minor: $minor"
+          echo "::notice::> patch: $patch"
+          echo "::notice::> postfix: $postfix"
           echo "::notice::> branch matches version patterns"
         else
           echo "::notice::> branch does not match version patterns"

@@ -41,15 +41,15 @@ runs:
           fi
           # source: 1.2 => target: 1.3
           if [ -z "${{ steps.source.outputs.patch }}" ] && [ -z "${{ steps.target.outputs.patch }}" ] && [ -n "${{ steps.source.outputs.minor }}" ] && [ -n "${{ steps.target.outputs.minor }}" ] ; then
-            echo "::error::> source and target branches have no patch version but both have a minor version"
+            echo "::error::> source and target branches have no patch version and both have a minor version"
             exit 1
           fi  
           # source: 1 => target: 2
           if [ -z "${{ steps.source.outputs.minor }}" ] && [ -z "${{ steps.target.outputs.minor }}" ] && [ -n "${{ steps.source.outputs.major }}" ] && [ -n "${{ steps.target.outputs.major }}" ] ; then
-            echo "::error::> source and target branches have no minor/patch version but both have a major version"
+            echo "::error::> source and target branches have no minor/patch version and both have a major version"
             exit 1
           fi         
-          # source: 1.2.3 => target: 1.1
+          # source: 1.2.3 => target: 1.1.?
           if [ -n "${{ steps.source.outputs.minor }}" ] && [ -n "${{ steps.target.outputs.minor }}" ] && (( ${{ steps.source.outputs.minor }} > ${{ steps.target.outputs.minor }} )); then
             echo "::error::> source minor version is greater than target minor version"
             exit 1        
@@ -58,7 +58,7 @@ runs:
           if [ -n "${{ steps.source.outputs.major }}" ] && [ -n "${{ steps.target.outputs.major }}" ] && (( ${{ steps.source.outputs.major }} > ${{ steps.target.outputs.major }} )); then
              echo "::error::> source major version is greater than target major version"
              exit 1
-          fi               
+          fi
           # target: 1.2.3
           if [ -n "${{ steps.target.outputs.patch }}" ]; then
             echo "::error::> target branch already has a patch version"
