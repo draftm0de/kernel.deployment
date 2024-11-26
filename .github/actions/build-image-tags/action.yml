@@ -102,7 +102,7 @@ runs:
                 #
                 echo "::notice::> latest branch (minor): $minor"        
                 echo "::notice::> latest branch (patch): $patch"
-                if [ -n "${minor}" ] && (( ${{ steps.source.outputs.minor }} < $patch )); then
+                if [ -n "${minor}" ] && (( ${{ steps.source.outputs.minor }} < $minor )); then
                   echo "::error:: source branch has a lower minor version than latest target related branch"
                   exit 1
                 fi        
