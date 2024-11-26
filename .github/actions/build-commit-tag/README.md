@@ -1,4 +1,4 @@
-# actions/build-commit-tag
+# Action: Calculate next commit tag
 
 ## description
 Calculate the next version number based on the specified target branch. This action evaluates existing tags and version patterns to determine and increment the appropriate versioning component (major, minor, or patch) based on predefined rules and the repository's current state.

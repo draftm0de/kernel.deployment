@@ -30,21 +30,38 @@ runs:
       with:
         branch: ${{ inputs.source }}
 
-    - name: "Tag Branches"
+    - name: "Validate source and target branch"
       shell: bash
-      id: get-image-tags
       run: |
-        echo "::notice:: Building Image Tags..."
-        
-        tags=()
-        if [ "${{ steps.target.outputs.branch }}" == "${{ inputs.target }}" ]; then
-          echo "::notice::> use target branch (matches version patterns)"
-          tags+=("${{ inputs.target }}")
+        echo "::notice::Validating source and target branches..."
+        if [ -n "${{ steps.source.outputs.branch }}" ] && [ -n "${{ steps.target.outputs.branch }}" ] ; then
+          echo "::notice::> source and target matches version patterns"
+          if (( ${{ steps.source.outputs.major }} > ${{ steps.target.outputs.major }} )); then
+            echo "::error::> source major version is greater than target major version"
+            exit 1
+          fi
+          if [ "${{ steps.source.outputs.major }}" == "${{ steps.target.outputs.major }}" ]; then
+            if (( ${{ steps.source.outputs.minor }} > ${{ steps.target.outputs.minor }} )); then
+              echo "::error::> source major is greater than target major version"
+              exit 1
+            fi        
+          fi 
+          if [ -n "${{ steps.target.outputs.minor }}" ] && [ -z "${{ steps.source.outputs.minor }}" ]; then
+            pattern="${{ steps.target.outputs.prefix }}${{ steps.target.outputs.major }}"
+            if [ -n "${{ steps.target.outputs.minor }}" ]; then
+              pattern="${pattern}.${{ steps.target.outputs.minor }}"
+            fi
+            echo "::notice::> search pattern: $pattern"
+            latest_branch=$(git branch -r | grep -E "${pattern}" | sed 's|origin/||' | sort -Vr | head -n 1)
+            if [ -n "$latest_branch" ]; then
+              echo "::notice::> latest branch: $latest_branch"
+            fi
+          fi
         fi
-        
-        if [ "${{ steps.source.outputs.branch }}" == "${{ inputs.source }}" ]; then
-          echo "::notice::> use source branch (matches version patterns)"
-          tags+=("${{ inputs.source }}")
+        if [ -n "${{ steps.source.outputs.branch }}" ]; then
+          echo "::notice::> use source branch"
         fi
-        echo "tags=${tags[*]}" >> $GITHUB_OUTPUT
-        echo "::notice::Image tags built.
+        if [ -n "${{ steps.target.outputs.branch }}" ]; then
+          echo "::notice::> use target branch"
+        fi
+        echo "::notice::source and target branches are validated."

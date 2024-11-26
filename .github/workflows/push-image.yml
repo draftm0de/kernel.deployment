@@ -3,6 +3,14 @@ name: Push Docker Image
 on:
   workflow_call:
     inputs:
+      source:
+        description: "source branch"
+        type: string
+        required: false
+      target:
+        description: "branch to be merged into"
+        type: string
+        required: false
       image:
         description: "image name"
         required: true
@@ -15,14 +23,11 @@ on:
         description: "commit tag"
         required: false
         type: string
-      source:
-        description: "source branch"
-        required: true
-        type: string
-      target:
-        description: "branch to be merged into"
-        required: true
-        type: string
+    secrets:
+      DOCKER_USERNAME:
+        required: false
+      DOCKER_PASSWORD:
+        required: false
 
 jobs:
   push-image:
@@ -31,12 +36,12 @@ jobs:
       - name: Check Out Repository
         uses: actions/checkout@v4
 
-      - name: "Build Branch Tags"
+      - name: "Build Image Tags"
         id: get-image-tags
         uses: draftm0de/kernel.deployment/.github/actions/build-image-tags@main
         with:
-          source: ${{ inputs.source }}
-          target: ${{ inputs.target }}
+          source: ${{ inputs.source || github.ref_name }}
+          target: ${{ inputs.target || github.event.pull_request.base.ref }}
 
       - name: "Load Docker Image From Artifact"
         id: load-image
@@ -47,15 +52,14 @@ jobs:
           artifact: ${{ inputs.artifact }}
 
       - name: "Tag and Push Image"
-
         run: |
-          echo "::notice:: Tagging and Pushing Image..."
-          tags="${{ )
+          echo "::notice::Tagging and Pushing Image..."
+          tags=()
           if [ "${{ inputs.commit_tag }}" ]; then
-            tag+("${{ inputs.commit_tag }}"}
-            echo "::notice:: use commit tag" 
+            tag+=("${{ inputs.commit_tag }}"}
+            echo "::notice::> use commit tag" 
           fi
-          if [ "${{ steps.get-image-tags.outputs.target }}" ]; then
-            tag+("${{ inputs.commit_tag }}"}
-            echo "::notice:: use commit tag" 
+          if [ "${{ steps.get-image-tags.outputs.tags }}" ]; then
+            # tag+("${{ inputs.commit_tag }}"}
+            echo "::notice::> use image tags" 
           fi
