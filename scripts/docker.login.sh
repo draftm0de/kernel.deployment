@@ -1,5 +1,5 @@
 #!/bin/bash
-SECRET_PATH="./.secrets"
+SECRET_PATH="../.secrets"
 # Load Docker username from a file
 DOCKER_USERNAME=$(cat "$SECRET_PATH/DOCKER_USERNAME")
 

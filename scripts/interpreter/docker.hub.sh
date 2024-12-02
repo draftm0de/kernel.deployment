@@ -3,6 +3,8 @@ set -e
 set -o pipefail
 
 DOCKER_HUB_URI="https://hub.docker.com/v2"
+DOCKER_HUB_REGISTRY="https://registry.hub.docker.com/v2"
+DOCKER_HUB_AUTH="https://auth.docker.io/"
 # ########################################
 # internal methods
 hub_config_get_auth() {
@@ -57,6 +59,39 @@ hub_get_config_auth_context() {
     fi
   fi
 }
+hub_get_bearer_token() {
+  failure="[Error] Docker Bearer token failure:"
+  local username
+  username=$(hub_config_get_auth 1)
+  exit=$?
+  if [ $exit -ne 0 ]; then
+    exit $exit
+  fi
+
+  local password
+  password=$(hub_config_get_auth 2)
+  exit=$?
+  if [ $exit -ne 0 ]; then
+    exit $exit
+  fi
+
+  repository="draftmode/image.caddy"
+  scope="repository:$repository"
+
+  uri="${DOCKER_HUB_AUTH}token?service=registry.docker.io&scope=$scope:pull"
+  response=$(curl -s -u $username:$password $uri)
+  if ! jq empty <<< "${response}" 2>/dev/null; then
+    echo "$failure Invalid JSON response while retrieving Bearer token" >&2
+    exit 1
+  fi
+  local token
+  token=$(jq -r .token <<< "${response}")
+  if [[ "${token}" == "null" || -z "${token}" ]]; then
+    echo "$failure Invalid credentials or malformed response" >&2
+    exit 1
+  fi
+  echo "${token}"
+}
 
 hub_get_jwt_token() {
   failure="[Error] Docker jwt token failure:"
@@ -93,6 +128,53 @@ hub_get_jwt_token() {
 }
 # internal methods
 # ########################################
+
+docker_manifest() {
+  image="${1}"
+  if [[ "$image" == *@* ]]; then
+    image_name="${image%@*}"
+    image_tag="${image#*@}"
+  else
+    image_name="${image%:*}"
+    image_tag="${image#*:}"
+  fi
+
+  local token
+  token=$(hub_get_bearer_token "$image_name")
+
+#  curl -H "Authorization: Bearer $token" \
+#     -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+#     https://registry.hub.docker.com/v2/draftmode/image.caddy/manifests/test
+  response=$(mktemp)
+  uri="${DOCKER_HUB_REGISTRY}/${image_name}/manifests/$image_tag"
+  http_code=$(curl -s -o "$response" \
+    -w "%{http_code}" \
+    -H "Authorization: Bearer $token" \
+    -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "${uri}")
+
+  uri="${DOCKER_HUB_REGISTRY}/${image_name}/blobs/$image_tag"
+  echo "$uri"
+
+  http_code=$(curl -s -o "$response" \
+    -w "%{http_code}" \
+    -I \
+    -L \
+    -H "Authorization: Bearer $token" \
+    "${uri}")
+
+  content=$(cat "$response")
+  rm -f "$response"
+  case $http_code in
+    200)
+      echo "found"
+      echo "$content" | jq .
+    ;;
+    *)
+      echo "${failure} unsupported response code $http_code" >&2
+      exit 1
+    ;;
+  esac
+}
 
 docker_image_tags() {
   image="${1}"
@@ -170,7 +252,7 @@ docker_image_sha() {
   jwt_token=$(hub_get_jwt_token "$image_name")
 
   response=$(mktemp)
-  uri="${DOCKER_HUB_URI}/repositories/${image_name}/tags/${image_tag}"
+  uri="https://hub.docker.com/v2/repositories/${image_name}/tags/${image_tag}"
   http_code=$(curl -s -o "$response" -w "%{http_code}" -H "Authorization: JWT $jwt_token" "${uri}")
   content=$(cat "$response")
   rm -f "$response"
