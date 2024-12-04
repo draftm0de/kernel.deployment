@@ -10,9 +10,14 @@ If the `inputs.property` is provided, returns the value of the specified propert
 - ``property`` _(optional)_: A jq-based query string specifying the property to extract from the manifest.
 
 ### Outputs
-- ``manifest`` _(string | empty)_: The complete manifest of the specified image. Returns an empty string if no manifest is found.
+- ``manifest`` _(string | empty)_: The complete (Base64-encoded) manifest of the specified image. Returns an empty string if no manifest is found.
 - ``property`` _(string | empty)_: The value of the specified property from the manifest. Returns an empty string if no property is specified or found.
 
 ### Notes
 - Ensure the provided `image` is valid and accessible.
 - The `property` input must follow jq syntax for property extraction. For more information on jq, refer to its documentation.
+
+_Decode Base64_
+````
+manifest=$(echo "${{ steps.get-manifest.outputs.manifest }}" | base64 --decode)
+````
