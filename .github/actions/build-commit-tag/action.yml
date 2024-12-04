@@ -48,7 +48,7 @@ runs:
       run: |
         echo "::notice::Comparing Image Digest..."
         remote_digest="${{ steps.target-image-digest.outputs.digest }}"
-        build_digest="${{ inputs.digest }}
+        build_digest="${{ inputs.digest }}"
         echo "::notice::>remote: $remote_digest"
         echo "::notice::>build: $build_digest"
         echo "::notice::Image digest compared."
