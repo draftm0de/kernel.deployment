@@ -11,6 +11,7 @@ on:
         description: "Build --target"
         type: string
         required: false
+        default: ""
       context:
         description: "Build context"
         type: string
@@ -20,26 +21,32 @@ on:
         description: "Additional build options"
         type: string
         required: false
+        default: ""
       build_args_file:
         description: "--build-args from file"
         type: string
         required: false
+        default: ""
       reproducible:
         description: "Build reproducible image"
         type: boolean
         required: false
+        default: false
       artifact:
         description: "Artifact name"
         type: string
         required: false
+        default: ""
     outputs:
       digest:
         description: "Build image digest"
-        value: ${{ steps.build-image.outputs.digest }}
+        value: ${{ jobs.build.outputs.digest }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build-image.outputs.digest }}
     steps:
       - name: Check Out Repository
         uses: actions/checkout@v4
@@ -56,7 +63,7 @@ jobs:
           reproducible: ${{ inputs.reproducible }}
 
       - name: "Save Docker Image"
-        if: ${{ inputs.artifact != '' }}
+        if: ${{ inputs.artifact && inputs.artifact != '' }}
         uses: draftm0de/kernel.deployment/.github/actions/image-save@main
         with:
           image: ${{ inputs.image }}
