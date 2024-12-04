@@ -39,7 +39,7 @@ on:
         default: ""
     outputs:
       digest:
-        description: "Build image digest"
+        description: "Built docker image digest"
         value: ${{ jobs.build.outputs.digest }}
 
 jobs:

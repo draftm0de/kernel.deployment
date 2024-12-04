@@ -7,6 +7,12 @@ inputs:
   target:
     description: "branch to be merged into"
     required: true
+  image:
+    description: "Docker image without tag"
+    required: true
+  digest:
+    description: "Docker image digest"
+    required: true
 
 outputs:
   tag:
@@ -16,19 +22,39 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: "Convert target branch into version"
+    - name: "Convert Target Branch To Version"
       id: target
       uses: draftm0de/kernel.deployment/.github/actions/convert-branch-to-version@main
       with:
         branch: ${{ inputs.target }}
 
-    - name: "Convert source branch into version"
+    - name: "Convert Source Branch To Version"
       id: source
       uses: draftm0de/kernel.deployment/.github/actions/convert-branch-to-version@main
       with:
         branch: ${{ inputs.source }}
 
-    - name: "Validate source and target branch"
+    - name: "Get Target Branch Image Digest"
+      if: ${{ steps.target.outputs.branch != '' && steps.source.outputs.branch == '' }}
+      id: target-image-digest
+      uses: draftm0de/kernel.deployment/.github/actions/image-manifest-property@main
+      with:
+        image: ${{ inputs.image }}
+        property: ".config.digest"
+
+    - name: "Compare Image Digest"
+      if: ${{ steps.target.outputs.branch != '' && steps.source.outputs.branch == '' }}
+      shell: bash
+      run: |
+        echo "::notice::Comparing Image Digest..."
+        remote_digest="${{ steps.target-image-digest.outputs.digest }}"
+        build_digest="${{ inputs.digest }}
+        echo "::notice::>remote: $remote_digest"
+        echo "::notice::>build: $build_digest"
+        echo "::notice::Image digest compared."
+
+    - name: "Validate Source and Target branch"
+      if: ${{ env.SKIP_STEP != 'true' }}
       shell: bash
       run: |
         echo "::notice::Validating source and target branch..."
