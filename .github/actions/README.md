@@ -10,5 +10,4 @@ This GitHub Action calculates Docker image tags based on the provided source and
 Parses the given branch name to extract and identify its version components
 
 ### [image-manifest-property](image-manifest-property/README.md)
-Retrieves the manifest for a specified image.<br> 
-If `property` is provided, returns the value of the specified property from the retrieved manifest (using a jq-based query).
+Returns the value of the specified property from the retrieved manifest (using a jq-based query).
