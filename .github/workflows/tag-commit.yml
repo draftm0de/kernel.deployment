@@ -4,11 +4,15 @@ on:
   workflow_call:
     inputs:
       source:
-        description: "source branch"
+        description: "Source branch"
         type: string
         required: false
       target:
-        description: "branch to be merged into"
+        description: "Branch to be merged into"
+        type: string
+        required: false
+      image-digest:
+        description: "Built image digest"
         type: string
         required: false
 

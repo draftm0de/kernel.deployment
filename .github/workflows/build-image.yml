@@ -4,30 +4,38 @@ on:
   workflow_call:
     inputs:
       image:
-        description: "image name"
+        description: "Docker image without tag"
         type: string
         required: true
       target:
-        description: "build --target"
+        description: "Build --target"
         type: string
         required: false
       context:
-        description: "build context"
+        description: "Build context"
         type: string
         required: false
         default: "."
       options:
-        description: "additional build options"
+        description: "Additional build options"
         type: string
         required: false
       build_args_file:
         description: "--build-args from file"
         type: string
         required: false
+      reproducible:
+        description: "Build reproducible image"
+        type: boolean
+        required: false
       artifact:
-        description: "artifact name"
+        description: "Artifact name"
         type: string
         required: false
+    outputs:
+      digest:
+        description: "Build image digest"
+        value: ${{ steps.build-image.outputs.digest }}
 
 jobs:
   build:
@@ -45,9 +53,10 @@ jobs:
           context: ${{ inputs.context }}
           options: ${{ inputs.options }}
           build_args_file: ${{ inputs.build_args_file }}
+          reproducible: ${{ inputs.reproducible }}
 
       - name: "Save Docker Image"
-        if: ${{ inputs.artifact }}
+        if: ${{ inputs.artifact != '' }}
         uses: draftm0de/kernel.deployment/.github/actions/image-save@main
         with:
           image: ${{ inputs.image }}
