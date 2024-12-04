@@ -25,7 +25,7 @@ runs:
         echo "::notice::Getting Manifest..."
         response=$(docker manifest inspect ${{ inputs.image }} 2>/dev/null)
         if [ $? -eq 0 ]; then
-          echo "manifest=${response}" >> $GITHUB_OUTPUT
+          echo "manifest=$response" >> $GITHUB_OUTPUT
         else
           echo "::error::>manifest for ${{ inputs.image }} not found"
         fi
@@ -37,7 +37,7 @@ runs:
       shell: bash
       run: |
         echo "::notice::Getting property from manifest..."
-        property=$(echo "$response" | jq -r '${{ inputs.property }}')
+        property=$(echo "${{ steps.get-manifest.outputs.manifest }}" | jq -r '${{ inputs.property }}')
         if [ "$property" != "null" ]; then
           echo "property=$property" >> $GITHUB_OUTPUT
         else
