@@ -1,0 +1,46 @@
+name: "Get Docker Manifest Property"
+description: "Get Docker Manifest .Config.Digest"
+inputs:
+  image:
+    description: "image"
+    required: true
+  property:
+    description: "jq pattern for a property"
+    required: false
+outputs:
+  manifest:
+    description: "manifest"
+    value: ${{ steps.get-manifest.outputs.manifest }}
+  property:
+    description: "value for given property"
+    value: ${{ steps.get-value.outputs.property }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Getting Manifest"
+      shell: bash
+      id: get-manifest
+      run: |
+        echo "::notice::Getting Manifest..."
+        response=$(docker manifest inspect ${{ inputs.image }} 2>/dev/null)
+        if [ $? -eq 0 ]; then
+          echo "manifest=${response}" >> $GITHUB_OUTPUT
+        else
+          echo "::error::>manifest for ${{ inputs.image }} not found"
+        fi
+        echo "::notice::Got Manifest"
+
+    - name: "Getting Property"
+      if: ${{ steps.get-manifest.outputs.manifest && inputs.property }}
+      id: get-value
+      shell: bash
+      run: |
+        echo "::notice::Getting property from manifest..."
+        property=$(echo "$response" | jq -r '${{ inputs.property }}')
+        if [ "$property" != "null" ]; then
+          echo "property=$property" >> $GITHUB_OUTPUT
+        else
+          echo "::error::> ${{ inputs.property }} not found in manifest"
+        fi
+        echo "::notice::Got property from manifest"

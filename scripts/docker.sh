@@ -351,11 +351,6 @@ handle_image_tag() {
   done
 }
 
-handle_manifest() {
-  cmd=${cmd//manifest /};
-  images=$(docker_get_image_names_from_arguments "$cmd")
-  docker_manifest "$images"
-}
 # base methods
 # ##########################################
 
@@ -386,9 +381,6 @@ case "$cmd" in
   ;;
   "image tag "*|"tag "*)
     handle_image_tag
-  ;;
-  "manifest "*)
-    handle_manifest
   ;;
   *)
     cmd="docker $cmd"

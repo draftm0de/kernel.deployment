@@ -1,15 +1,15 @@
 # actions/convert-branch-to-version
 
 ## Description
-Parse the provided branch name into its version components, including:
+Parses the given branch name to extract and identify its version components, which include:
 
-- Prefix
-- Major
-- Minor
-- Patch
-- Postfix
+- `Prefix` The initial segment of the branch name (if present).
+- `Major` The major version number.
+- `Minor` The minor version number.
+- `Patch` The patch version number.
+- `Postfix` Any additional information following the version numbers.
 
-This action uses version patterns to extract and identify these components.
+This action utilizes predefined version patterns to accurately parse and extract these components.
 
 ### Inputs
 - ``branch`` _(required)_: The branch name to be processed.

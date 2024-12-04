@@ -1,5 +1,14 @@
 # Actions
 
-- [actions/build-commit-tag](build-commit-tag/README.md)
-- [actions/build-image-tags](build-image-tags/README.md)
-- [actions/convert-branch-to-version](convert-branch-to-version/README.md)
+### [build-commit-tag](build-commit-tag/README.md)
+Calculate the next version number based on the specified target branch. This action evaluates existing tags and version patterns to determine and increment the appropriate versioning component (major, minor, or patch) based on predefined rules and the repository's current state.       |
+
+### [build-image-tags](build-image-tags/README.md)
+This GitHub Action calculates Docker image tags based on the provided source and target branches. It supports dynamic tagging logic to generate meaningful and reusable tags for your Docker images.       |
+
+### [convert-branch-to-version](convert-branch-to-version/README.md)
+Parses the given branch name to extract and identify its version components
+
+### [image-manifest-property](image-manifest-property/README.md)
+Retrieves the manifest for a specified image.<br> 
+If `property` is provided, returns the value of the specified property from the retrieved manifest (using a jq-based query).

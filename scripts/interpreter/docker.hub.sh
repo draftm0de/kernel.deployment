@@ -131,6 +131,7 @@ hub_get_jwt_token() {
 
 docker_manifest() {
   image="${1}"
+  failure="[Error] get manifest for ${1} failure:"
   if [[ "$image" == *@* ]]; then
     image_name="${image%@*}"
     image_tag="${image#*@}"
@@ -139,41 +140,13 @@ docker_manifest() {
     image_tag="${image#*:}"
   fi
 
-  local token
-  token=$(hub_get_bearer_token "$image_name")
-
-#  curl -H "Authorization: Bearer $token" \
-#     -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
-#     https://registry.hub.docker.com/v2/draftmode/image.caddy/manifests/test
-  response=$(mktemp)
-  uri="${DOCKER_HUB_REGISTRY}/${image_name}/manifests/$image_tag"
-  http_code=$(curl -s -o "$response" \
-    -w "%{http_code}" \
-    -H "Authorization: Bearer $token" \
-    -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "${uri}")
-
-  uri="${DOCKER_HUB_REGISTRY}/${image_name}/blobs/$image_tag"
-  echo "$uri"
-
-  http_code=$(curl -s -o "$response" \
-    -w "%{http_code}" \
-    -I \
-    -L \
-    -H "Authorization: Bearer $token" \
-    "${uri}")
-
-  content=$(cat "$response")
-  rm -f "$response"
-  case $http_code in
-    200)
-      echo "found"
-      echo "$content" | jq .
-    ;;
-    *)
-      echo "${failure} unsupported response code $http_code" >&2
-      exit 1
-    ;;
-  esac
+  response=$(docker manifest inspect "${image}${tag}" 2>/dev/null)
+  if [ "$response" ]; then
+    echo "${response}"
+  else
+    echo "${failure} manifest not found" >&2
+    exit 1
+  fi
 }
 
 docker_image_tags() {
@@ -239,41 +212,19 @@ docker_image_tags() {
 }
 
 docker_image_sha() {
-  image_name="${1%:*}"
-  image_tag="${1##*:}"
-  failure="[Error] get sha for $1 failure:"
-
-  if [ "$image_name" == "$image_tag" ]; then
-    echo "$failure Image tag missing" >&2
+  failure="[Error] get sha for ${1} failure:"
+  manifest=$(docker_manifest "${1}")
+  exit=$?
+  if [ $exit -ne 0 ]; then
+    exit $exit
+  fi
+  digest=$(jq -r '.config.digest' <<< "$manifest")
+  if [ "$digest" != "null" ]; then
+    echo "${digest}"
+  else
+    echo "${failure} .config.digest does not exist in manifest" >&2
     exit 1
   fi
-
-  local jwt_token
-  jwt_token=$(hub_get_jwt_token "$image_name")
-
-  response=$(mktemp)
-  uri="https://hub.docker.com/v2/repositories/${image_name}/tags/${image_tag}"
-  http_code=$(curl -s -o "$response" -w "%{http_code}" -H "Authorization: JWT $jwt_token" "${uri}")
-  content=$(cat "$response")
-  rm -f "$response"
-
-  sha=""
-  case $http_code in
-    200)
-      sha=$(jq -r '.digest' <<< "$content")
-    ;;
-    404)
-    ;;
-    401)
-      message=$(jq -r '.message' <<< "$content")
-      echo "${failure} ${message}" >&2
-      exit 1
-    ;;
-    *)
-      echo "${failure} unsupported response code $http_code" >&2
-      exit 1
-  esac
-  echo "$sha"
 }
 
 docker_image_remove() {
