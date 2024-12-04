@@ -6,11 +6,8 @@ inputs:
     required: true
   property:
     description: "jq pattern for a property"
-    required: false
+    required: true
 outputs:
-  manifest:
-    description: "Base64-encoded manifest JSON output"
-    value: ${{ steps.get-manifest.outputs.manifest }}
   property:
     description: "Value for the given property"
     value: ${{ steps.get-value.outputs.property }}
@@ -18,31 +15,21 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: "Getting Manifest"
+    - name: "Getting Property From Manifest"
       shell: bash
-      id: get-manifest
+      id: get-value
       run: |
-        echo "::notice::Getting Manifest..."
+        echo "::notice::Getting Property From Manifest..."
         response=$(docker manifest inspect ${{ inputs.image }} 2>/dev/null)
         if [ $? -eq 0 ]; then
-          encoded_response=$(echo "$response" | base64)
-          echo "manifest=$encoded_response" >> $GITHUB_OUTPUT
+          property=$(echo "$response" | jq -r '${{ inputs.property }}')
+          if [ "$property" != "null" ]; then
+            echo "property=$property" >> $GITHUB_OUTPUT
+          else
+            echo "::error::> ${{ inputs.property }} not found in manifest"
+          fi
         else
           echo "::error::>manifest for ${{ inputs.image }} not found"
         fi
-        echo "::notice::Got Manifest"
-
-    - name: "Getting Property"
-      if: ${{ steps.get-manifest.outputs.manifest && inputs.property }}
-      id: get-value
-      shell: bash
-      run: |
-        echo "::notice::Getting property from manifest..."
-        decoded_manifest=$(echo "${{ steps.get-manifest.outputs.manifest }}" | base64 --decode)
-        property=$(echo "$decoded_manifest" | jq -r '${{ inputs.property }}')
-        if [ "$property" != "null" ]; then
-          echo "property=$property" >> $GITHUB_OUTPUT
-        else
-          echo "::error::> ${{ inputs.property }} not found in manifest"
-        fi
         echo "::notice::Got property from manifest"
+
