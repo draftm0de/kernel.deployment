@@ -23,20 +23,20 @@ runs:
         regex='^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$'
         echo "REGEX=$regex" >> $GITHUB_ENV
 
-    - name: "Convert target branch into version"
+    - name: "Convert Target Branch To Version"
       id: target
       uses: draftm0de/kernel.deployment/.github/actions/convert-branch-to-version@main
       with:
         branch: ${{ inputs.target }}
 
-    - name: "Convert source branch into version"
+    - name: "Convert Source Branch To Version"
       id: source
       uses: draftm0de/kernel.deployment/.github/actions/convert-branch-to-version@main
       with:
         branch: ${{ inputs.source }}
 
     - name: "Protect Branch By Name"
-      if: ${{ steps.source.outputs.branch }} && ${{ steps.target.outputs.branch }}
+      if: ${{ steps.source.outputs.branch && steps.target.outputs.branch }}
       shell: bash
       run: |
         echo "::notice::Protecting branch by name..."
@@ -79,7 +79,7 @@ runs:
         echo "::notice::Branch by name protected..."
 
     - name: "Protect Branch Via Git"
-      if: ${{ steps.source.outputs.branch }} && ${{ steps.target.outputs.branch }}
+      if: ${{ steps.source.outputs.branch && steps.target.outputs.branch }}
       shell: bash
       run: |
         echo "::notice::Protecting branch via git..."
