@@ -20,6 +20,8 @@ on:
         type: string
         required: false
     secrets:
+      DOCKER_USERNAME:
+        required: false
       DOCKER_TOKEN:
         required: false
 
