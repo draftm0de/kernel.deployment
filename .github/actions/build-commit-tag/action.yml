@@ -39,7 +39,7 @@ runs:
       id: target-image-digest
       uses: draftm0de/kernel.deployment/.github/actions/image-manifest-property@main
       with:
-        image: ${{ inputs.image }}
+        image: ${{ inputs.image }}:${{ steps.target.outputs.branch }}
         property: ".config.digest"
 
     - name: "Compare Image Digest"
