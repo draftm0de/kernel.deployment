@@ -49,8 +49,12 @@ runs:
         echo "::notice::Comparing Image Digest..."
         remote_digest="${{ steps.target-image-digest.outputs.property }}"
         build_digest="${{ inputs.digest }}"
-        echo "::notice::>remote: $remote_digest"
-        echo "::notice::>build: $build_digest"
+        echo "::debug::>remote: $remote_digest"
+        echo "::debug::>build: $build_digest"
+        if [ "$remote_digest" == "$build_digest" ]; then
+          echo "::notice::> remote digest matches build digest, skip commit tagging"
+          echo "SKIP_STEP=true" >> $GITHUB_ENV
+        fi 
         echo "::notice::Image digest compared."
 
     - name: "Validate Source and Target branch"
@@ -63,14 +67,14 @@ runs:
           echo "SKIP_STEP=true" >> $GITHUB_ENV
           exit 0
         else
-          echo "::notice::> source branch does not match version pattern"
+          echo "::debug::> source branch does not match version pattern"
         fi 
         if [ -z "${{ steps.target.outputs.branch }}" ]; then
           echo "::warning::target branch does not match version patterns, skip commit tagging"
           echo "SKIP_STEP=true" >> $GITHUB_ENV
           exit 0
         else
-          echo "::notice::> target branch matches version patterns"
+          echo "::debug::> target branch matches version patterns"
         fi
         echo "::notice::source and target branch validated."
 
@@ -113,16 +117,16 @@ runs:
         else
           pattern="${pattern}.*"
         fi        
-        echo "::notice::> search pattern: $pattern"
+        echo "::debug::> search pattern: $pattern"
         
         latest_tag=$(git tag --list "${pattern}" --sort=-v:refname | head -n 1)
         
         # determine the new tag
         if [ -z "$latest_tag" ]; then
-          echo "::notice::> latest tag: no latest tag"          
+          echo "::debug::> latest tag: no latest tag"          
           commit_tag="${commit_tag}.1${{ steps.target.outputs.postfix }}"
         else
-          echo "::notice::> latest tag: $latest_tag"
+          echo "::debug::> latest tag: $latest_tag"
         
           # Increment the patch version
           patch_version=${latest_tag##*.}
@@ -139,9 +143,9 @@ runs:
       run: |
         echo "::notice::Approving Commit Tag..."
         tag="${{ steps.build-commit-tag.outputs.tag }}"
-        echo "::notice::> tag: $tag"
+        echo "::debug::> tag: $tag"
         if git ls-remote --exit-code --heads origin $tag; then
-          echo "::error::commit tag already exists as branch"
+          echo "::error::Commit tag $tag already exists as branch"
         else
           echo "::notice::Commit tag approved."
           echo "tag=${tag}" >> $GITHUB_OUTPUT

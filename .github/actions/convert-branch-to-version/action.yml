@@ -35,7 +35,7 @@ runs:
         echo "::notice::Converting branch name..."
         # Extract the target branch name
         branch="${{ inputs.branch }}"
-        echo "::notice::> branch:$branch"
+        echo "::debug::> branch: $branch"
         # Regex pattern to capture major, minor, patch, and optional postfix
         REGEX="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
         
@@ -57,11 +57,11 @@ runs:
           echo "patch=$patch" >> $GITHUB_OUTPUT
           echo "postfix=$postfix" >> $GITHUB_OUTPUT
           echo "branch=$branch" >> $GITHUB_OUTPUT
-          echo "::notice::> prefix: $prefix"
-          echo "::notice::> major: $major"
-          echo "::notice::> minor: $minor"
-          echo "::notice::> patch: $patch"
-          echo "::notice::> postfix: $postfix"
+          echo "::debug::> prefix: $prefix"
+          echo "::debug::> major: $major"
+          echo "::debug::> minor: $minor"
+          echo "::debug::> patch: $patch"
+          echo "::debug::> postfix: $postfix"
           echo "::notice::> branch matches version patterns"
         else
           echo "::notice::> branch does not match version patterns"
