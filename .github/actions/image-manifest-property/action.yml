@@ -22,8 +22,10 @@ runs:
         echo "::notice::Getting Property From Manifest..."
         response=$(docker manifest inspect ${{ inputs.image }} 2>/dev/null)
         if [ $? -eq 0 ]; then
+          echo "::notice::> manifest found"
           property=$(echo "$response" | jq -r '${{ inputs.property }}')
           if [ "$property" != "null" ]; then
+            echo "::notice::> property: $property"
             echo "property=$property" >> $GITHUB_OUTPUT
           else
             echo "::error::> ${{ inputs.property }} not found in manifest"
