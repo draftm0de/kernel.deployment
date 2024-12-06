@@ -1,0 +1,43 @@
+name: "Split Docker Image Name"
+description: "Split Docker Image Name"
+inputs:
+  image:
+    description: "Full Qualified Image Name"
+    required: true
+outputs:
+  repository:
+    description: "Image Repository"
+    value: ${{ steps.image-split.outputs.registry }}
+  name:
+    description: "Image Name"
+    value: ${{ steps.image-split.outputs.name }}
+  tag:
+    description: "Image Tag"
+    value: ${{ steps.image-split.outputs.tag }}
+  digest:
+    description: "Image Digest"
+    value: ${{ steps.image-split.outputs.digest }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Checkout Scripts"
+      id: script
+      uses: draftm0de/kernel.deployment/.github/actions/check-out-scripts@main
+
+    - name: "Split Docker Image Name"
+      shell: bash
+      id: image-split
+      run: |
+        echo "::group::Parsed Docker Image Name"
+        path=${{ steps.script.outputs.path }}
+        source ./${path}/dto/docker-image-name-dto.sh "${{ inputs.image }}"
+        echo "> registry: $DOCKER_REGISTRY"
+        echo "registry=$DOCKER_REGISTRY" >> $GITHUB_OUTPUT
+        echo "> name: $DOCKER_NAME"
+        echo "name=$DOCKER_NAME" >> $GITHUB_OUTPUT        
+        echo "> tag: $DOCKER_TAG"
+        echo "tag=$DOCKER_TAG" >> $GITHUB_OUTPUT        
+        echo "> digest: $DOCKER_DIGEST"
+        echo "digest=$DOCKER_DIGEST" >> $GITHUB_OUTPUT        
+        echo "::endgroup::"            
