@@ -24,13 +24,13 @@ runs:
   steps:
     - name: "Convert Target Branch To Version"
       id: target
-      uses: draftm0de/kernel.deployment/.github/actions/convert-branch-to-version@main
+      uses: draftm0de/kernel.deployment/.github/actions/dto-git-branch-version@main
       with:
         branch: ${{ inputs.target }}
 
     - name: "Convert Source Branch To Version"
       id: source
-      uses: draftm0de/kernel.deployment/.github/actions/convert-branch-to-version@main
+      uses: draftm0de/kernel.deployment/.github/actions/dto-git-branch-version@main
       with:
         branch: ${{ inputs.source }}
 

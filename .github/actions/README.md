@@ -6,7 +6,7 @@ Calculate the next version number based on the specified target branch. This act
 ### [build-image-tags](build-image-tags/README.md)
 This GitHub Action calculates Docker image tags based on the provided source and target branches. It supports dynamic tagging logic to generate meaningful and reusable tags for your Docker images.       |
 
-### [convert-branch-to-version](convert-branch-to-version/README.md)
+### [dto-git-branch-version](dto-git-branch-version/README.md)
 Parses the given branch name to extract and identify its version components
 
 ### [image-manifest-property](image-manifest-property/README.md)

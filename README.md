@@ -9,5 +9,5 @@
 
 - [actions/build-commit-tag](.github/actions/build-commit-tag/README.md)
 - [actions/build-image-tags](.github/actions/build-image-tags/README.md)
-- [actions/convert-branch-to-version](.github/actions/convert-branch-to-version/README.md)
+- [actions/dto-git-branch-version](.github/actions/dto-git-branch-version/README.md)
 - [actions/image-manifest-property](.github/actions/image-manifest-property/README.md)

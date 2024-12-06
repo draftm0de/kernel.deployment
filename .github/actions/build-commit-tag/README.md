@@ -4,7 +4,7 @@
 Calculate the next version number based on the specified target branch. This action evaluates existing tags and version patterns to determine and increment the appropriate versioning component (major, minor, or patch) based on predefined rules and the repository's current state.
 
 _Related Actions_
-- [actions/convert-branch-to-version](../convert-branch-to-version/README.md): Extracts version components from a branch name.
+- [actions/dto-git-branch-version](../dto-git-branch-version/README.md): Extracts version components from a branch name.
 
 ### Inputs
 - ``source`` _(required)_: Specifies the source branch of the merge request.

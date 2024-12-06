@@ -1,4 +1,4 @@
-# actions/convert-branch-to-version
+# actions/dto-git-branch-version
 
 ## Description
 Parses the given branch name to extract and identify its version components, which include:
