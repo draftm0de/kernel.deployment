@@ -6,7 +6,7 @@ This GitHub Action calculates Docker image tags based on the provided source and
 This action ensures consistent and meaningful Docker image tags based on branching strategies. It validates source and target branch names to maintain semantic versioning and generate Docker tags.
 
 _Related Actions_
-- [actions/dto-git-branch-version](../dto-git-branch-version/README.md): Extracts version components from a branch name.
+- [actions/dto-explode-git-branch-to-version](../dto-explode-git-branch-to-version/README.md): Extracts version components from a branch name.
 
 ### Input
 - ``source`` _(required)_: Specifies the source branch of the merge request.

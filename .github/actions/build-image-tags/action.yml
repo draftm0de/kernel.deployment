@@ -25,13 +25,13 @@ runs:
 
     - name: "Convert Target Branch To Version"
       id: target
-      uses: draftm0de/kernel.deployment/.github/actions/dto-git-branch-version@main
+      uses: draftm0de/kernel.deployment/.github/actions/dto-explode-git-branch-to-version@main
       with:
         branch: ${{ inputs.target }}
 
     - name: "Convert Source Branch To Version"
       id: source
-      uses: draftm0de/kernel.deployment/.github/actions/dto-git-branch-version@main
+      uses: draftm0de/kernel.deployment/.github/actions/dto-explode-git-branch-to-version@main
       with:
         branch: ${{ inputs.source }}
 

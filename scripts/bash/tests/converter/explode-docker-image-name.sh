@@ -7,7 +7,7 @@ base_path="$base_path/../../src"
 
 # image-split-name
 INPUT="draftmode/my-image:1.0"
-SCRIPT="${base_path}/dto/docker-image-name-dto.sh"
+SCRIPT="${base_path}/converter/explode-docker-image-name.sh"
 # shellcheck disable=SC1090
 source "${SCRIPT}" "${INPUT}"
 echo "> > ${INPUT}"

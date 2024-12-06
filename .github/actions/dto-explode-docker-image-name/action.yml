@@ -38,7 +38,7 @@ runs:
         echo "::group::Parsed Docker Image Name"
         
         path=${{ steps.script.outputs.path }}
-        source ./${path}/dto/docker-image-name-dto.sh "${{ inputs.image }}"
+        source ./${path}/converter/explode-docker-image-name.sh "${{ inputs.image }}"
         echo "> registry: $DOCKER_REGISTRY"        
         echo "> name: $DOCKER_NAME"        
         echo "> tag: $DOCKER_TAG"              

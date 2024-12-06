@@ -18,7 +18,7 @@ runs:
   steps:
     - name: "Convert Image Name"
       id: get-file-name
-      uses: draftm0de/kernel.deployment/.github/actions/convert-image-to-file-name@main
+      uses: draftm0de/kernel.deployment/.github/actions/dto-convert-image-name-to-file@main
       with:
         image: ${{ inputs.image }}
 

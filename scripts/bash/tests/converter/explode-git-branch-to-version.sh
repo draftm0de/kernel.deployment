@@ -5,7 +5,7 @@ set -o pipefail
 base_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 base_path="$base_path/../../src"
 
-SCRIPT="${base_path}/dto/git-branch-version-dto.sh"
+SCRIPT="${base_path}/converter/explode-git-branch-to-version.sh"
 INPUT="1"
 # shellcheck disable=SC1090
 source "${SCRIPT}" "${INPUT}"

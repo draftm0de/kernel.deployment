@@ -39,7 +39,7 @@ runs:
         echo "::group::Converting branch ${{ inputs.branch }}"
         
         path=${{ steps.script.outputs.path }}
-        source ./${path}/dto/git-branch-version-dto.sh "${{ inputs.branch }}"
+        source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.branch }}"
         
         echo "> branch: $BRANCH"        
         echo "> prefix: $PREFIX"
