@@ -5,12 +5,18 @@ inputs:
     description: "Full Qualified Image Name"
     required: true
 outputs:
-  repository:
-    description: "Image Repository"
+  host:
+    description: "Image Host"
+    value: ${{ steps.image-split.outputs.host }}
+  port:
+    description: "Image Port"
+    value: ${{ steps.image-split.outputs.port }}
+  registry:
+    description: "Image Registry/Namespace"
     value: ${{ steps.image-split.outputs.registry }}
-  name:
-    description: "Image Name"
-    value: ${{ steps.image-split.outputs.name }}
+  repository:
+    description: "Image Repository/Name"
+    value: ${{ steps.image-split.outputs.repository }}
   tag:
     description: "Image Tag"
     value: ${{ steps.image-split.outputs.tag }}
