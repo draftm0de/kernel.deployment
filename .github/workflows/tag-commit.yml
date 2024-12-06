@@ -34,14 +34,15 @@ jobs:
 
       - name: "Preparing Arguments"
         run: |
-          echo "::notice::Preparing Arguments..."
+          echo "::group::Preparing Arguments"
+          
           image="${{ inputs.image }}"
           repository="${image%%/*}"
-          echo "::notice::> repository:$repository"          
+          echo "> repository:$repository"          
           image="${image#*/}"
-          echo "::notice::> image:$image"
+          echo "> image: $image"
           
-          echo "::notice::Arguments prepared."
+          echo "::endgroup::"          
           echo "REPOSITORY=$repository" >> $GITHUB_ENV
           echo "IMAGE=$image" >> $GITHUB_ENV          
 
@@ -65,11 +66,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "::notice::Tagging Commit..."
+          echo "::group::Tagging Commit"
+          
           tag="${{ steps.get-commit-tag.outputs.tag }}"
-          echo "::notice::> tag: $tag"
+          echo "> tag: $tag"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # git tag ${{ steps.get-commit-tag.outputs.tag }}
-          # git push origin ${{ steps.get-commit-tag.outputs.tag }}          
-          echo "::notice::Commit Tagged."
+          # git tag ${tag}
+          echo "> commit tagged with: $tag"
+          # git push origin ${tag}
+          echo "> commit push to origin with: $tag"      
+          
+          echo "::endgroup::"

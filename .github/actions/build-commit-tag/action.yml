@@ -46,43 +46,39 @@ runs:
       if: ${{ steps.target.outputs.branch != '' && steps.source.outputs.branch == '' }}
       shell: bash
       run: |
-        echo "::notice::Comparing Image Digest..."
         remote_digest="${{ steps.target-image-digest.outputs.property }}"
+        echo "::debug::> remote_digest: $remote_digest"
         build_digest="${{ inputs.digest }}"
-        echo "::debug::>remote: $remote_digest"
-        echo "::debug::>build: $build_digest"
+        echo "::debug::> build_digest: $build_digest"
         if [ "$remote_digest" == "$build_digest" ]; then
-          echo "::notice::> remote digest matches build digest, skip commit tagging"
+          echo "::warning::remote digest matches build digest, skip commit tagging"
           echo "SKIP_STEP=true" >> $GITHUB_ENV
+          exit 0
         fi 
-        echo "::notice::Image digest compared."
 
     - name: "Validate Source and Target branch"
       if: ${{ env.SKIP_STEP != 'true' }}
       shell: bash
       run: |
-        echo "::notice::Validating source and target branch..."
         if [ -n "${{ steps.source.outputs.branch }}" ]; then
           echo "::warning::source branch matches version patterns, skip commit tagging"
           echo "SKIP_STEP=true" >> $GITHUB_ENV
           exit 0
         else
-          echo "::debug::> source branch does not match version pattern"
+          echo "::debug::> source branch does not match version patterns" 
         fi 
         if [ -z "${{ steps.target.outputs.branch }}" ]; then
           echo "::warning::target branch does not match version patterns, skip commit tagging"
           echo "SKIP_STEP=true" >> $GITHUB_ENV
           exit 0
         else
-          echo "::debug::> target branch matches version patterns"
-        fi
-        echo "::notice::source and target branch validated."
+          echo "::debug::> target branch matches version patterns" 
+        fi 
 
     - name: "Ensure commit does not have any version tag"
       if: ${{ env.SKIP_STEP != 'true' }}
       shell: bash
       run: |
-        echo "::notice::Protecting version tags..."
         git fetch --tags
         
         # Get all tags for the current commit
@@ -94,18 +90,17 @@ runs:
         matching_tags=()
         while IFS= read -r tag; do
           if [[ $tag =~ $regex ]]; then
-            echo "::error::> commit already has a version tag: $tag"
+            echo "::error::commit already has a version tag: $tag"
             exit 1
           fi
         done <<< "$tags"
-        echo "::notice::Version tags protected."
 
     - name: "Build commit tag"
       if: ${{ env.SKIP_STEP != 'true' }}
       shell: bash
       id: build-commit-tag
       run: |
-        echo "::notice::Build Commit Tag..."
+        echo "::group::Building commit tag"
         
         pattern="${{ steps.target.outputs.prefix }}${{ steps.target.outputs.major }}"
         if [ -n "${{ steps.target.outputs.minor }}" ]; then
@@ -117,23 +112,25 @@ runs:
         else
           pattern="${pattern}.*"
         fi        
-        echo "::debug::> search pattern: $pattern"
+        echo "> search pattern: $pattern"
         
         latest_tag=$(git tag --list "${pattern}" --sort=-v:refname | head -n 1)
         
         # determine the new tag
         if [ -z "$latest_tag" ]; then
-          echo "::debug::> latest tag: no latest tag"          
+          echo "> latest tag: no latest tag"          
           commit_tag="${commit_tag}.1${{ steps.target.outputs.postfix }}"
         else
-          echo "::debug::> latest tag: $latest_tag"
+          echo "> latest tag: $latest_tag"
         
           # Increment the patch version
           patch_version=${latest_tag##*.}
           new_patch_version=$((patch_version + 1))        
           commit_tag="${commit_tag}.${patch_version}${{ steps.target.outputs.postfix }}"
         fi
-        echo "::notice::Commit tag built: $commit_tag"
+        echo "> commit tag: $commit_tag"        
+        
+        echo "::endgroup::"        
         echo "tag=${commit_tag}" >> $GITHUB_OUTPUT
 
     - name: "Ensure tag is not an existing branch"
@@ -141,12 +138,15 @@ runs:
       shell: bash
       id: get-commit-tag
       run: |
-        echo "::notice::Approving Commit Tag..."
+        echo "::group::Approving Commit Tag"
+        
         tag="${{ steps.build-commit-tag.outputs.tag }}"
-        echo "::debug::> tag: $tag"
+        echo "> tag: $tag"
         if git ls-remote --exit-code --heads origin $tag; then
           echo "::error::Commit tag $tag already exists as branch"
         else
-          echo "::notice::Commit tag approved."
+          echo "> tag approved."
           echo "tag=${tag}" >> $GITHUB_OUTPUT
         fi
+        
+        echo "::endgroup::"

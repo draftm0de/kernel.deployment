@@ -33,29 +33,29 @@ runs:
       id: arguments
       shell: bash
       run: |
-        echo "::notice::Preparing build arguments..."
+        echo "::group::Preparing build arguments"
+        
         build_options="${{ inputs.options }}"
         
         build_args_file="${{ inputs.context }}/${{ inputs.build_args_file }}"
         if [ -f "$build_args_file" ]; then
-          echo "::debug::> build-args from file: $build_args_file"
+          echo "> build-args from file: $build_args_file"
           build_args=$(cat "$build_args_file" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
           build_options="$build_options $build_args"        
         fi    
                
         tag="${{ inputs.image }}:latest"
-        echo "::debug::> tag: $tag"       
+        echo "> tag: $tag"       
         build_options="$build_options --tag $tag"
         
         if [ -n "${{ inputs.target }}" ]; then
-          echo "::debug::> target: ${{ inputs.target }}"
+          echo "> target: ${{ inputs.target }}"
           build_options="$build_options --target ${{ inputs.target }}"
         fi     
-        
-        echo "::debug::> context: ${{ inputs.context }}"
+        echo "> context: ${{ inputs.context }}"
         build_options="$build_options ${{ inputs.context }}"
 
-        echo "::notice::Build arguments prepared."
+        echo "::endgroup::"        
         echo "build_options=$build_options" >> $GITHUB_OUTPUT        
         echo "image=$tag" >> $GITHUB_OUTPUT
 
@@ -67,18 +67,19 @@ runs:
       shell: bash
       id: build-image
       run: |
-        echo "::notice::Building docker image..."
+        echo "::group::Building docker image"
         
         options="${{ steps.arguments.outputs.build_options }}"
         if [ ${{ inputs.reproducible }} == 'true' ]; then
-          echo "::debug::> use docker buildx build"
+          echo "> use docker buildx build"
           SOURCE_DATE_EPOCH=0 docker buildx build --no-cache --output type=docker,rewrite-timestamp=true $options
         else
-          echo "::debug::> use docker build"
+          echo "> use docker build"
           docker build $options
         fi
         tag="${{ inputs.image }}:latest"
-        digest=$(docker inspect --format="{{.Id}}" "$tag")
+        digest=$(docker inspect --format="{{.Id}}" "$tag")        
+        echo "> digest: $digest"    
         
-        echo "::notice::Docker image built: $digest."
-        echo "digest=$digest" >> $GITHUB_OUTPUT        
+        echo "::endgroup::"        
+        echo "digest=$digest" >> $GITHUB_OUTPUT

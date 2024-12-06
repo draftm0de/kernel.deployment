@@ -36,14 +36,16 @@ runs:
       id: image-split
       run: |
         echo "::group::Parsed Docker Image Name"
+        
         path=${{ steps.script.outputs.path }}
         source ./${path}/dto/docker-image-name-dto.sh "${{ inputs.image }}"
-        echo "> registry: $DOCKER_REGISTRY"
+        echo "> registry: $DOCKER_REGISTRY"        
+        echo "> name: $DOCKER_NAME"        
+        echo "> tag: $DOCKER_TAG"              
+        echo "> digest: $DOCKER_DIGEST"                      
+        
+        echo "::endgroup::"           
+        echo "tag=$DOCKER_TAG" >> $GITHUB_OUTPUT  
+        echo "name=$DOCKER_NAME" >> $GITHUB_OUTPUT
         echo "registry=$DOCKER_REGISTRY" >> $GITHUB_OUTPUT
-        echo "> name: $DOCKER_NAME"
-        echo "name=$DOCKER_NAME" >> $GITHUB_OUTPUT        
-        echo "> tag: $DOCKER_TAG"
-        echo "tag=$DOCKER_TAG" >> $GITHUB_OUTPUT        
-        echo "> digest: $DOCKER_DIGEST"
-        echo "digest=$DOCKER_DIGEST" >> $GITHUB_OUTPUT        
-        echo "::endgroup::"            
+        echo "digest=$DOCKER_DIGEST" >> $GITHUB_OUTPUT  

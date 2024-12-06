@@ -19,19 +19,19 @@ runs:
       shell: bash
       id: get-value
       run: |
-        echo "::notice::Getting Property From Manifest..."
+        echo "::group::Getting Property From Manifest..."
         response=$(docker manifest inspect ${{ inputs.image }} 2>/dev/null)
         if [ $? -eq 0 ]; then
-          echo "::debug::> manifest found"
+          echo "> manifest found"
           property=$(echo "$response" | jq -r '${{ inputs.property }}')
           if [ "$property" != "null" ]; then
-            echo "::debug::> property: $property"
+            echo "> property: $property"
             echo "property=$property" >> $GITHUB_OUTPUT
           else
-            echo "::error::> ${{ inputs.property }} not found in manifest"
+            echo "::error::${{ inputs.property }} not found in manifest"
           fi
         else
-          echo "::error::>manifest for ${{ inputs.image }} not found"
+          echo "::error::manifest for ${{ inputs.image }} not found"
         fi
-        echo "::notice::Got property from manifest"
+        echo "::endgroup::"
 

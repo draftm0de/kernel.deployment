@@ -17,7 +17,7 @@ runs:
       shell: bash
       id: arguments
       run: |
-        echo "::notice:: Converting image name..."
+        echo "::group::Converting image name"
         
         # convert inputs.image to filename
         filename="${{ inputs.image }}"
@@ -25,7 +25,7 @@ runs:
         filename="${filename//./-}"
         filename="${filename//:/-}"
         filename="${filename}.tar"
-        echo "::notice:: > filename: $filename"
+        echo "> filename: $filename"
         
-        echo "::notice:: Image name converted."
+        echo "::endgroup::"         
         echo "file=$filename" >> $GITHUB_OUTPUT                

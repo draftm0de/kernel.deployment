@@ -25,15 +25,15 @@ runs:
     - name: "Save Docker Image"
       shell: bash
       run: |
-        echo "::notice:: Saving Docker Image..."
+        echo "::group::Saving Docker Image"
         
         image="${{ inputs.image }}"           
         file="${{ steps.get-file-name.outputs.file }}"       
         docker save -o $file $image
-        echo "::notice:: > image: $image"
-        echo "::notice:: > file: $file"
+        echo "> image: $image"
+        echo "> file: $file"
         
-        echo "::notice:: Docker image saved."
+        echo "::endgroup::"
 
     - name: "Upload To Artifact"
       uses: actions/upload-artifact@v4
