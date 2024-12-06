@@ -31,7 +31,7 @@ runs:
       id: script
       uses: draftm0de/kernel.deployment/.github/actions/check-out-scripts@main
 
-    - name: "Split Docker Image Name"
+    - name: "Explode Docker Image Name"
       shell: bash
       id: image-split
       run: |
