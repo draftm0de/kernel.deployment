@@ -1,5 +1,5 @@
 name: "Get Docker Manifest Property"
-description: "Get Docker Manifest .Config.Digest"
+description: "Get Docker Manifest Property (e.g. .config.digest)"
 inputs:
   image:
     description: "Docker image with tag"
@@ -9,29 +9,23 @@ inputs:
     required: true
 outputs:
   property:
-    description: "Value for the given property"
+    description: "Value for the requested property"
     value: ${{ steps.get-value.outputs.property }}
 
 runs:
   using: "composite"
   steps:
+    - name: "Checkout Draftmode Scripts"
+      id: script
+      uses: draftm0de/kernel.deployment/.github/actions/check-out-scripts@main
+
     - name: "Getting Property From Manifest"
       shell: bash
       id: get-value
       run: |
-        echo "::group::Getting Property From Manifest..."
-        response=$(docker manifest inspect ${{ inputs.image }} 2>/dev/null)
-        if [ $? -eq 0 ]; then
-          echo "> manifest found"
-          property=$(echo "$response" | jq -r '${{ inputs.property }}')
-          if [ "$property" != "null" ]; then
-            echo "> property: $property"
-            echo "property=$property" >> $GITHUB_OUTPUT
-          else
-            echo "::error::${{ inputs.property }} not found in manifest"
-          fi
-        else
-          echo "::error::manifest for ${{ inputs.image }} not found"
-        fi
-        echo "::endgroup::"
+        echo "::group::Getting Property From Manifest"
+        source ./${path}/docker/image-manifest.sh "${{ inputs.image }}" ".config.digest"
+        echo "> property: $PROPERTY"
 
+        echo "::endgroup::"
+        echo "property=$property" >> $GITHUB_OUTPUT        

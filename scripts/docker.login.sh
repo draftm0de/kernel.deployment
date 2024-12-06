@@ -1,9 +1,6 @@
 #!/bin/bash
 SECRET_PATH="../.secrets"
-# Load Docker username from a file
 DOCKER_USERNAME=$(cat "$SECRET_PATH/DOCKER_USERNAME")
-
-# Path to the file containing Docker password
 DOCKER_PASSWORD_FILE="$SECRET_PATH/DOCKER_PASSWORD"
 
 # Perform Docker login using --password-stdin

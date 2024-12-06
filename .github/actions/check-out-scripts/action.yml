@@ -3,13 +3,13 @@ description: "Checkout Draftmode Script Repository"
 
 outputs:
   path:
-    description: "Script Path"
+    description: "Bash Script Path"
     value: ".draftmode/scripts/bash/src"
 
 runs:
   using: "composite"
   steps:
-    - name: "Checkout Verification"
+    - name: "Prevent Multiple Checkout"
       shell: bash
       run: |
         path=".draftmode/scripts/bash/src"

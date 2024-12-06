@@ -26,94 +26,42 @@ runs:
       id: script
       uses: draftm0de/kernel.deployment/.github/actions/check-out-scripts@main
 
-    - name: "Explode Target Branch To Version"
-      id: target
-      uses: draftm0de/kernel.deployment/.github/actions/dto-explode-git-branch-to-version@main
-      with:
-        branch: ${{ inputs.target }}
-
-    - name: "Explode Source Branch To Version"
-      id: source
-      uses: draftm0de/kernel.deployment/.github/actions/dto-explode-git-branch-to-version@main
-      with:
-        branch: ${{ inputs.source }}
-
-    - name: "Explode Docker Image Name"
-      id: image
-      if: ${{ inputs.image }}
-      uses: draftm0de/kernel.deployment/.github/actions/dto-explode-docker-image@main
-      with:
-        image: ${{ inputs.image }}
-
-    - name: "Ensure Build Tag Processing"
+    - name: "Ensure Target Branch Is Version Based"
       shell: bash
       run: |
-        echo "::group::Ensure Build Tag Processing"
         path=${{ steps.script.outputs.path }}
-        
-        source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.source }}"
-        if [ "${BRANCH}" != '' ]; then
-          echo "> source branch is a version based branch, skip tagging"
-          exit 1
-        fi
-        
         source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}"
         if [ "${BRANCH}" == '' ]; then
-          echo "> target branch is not a version based branch, skip tagging"
+          echo "::warning::target branch is not version based, skip tagging"
           exit 1
         fi
-        
-        if [ "${{ inputs.image }}" != "" ] && [ "${{ inputs.digest }}" != "" ]; then
-          source ./${path}/converter/explode-docker-image-name.sh "${{ inputs.image }}"
-          compare_image="${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}"
-          echo "> compare image: $compare_image"
-          remote_digest=$(./${path}/docker/image-get-manifest-digest.sh "${compare_image}")
-          echo "> remote digest: $remote_digest"
-        fi
 
-    - name: "Get Target Branch Image Digest"
-      if: ${{ inputs.image && steps.target.outputs.branch != '' && steps.source.outputs.branch == '' }}
-      id: target-image-digest
-      uses: draftm0de/kernel.deployment/.github/actions/image-manifest-property@main
-      with:
-        image: ${{ inputs.image }}:${{ steps.target.outputs.branch }}
-        property: ".config.digest"
+    - name: "Ensure Source Branch Is Not Versioned Based"
+      shell: bash
+      run: |  
+        path=${{ steps.script.outputs.path }}
+        source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.source }}"
+        if [ "${BRANCH}" != '' ]; then
+          echo "::warning::source branch is version based, skip tagging"
+          exit 1
+        fi      
 
-    - name: "Compare Image Digest"
-      if: ${{ steps.target.outputs.branch != '' && steps.source.outputs.branch == '' }}
+    - name: "Compare Target Image Digest With Built Digest"
+      if: ${{ inputs.image  && inputs.digest }}
       shell: bash
       run: |
-        remote_digest="${{ steps.target-image-digest.outputs.property }}"
-        echo "::debug::> remote_digest: $remote_digest"
-        build_digest="${{ inputs.digest }}"
-        echo "::debug::> build_digest: $build_digest"
-        if [ "$remote_digest" == "$build_digest" ]; then
-          echo "::warning::remote digest matches build digest, skip commit tagging"
-          echo "SKIP_STEP=true" >> $GITHUB_ENV
-          exit 0
+        path=${{ steps.script.outputs.path }}
+        source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}"
+        tag="${BRANCH}"
+        source ./${path}/converter/explode-docker-image-name.sh "${{ inputs.image }}"
+        image="${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:${tag}"
+        source ./${path}/docker/image-manifest.sh "${{ inputs.image }}" ".config.digest"
+        if [ "${PROPERTY}" == "${{ inputs.digest }}" ]; then
+          echo "::warning::built image digest is equal to target branch related image, skip tagging"
+          exit 1
         fi 
 
-    - name: "Validate Source and Target branch"
-      if: ${{ env.SKIP_STEP != 'true' }}
-      shell: bash
-      run: |
-        if [ -n "${{ steps.source.outputs.branch }}" ]; then
-          echo "::warning::source branch matches version patterns, skip commit tagging"
-          echo "SKIP_STEP=true" >> $GITHUB_ENV
-          exit 0
-        else
-          echo "::debug::> source branch does not match version patterns" 
-        fi 
-        if [ -z "${{ steps.target.outputs.branch }}" ]; then
-          echo "::warning::target branch does not match version patterns, skip commit tagging"
-          echo "SKIP_STEP=true" >> $GITHUB_ENV
-          exit 0
-        else
-          echo "::debug::> target branch matches version patterns" 
-        fi 
-
-    - name: "Ensure commit does not have any version tag"
-      if: ${{ env.SKIP_STEP != 'true' }}
+    - name: "Ensure Commit Does Not Have Any Versioned Tag"
       shell: bash
       run: |
         git fetch --tags
@@ -127,25 +75,27 @@ runs:
         matching_tags=()
         while IFS= read -r tag; do
           if [[ $tag =~ $regex ]]; then
-            echo "::error::commit already has a version tag: $tag"
+            echo "::warning::commit already has a version tag: $tag"
             exit 1
           fi
         done <<< "$tags"
 
-    - name: "Build commit tag"
-      if: ${{ env.SKIP_STEP != 'true' }}
+    - name: "Build Commit Tag"
       shell: bash
       id: build-commit-tag
       run: |
         echo "::group::Building commit tag"
         
-        pattern="${{ steps.target.outputs.prefix }}${{ steps.target.outputs.major }}"
-        if [ -n "${{ steps.target.outputs.minor }}" ]; then
-          pattern="${pattern}.${{ steps.target.outputs.minor }}"
+        path=${{ steps.script.outputs.path }}
+        source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}"
+        
+        pattern="${PREFIX}${MAJOR}"
+        if [ -n "${MINOR}" ]; then
+          pattern="${pattern}.${MINOR}"
         fi
         commit_tag="$pattern"
-        if [ -n "${{ steps.target.outputs.postfix }}" ]; then
-          pattern="${pattern}.*-${{ steps.target.outputs.minor }}"
+        if [ -n "${POSTFIX}" ]; then
+          pattern="${pattern}.*-${POSTFIX}"
         else
           pattern="${pattern}.*"
         fi        
@@ -156,21 +106,21 @@ runs:
         # determine the new tag
         if [ -z "$latest_tag" ]; then
           echo "> latest tag: no latest tag"          
-          commit_tag="${commit_tag}.1${{ steps.target.outputs.postfix }}"
+          commit_tag="${commit_tag}.1${POSTFIX}"
         else
           echo "> latest tag: $latest_tag"
         
           # Increment the patch version
           patch_version=${latest_tag##*.}
           new_patch_version=$((patch_version + 1))        
-          commit_tag="${commit_tag}.${patch_version}${{ steps.target.outputs.postfix }}"
+          commit_tag="${commit_tag}.${patch_version}${POSTFIX}"
         fi
         echo "> commit tag: $commit_tag"        
         
         echo "::endgroup::"        
         echo "tag=${commit_tag}" >> $GITHUB_OUTPUT
 
-    - name: "Ensure tag is not an existing branch"
+    - name: "Ensure Tag Is Not An Existing Branch"
       if: ${{ steps.build-commit-tag.outputs.tag }}
       shell: bash
       id: get-commit-tag
@@ -181,6 +131,7 @@ runs:
         echo "> tag: $tag"
         if git ls-remote --exit-code --heads origin $tag; then
           echo "::error::Commit tag $tag already exists as branch"
+          exit 1
         else
           echo "> tag approved."
           echo "tag=${tag}" >> $GITHUB_OUTPUT
