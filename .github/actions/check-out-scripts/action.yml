@@ -18,7 +18,7 @@ runs:
         fi
 
     - name: "Checkout Draftmode Repository"
-      if: ${{ env.SCRIPT_PATH != '' }}
+      if: ${{ env.SCRIPT_PATH == '' }}
       uses: actions/checkout@v4
       with:
         repository: draftm0de/kernel.deployment@main
