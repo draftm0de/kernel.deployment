@@ -2,7 +2,7 @@ name: "Split Docker Image Name"
 description: "Split Docker Image Name"
 inputs:
   image:
-    description: "Full Qualified Image Name"
+    description: "Fully Qualified Image Name"
     required: true
 outputs:
   host:
@@ -35,7 +35,7 @@ runs:
       shell: bash
       id: image-split
       run: |
-        echo "::group::Parsed Docker Image Name"
+        echo "::group::Parse Docker Image"
         
         path=${{ steps.script.outputs.path }}
         source ./${path}/converter/explode-docker-image-name.sh "${{ inputs.image }}"

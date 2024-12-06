@@ -8,11 +8,11 @@ inputs:
     description: "branch to be merged into"
     required: true
   image:
-    description: "Docker image without tag"
-    required: true
+    description: "Docker image (without tag)"
+    required: false
   digest:
-    description: "Docker image digest"
-    required: true
+    description: "Built docker image digest"
+    required: false
 
 outputs:
   tag:
@@ -22,20 +22,57 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: "Convert Target Branch To Version"
+    - name: "Checkout Draftmode Scripts"
+      id: script
+      uses: draftm0de/kernel.deployment/.github/actions/check-out-scripts@main
+
+    - name: "Explode Target Branch To Version"
       id: target
       uses: draftm0de/kernel.deployment/.github/actions/dto-explode-git-branch-to-version@main
       with:
         branch: ${{ inputs.target }}
 
-    - name: "Convert Source Branch To Version"
+    - name: "Explode Source Branch To Version"
       id: source
       uses: draftm0de/kernel.deployment/.github/actions/dto-explode-git-branch-to-version@main
       with:
         branch: ${{ inputs.source }}
 
+    - name: "Explode Docker Image Name"
+      id: image
+      if: ${{ inputs.image }}
+      uses: draftm0de/kernel.deployment/.github/actions/dto-explode-docker-image@main
+      with:
+        image: ${{ inputs.image }}
+
+    - name: "Ensure Build Tag Processing"
+      shell: bash
+      run: |
+        echo "::group::Ensure Build Tag Processing"
+        path=${{ steps.script.outputs.path }}
+        
+        source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.source }}"
+        if [ "${BRANCH}" != '' ]; then
+          echo "> source branch is a version based branch, skip tagging"
+          exit 1
+        fi
+        
+        source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}"
+        if [ "${BRANCH}" == '' ]; then
+          echo "> target branch is not a version based branch, skip tagging"
+          exit 1
+        fi
+        
+        if [ "${{ inputs.image }}" != "" ] && [ "${{ inputs.digest }}" != "" ]; then
+          source ./${path}/converter/explode-docker-image-name.sh "${{ inputs.image }}"
+          compare_image="${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}"
+          echo "> compare image: $compare_image"
+          remote_digest=$(./${path}/docker/image-get-manifest-digest.sh "${compare_image}")
+          echo "> remote digest: $remote_digest"
+        fi
+
     - name: "Get Target Branch Image Digest"
-      if: ${{ steps.target.outputs.branch != '' && steps.source.outputs.branch == '' }}
+      if: ${{ inputs.image && steps.target.outputs.branch != '' && steps.source.outputs.branch == '' }}
       id: target-image-digest
       uses: draftm0de/kernel.deployment/.github/actions/image-manifest-property@main
       with:
