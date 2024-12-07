@@ -29,37 +29,53 @@ runs:
     - name: "Ensure Target Branch Is Version Based"
       shell: bash
       run: |
+        echo "::group::Ensure Target Branch Is Version Based"
         path=${{ steps.script.outputs.path }}
         source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}"
         if [ "${BRANCH}" == '' ]; then
           echo "::warning::target branch is not version based, skip tagging"
           exit 1
+        else
+          echo "target branch is version based"
         fi
+        echo "::endgroup::"
 
     - name: "Ensure Source Branch Is Not Versioned Based"
       shell: bash
-      run: |  
+      run: |
+        echo "::group::Ensure Source Branch Is Not Versioned Based"
         path=${{ steps.script.outputs.path }}
         source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.source }}"
         if [ "${BRANCH}" != '' ]; then
           echo "::warning::source branch is version based, skip tagging"
           exit 1
-        fi      
+        else
+          echo "> source branch is version based"
+        fi  
+        echo "::endgroup::"
 
     - name: "Compare Target Image Digest With Built Digest"
       if: ${{ inputs.image  && inputs.digest }}
       shell: bash
       run: |
+        echo "::group::Compare Target Image Digest With Built Digest"
         path=${{ steps.script.outputs.path }}
         source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}"
         tag="${BRANCH}"
+        echo "> tag: $tag"
         source ./${path}/converter/explode-docker-image-name.sh "${{ inputs.image }}"
         image="${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:${tag}"
-        source ./${path}/docker/image-manifest.sh "${{ inputs.image }}" ".config.digest"
+        echo "> image: $image"
+        source ./${path}/docker/image-manifest-jq.sh "${{ inputs.image }}" ".config.digest"
+        echo "> built digest: ${{ inputs.digest }}"
+        echo "> remote digest: ${PROPERTY}"
         if [ "${PROPERTY}" == "${{ inputs.digest }}" ]; then
           echo "::warning::built image digest is equal to target branch related image, skip tagging"
           exit 1
-        fi 
+        else
+          echo "built image digest is not equal to target branch related image"
+        fi
+        echo "::endgroup::"
 
     - name: "Ensure Commit Does Not Have Any Versioned Tag"
       shell: bash
