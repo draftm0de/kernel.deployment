@@ -62,11 +62,11 @@ runs:
         path=${{ steps.script.outputs.path }}
         source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}"
         tag="${BRANCH}"
-        echo "> tag: $tag"
+        echo "> target branch tag: $tag"
         source ./${path}/converter/explode-docker-image-name.sh "${{ inputs.image }}"
         image="${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:${tag}"
-        echo "> image: $image"
-        source ./${path}/docker/image-manifest-jq.sh "${{ inputs.image }}" ".config.digest"
+        echo "> target branch image: $image"
+        source ./${path}/docker/image-manifest-jq.sh "${image}" ".config.digest"
         echo "> built digest: ${{ inputs.digest }}"
         echo "> remote digest: ${PROPERTY}"
         if [ "${PROPERTY}" == "${{ inputs.digest }}" ]; then
