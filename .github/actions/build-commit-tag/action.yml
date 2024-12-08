@@ -26,35 +26,41 @@ runs:
       id: script
       uses: draftm0de/kernel.deployment/.github/actions/check-out-scripts@main
 
-    - name: "Ensure Target Branch Is Version Based"
+    - name: "Ensure Commit Has To Be Tagged"
       shell: bash
       run: |
-        echo "::group::Ensure Target Branch Is Version Based"
+        # -- ensure target branch is version based--
+        echo "::group::Ensure Commit Has To Be Tagged"
         path=${{ steps.script.outputs.path }}
         source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}"
         if [ "${BRANCH}" == '' ]; then
           echo "::warning::target branch is not version based, skip tagging"
           exit 1
         else
-          echo "target branch is version based"
+          echo "> target branch is version based"
         fi
-        echo "::endgroup::"
-
-    - name: "Ensure Source Branch Is Not Versioned Based"
-      shell: bash
-      run: |
-        echo "::group::Ensure Source Branch Is Not Versioned Based"
-        path=${{ steps.script.outputs.path }}
+        
+        # -- ensure source branch is not version based--
         source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.source }}"
         if [ "${BRANCH}" != '' ]; then
           echo "::warning::source branch is version based, skip tagging"
           exit 1
         else
           echo "> source branch is version based"
-        fi  
+        fi
         echo "::endgroup::"
 
-    - name: "Compare Target Image Digest With Built Digest"
+    - name: "Ensure Commit Does Not Have Any Versioned Tag"
+      shell: bash
+      run: |
+        path=${{ steps.script.outputs.path }}
+        source ./${path}/git/read-commit-tags.sh "--filter=versioned"
+        if [ -n "${TAGS}" ]; then
+          echo "::warning::commit already has a versioned tag, skip tagging"
+          exit 1        
+        fi         
+
+    - name: "Compare Image Digest"
       if: ${{ inputs.image  && inputs.digest }}
       shell: bash
       run: |
@@ -63,12 +69,15 @@ runs:
         source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}"
         tag="${BRANCH}"
         echo "> target branch tag: $tag"
+        
         source ./${path}/converter/explode-docker-image-name.sh "${{ inputs.image }}"
         image="${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:${tag}"
         echo "> target branch image: $image"
+        
         source ./${path}/docker/image-manifest-jq.sh "${image}" ".config.digest"
         echo "> built digest: ${{ inputs.digest }}"
         echo "> remote digest: ${PROPERTY}"
+        
         if [ "${PROPERTY}" == "${{ inputs.digest }}" ]; then
           echo "::warning::built image digest is equal to target branch related image, skip tagging"
           exit 1
@@ -77,32 +86,15 @@ runs:
         fi
         echo "::endgroup::"
 
-    - name: "Ensure Commit Does Not Have Any Versioned Tag"
-      shell: bash
-      run: |
-        git fetch --tags
-        
-        # Get all tags for the current commit
-        current_commit=$(git rev-parse HEAD)
-        tags=$(git tag --contains "$current_commit")
-        
-        # Filter tags matching the regex
-        regex="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
-        matching_tags=()
-        while IFS= read -r tag; do
-          if [[ $tag =~ $regex ]]; then
-            echo "::warning::commit already has a version tag: $tag"
-            exit 1
-          fi
-        done <<< "$tags"
-
     - name: "Build Commit Tag"
       shell: bash
       id: build-commit-tag
       run: |
-        echo "::group::Building commit tag"
+        echo "::group::Building commit tag"              
         
         path=${{ steps.script.outputs.path }}
+        source ./${path}/git/read-tags.sh "--branch=${{ inputs.target }}" "--latest"
+        
         source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}"
         
         pattern="${PREFIX}${MAJOR}"

@@ -2,8 +2,8 @@
 set -e
 set -o pipefail
 
-REGEX="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
-INPUT="${1}"
+regex="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
+input="${1}"
 
 PREFIX=""
 MAJOR=""
@@ -13,7 +13,7 @@ POSTFIX=""
 BRANCH=""
 
 # Match branch name against the regex
-if [[ "$INPUT" =~ $REGEX ]]; then
+if [[ "$input" =~ $regex ]]; then
   PREFIX="${BASH_REMATCH[1]}"
   MAJOR="${BASH_REMATCH[2]}"
   MINOR="${BASH_REMATCH[3]}"
@@ -23,7 +23,10 @@ if [[ "$INPUT" =~ $REGEX ]]; then
   # remove leading .
   MINOR="${MINOR#.}"
   PATCH="${PATCH#.}"
-  BRANCH="${INPUT}"
+  BRANCH="${input}"
+  echo "> > branch [$input] matches version patterns"
+else
+  echo "> > branch [$input] does not match version patterns"
 fi
 
 export PREFIX
