@@ -24,9 +24,6 @@ if [[ "$input" =~ $regex ]]; then
   MINOR="${MINOR#.}"
   PATCH="${PATCH#.}"
   BRANCH="${input}"
-  echo "> > branch [$input] matches version patterns"
-else
-  echo "> > branch [$input] does not match version patterns"
 fi
 
 export PREFIX
@@ -35,3 +32,6 @@ export MINOR
 export PATCH
 export POSTFIX
 export BRANCH
+if [ -n "${BRANCH}" ]; then
+  echo "$BRANCH"
+fi

@@ -1,17 +1,18 @@
 #!/bin/bash
 set -e
 set -o pipefail
-tests=()
-#tests+=("converter/explode-docker-image-name")
-#tests+=("converter/explode-branch-to-version")
-#tests+=("converter/patch-branch")
-#tests+=("docker/image-manifest-jq")
-#tests+=("git/read-commit-tags")
-tests+=("git/read-tags")
 
-for test in "${tests[@]}"; do
-  echo "******* ${test} *********"
-  script="./tests/${test}.sh"
+scripts=()
+#scripts+=("converter/explode-docker-image-name")
+#scripts+=("converter/explode-branch-to-version")
+#scripts+=("converter/patch-branch")
+#scripts+=("docker/image-manifest-jq")
+scripts+=("git/read-commit-tags")
+#scripts+=("git/read-tags")
+
+for script in "${scripts[@]}"; do
+  if [ -z "${1}" ] || [ "${1}" == "${script}" ]; then
   # shellcheck disable=SC1090
-  source "$script"
+  source "./tests/${script}.sh"
+  fi
 done

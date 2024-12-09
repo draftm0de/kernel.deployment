@@ -2,33 +2,32 @@
 set -e
 set -o pipefail
 
-helper_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-helper_path="$helper_path/../../src"
-echo "***********"
-BRANCH=""
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+src_dir="$script_dir/../../src"
+
 latest=""
+filter=""
 options=()
 for arg in "$@"; do
   case "$arg" in
     --latest)
       latest="auto"
       options+=("--sort=-v:refname")
-      echo "> --sort=-v:refname"
+      echo "> --sort=-v:refname [from argument --latest]"
     ;;
     --list*)
       if [[ "$arg" =~ --list[[:space:]](.+) ]]; then
         filter="${BASH_REMATCH[1]}"
         options+=("--list")
         options+=("${filter}")
-        echo "> --list ${filter}"
+        echo "> --list ${filter} [from argument --list]"
       fi
     ;;
     --branch=*)
-      filter="${arg#*=}"
-      echo "> --branch=${filter}"
-      helper="${helper_path}/converter/explode-branch-to-version.sh"
+      branch="${arg#*=}"
+      list="$branch"
       # shellcheck disable=SC1090
-      source "$helper" "${filter}"
+      source "${src_dir}/converter/explode-branch-to-version.sh" "${branch}" >/dev/null
       if [ -n "$BRANCH" ]; then
         list="${PREFIX}${MAJOR}"
         if [ -n "${MINOR}" ]; then
@@ -39,20 +38,45 @@ for arg in "$@"; do
         else
           list="${list}.*"
         fi
-        options+=("--list")
-        options+=("${list}")
-        echo "> --list ${list}"
+        echo "> --list ${list} [built from argument --branch=${branch}]"
+      else
+        echo "> --list ${list} [from argument --branch]"
       fi
+      options+=("--list")
+      options+=("${list}")
+      options+=("--sort=-v:refname")
+      filter="version"
     ;;
   esac
 done
 
 # execute git tag command
-TAGS=$(git tag "${options[@]}")
+read_tags=$(git tag "${options[@]}")
+
+tags=()
+while IFS= read -r tag; do
+  # echo ":$MAJOR:"
+  case "$filter" in
+    version|only-version)
+      source "${src_dir}/converter/explode-branch-to-version.sh" "${tag}" 1>/dev/null
+      if [ -z "${BRANCH}" ]; then
+        tag=""
+      fi
+    ;;
+  esac
+  if [ -n "$tag" ]; then
+    tags+=("$tag")
+  fi
+done <<< "$read_tags"
 
 # reduce TAGS to latest
 if [ -n "${latest}" ]; then
-  TAGS=$(echo "$TAGS" | head -n 1)
+  latest_tag=$(echo "$tags" | head -n 1)
+  tags=("$latest_tag")
 fi
-export TAGS
+
+for tag in "${tags[@]}"; do
+  echo "$tag"
+done
+
 

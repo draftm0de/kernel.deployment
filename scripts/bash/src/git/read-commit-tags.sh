@@ -2,62 +2,47 @@
 set -e
 set -o pipefail
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+src_dir="$script_dir/../../src"
+
 filter="all"
-filter_notice="(use default)"
 for arg in "$@"; do
   case "$arg" in
     --filter=*)
-      arg_filter="${arg#*=}"
-      case "$arg_filter" in
-        all|versioned)
-          filter_notice="(received from args)"
-          filter="$arg_filter"
-        ;;
-        *)
-          filter_notice="(received invalid from args, use: all)"
-          filter="all"
-        ;;
-      esac
+      filter="${arg#*=}"
+      echo "> --filter $filter [from arguments]"
       ;;
     *)
       commit="$arg"
       ;;
   esac
 done
-commit_notice="(received from args)"
 if [ -z "$commit" ]; then
   commit=$(git rev-parse HEAD)
-  commit_notice="(got from rev-parse HEAD)"
+  echo "> --points-at $commit [from git pev-parse HEAD]"
+else
+  echo "> --points-at $commit [from arguments]"
 fi
-echo "> commit: ${commit} ${commit_notice}"
-echo "> filter: ${filter} ${filter_notice}"
 
 # fetch all tags
 git fetch --tags
 
 filtered_tags=()
-versioned_regex="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
-if git tag --contains "$commit" &>/dev/null; then
-  commit_tags=$(git tag --contains "$commit")
+if git tag --points-at "$commit" &>/dev/null; then
+  commit_tags=$(git tag --points-at "$commit")
   while IFS= read -r commit_tag; do
-    isValid="false"
     case "$filter" in
-      versioned)
-        if [[ $commit_tag =~ $versioned_regex ]]; then
-          isValid="true"
-        fi
-      ;;
-      all)
-        isValid="true"
+      version|only-version)
+        commit_tag=$(source "${src_dir}/converter/explode-branch-to-version.sh" "${commit_tag}")
       ;;
     esac
-    if [ "$isValid" == "true" ]; then
-      echo "> > tag: $commit_tag, matches ${filter}"
+    if [ -n "$commit_tag" ]; then
       filtered_tags+=("$commit_tag")
-    else
-      echo "> > tag: $commit_tag, does not match ${filter}"
     fi
   done <<< "$commit_tags"
 fi
-TAGS="${filtered_tags[*]}"
-export TAGS
+for tag in "${filtered_tags[@]}"; do
+  echo "$tag"
+done
+
+
