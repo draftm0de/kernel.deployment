@@ -1,52 +1,52 @@
 #!/bin/bash
 set -e
 set -o pipefail
+echo "/git/read-tags.sh" 1>&2
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 src_dir="$script_dir/../../src"
 
-latest=""
+branch=""
 filter=""
+option_latest=""
+option_list=""
 options=()
 for arg in "$@"; do
   case "$arg" in
     --latest)
-      latest="auto"
+      echo "> arg: $arg" 1>&2
+      option_latest="true"
       options+=("--sort=-v:refname")
-      echo "> --sort=-v:refname [from argument --latest]"
+      echo "> --sort=-v:refname" 1>&2
     ;;
-    --list*)
-      if [[ "$arg" =~ --list[[:space:]](.+) ]]; then
-        filter="${BASH_REMATCH[1]}"
-        options+=("--list")
-        options+=("${filter}")
-        echo "> --list ${filter} [from argument --list]"
-      fi
+    --list)
+      option_list="true"
     ;;
     --branch=*)
+      echo "> arg: $arg" 1>&2
       branch="${arg#*=}"
-      list="$branch"
       # shellcheck disable=SC1090
-      source "${src_dir}/converter/explode-branch-to-version.sh" "${branch}" >/dev/null
-      if [ -n "$BRANCH" ]; then
-        list="${PREFIX}${MAJOR}"
-        if [ -n "${MINOR}" ]; then
-          list="${list}.${MINOR}"
-        fi
-        if [ -n "${POSTFIX}" ]; then
-          list="${list}.*-${POSTFIX}"
-        else
-          list="${list}.*"
-        fi
-        echo "> --list ${list} [built from argument --branch=${branch}]"
+      tag_list=$(source "${src_dir}/converter/branch-to-version.sh" "${branch}" "--format=tag-list" 2>/dev/null)
+      if [ -n "$tag_list" ]; then
+        list="$tag_list"
+        echo "> > branch matches version patterns: yes" 1>&2
+        echo "> > --list ${list}" 1>&2
+        filter="branch"
       else
-        echo "> --list ${list} [from argument --branch]"
+        echo "> > branch matches version patterns: no" 1>&2
+        list="$branch"
+        echo "> > --list ${list}" 1>&2
       fi
       options+=("--list")
       options+=("${list}")
-      options+=("--sort=-v:refname")
-      filter="version"
     ;;
+    *)
+      if [ -n "$option_list" ]; then
+        options+=("--list")
+        options+=("${arg}")
+        option_list=""
+        echo "> arg --list ${arg}" 1>&2
+      fi
   esac
 done
 
@@ -55,12 +55,14 @@ read_tags=$(git tag "${options[@]}")
 
 tags=()
 while IFS= read -r tag; do
-  # echo ":$MAJOR:"
   case "$filter" in
-    version|only-version)
-      source "${src_dir}/converter/explode-branch-to-version.sh" "${tag}" 1>/dev/null
-      if [ -z "${BRANCH}" ]; then
-        tag=""
+    branch)
+      message="> tag $tag contains $branch"
+      tag=$(source "${src_dir}/converter/branch-to-version.sh" "${tag}" "--contains=${branch}" 2>/dev/null)
+      if [ -n "${tag}" ]; then
+        echo "$message: yes" 1>&2
+      else
+        echo "$message: no" 1>&2
       fi
     ;;
   esac
@@ -70,7 +72,7 @@ while IFS= read -r tag; do
 done <<< "$read_tags"
 
 # reduce TAGS to latest
-if [ -n "${latest}" ]; then
+if [ -n "${option_latest}" ]; then
   latest_tag=$(echo "$tags" | head -n 1)
   tags=("$latest_tag")
 fi
@@ -78,5 +80,3 @@ fi
 for tag in "${tags[@]}"; do
   echo "$tag"
 done
-
-

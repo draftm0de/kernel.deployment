@@ -2,16 +2,17 @@
 set -e
 set -o pipefail
 
-SCRIPT="../../src/git/read-tags.sh"
+base_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+base_path="$base_path/../../src"
+SCRIPT="${base_path}/git/read-tags.sh"
 
-# shellcheck disable=SC1090
-source "${SCRIPT}" "--branch=1"
-echo "$TAGS"
+# debugMode="true"
+UnitTest "${SCRIPT}" "1.1" "--branch=1" "--latest"
+UnitTest "${SCRIPT}" "1.0.3" "--branch=1.0" "--latest"
+UnitTest "${SCRIPT}" "1.1" "--list 1.*" "--latest"
+UnitTest "${SCRIPT}" "1.0
+1.0.1
+1.0.3
+1.0x3
+1.1" "--list 1.*"
 
-# shellcheck disable=SC1090
-source "${SCRIPT}" "--branch=1" "--latest"
-echo "$TAGS"
-
-# shellcheck disable=SC1090
-source "${SCRIPT}" "--list 1.*" "--latest"
-echo "$TAGS"
