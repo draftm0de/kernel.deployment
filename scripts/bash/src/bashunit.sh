@@ -1,0 +1,86 @@
+#!/bin/bash
+set -e
+set -o pipefail
+
+UnitTest() {
+  local source source_print expected arguments response
+  source="${1}"
+  source_print=$(basename $source)
+  shift
+  expected="${1}"
+  shift
+  arguments="${*}"
+  if [ "${expected}" == "{true}" ] || [ "${expected}" == "{false}" ]; then
+    if [ -n "${debugMode}" ]; then
+      if ${source} $arguments; then
+        if [ "${expected}" == "{true}" ]; then
+          echo "${source_print} [${arguments}] successful"
+        else
+          echo "${source_print} [${arguments}] failure"
+        fi
+      else
+        if [ "${expected}" == "{false}" ]; then
+          echo "${source_print} [${arguments}] successful"
+        else
+          echo "${source_print} [${arguments}] failure"
+        fi
+      fi
+    else
+      if ${source} $arguments 2>/dev/null; then
+        if [ "${expected}" == "{true}" ]; then
+          echo "${source_print} [${arguments}] successful"
+        else
+          echo "${source_print} [${arguments}] failure"
+        fi
+      else
+        if [ "${expected}" == "{false}" ]; then
+          echo "${source_print} [${arguments}] successful"
+        else
+          echo "${source_print} [${arguments}] failure"
+        fi
+      fi
+    fi
+  else
+    if [ -n "${debugMode}" ]; then
+      # shellcheck disable=SC1090
+      response=$(source "${source}" $arguments)
+    else
+      # shellcheck disable=SC1090
+      response=$(source "${source}" $arguments 2>/dev/null)
+    fi
+    if [ "$response" == "$expected" ]; then
+      echo "${source_print} [${arguments}] successful"
+    else
+      echo "${source_print} [${arguments}] failure (response: $response, expected: $expected)"
+    fi
+  fi
+}
+
+setup() {
+  if [ -n "${main_tags[*]}" ]; then
+    for tag in "${main_tags[@]}"; do
+      git tag -f "${tag}" main >/dev/null
+    done
+  fi
+}
+
+teardown() {
+  if [ -n "${main_tags[*]}" ]; then
+    for tag in "${main_tags[@]}"; do
+      git tag -d "${tag}" >/dev/null
+    done
+  fi
+}
+
+UnitTests() {
+  if [ -n "${scripts[*]}" ]; then
+    setup
+    for script in "${scripts[@]}"; do
+      if [ -z "${1}" ] || [ "${1}" == "${script}" ]; then
+        echo "-------------------- ${script} --------------------"
+        source "./tests/${script}.sh"
+      fi
+    done
+    teardown
+  fi
+}

@@ -1,8 +1,15 @@
 #!/bin/bash
 set -e
 set -o pipefail
-echo "/converter/branch-to-version.sh" 1>&2
 
+silent=""
+for arg in "$@"; do
+  if [[ "$arg" == "--silent" ]]; then
+    silent=true
+  fi
+done
+
+echo "/converter/branch-to-version.sh" 1>&2
 regex="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
 input="${1}"
 
@@ -28,6 +35,8 @@ if [[ "$input" =~ $regex ]]; then
   BRANCH="${input}"
   for arg in "$@"; do
     case "$arg" in
+      --silent)
+      ;;
       --contains=*)
         contains="${arg#*=}"
         echo "> arg: $arg" 1>&2
@@ -71,8 +80,14 @@ if [[ "$input" =~ $regex ]]; then
       ;;
     esac
   done
+  if [ -n "${silent}" ]; then
+    exit 0
+  fi
 else
   echo "> $input matches version pattern: false" 1>&2
+  if [ -n "${silent}" ]; then
+    exit 1
+  fi
 fi
 
 export PREFIX

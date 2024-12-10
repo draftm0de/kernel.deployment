@@ -32,21 +32,19 @@ runs:
         # -- ensure target branch is version based--
         echo "::group::Ensure Commit Has To Be Tagged"
         path=${{ steps.script.outputs.path }}
-        source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}"
-        if [ "${BRANCH}" == '' ]; then
+        if ./${path}/converter/branch-to-version.sh "${{ inputs.target }}" "--silent" 2>/dev/null; then
+          echo "> target branch is version based"
+        else
           echo "::warning::target branch is not version based, skip tagging"
           exit 1
-        else
-          echo "> target branch is version based"
         fi
         
         # -- ensure source branch is not version based--
-        source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.source }}"
-        if [ "${BRANCH}" != '' ]; then
+        if ./${path}/converter/branch-to-version.sh "${{ inputs.source }}" "--silent" 2>/dev/null; then
           echo "::warning::source branch is version based, skip tagging"
           exit 1
         else
-          echo "> source branch is version based"
+          echo "> source branch is not version based"
         fi
         echo "::endgroup::"
 
@@ -54,8 +52,7 @@ runs:
       shell: bash
       run: |
         path=${{ steps.script.outputs.path }}
-        source ./${path}/git/read-commit-tags.sh "--filter=versioned"
-        if [ -n "${TAGS}" ]; then
+        if ./${path}/git/read-commit-tags.sh "--filter=version" "--silent" 2>/dev/null; then
           echo "::warning::commit already has a versioned tag, skip tagging"
           exit 1        
         fi         
@@ -66,19 +63,19 @@ runs:
       run: |
         echo "::group::Compare Target Image Digest With Built Digest"
         path=${{ steps.script.outputs.path }}
-        source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}"
-        tag="${BRANCH}"
+        
+        tag=$(./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}" 2>/dev/null)
         echo "> target branch tag: $tag"
         
         source ./${path}/converter/explode-docker-image-name.sh "${{ inputs.image }}"
         image="${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:${tag}"
         echo "> target branch image: $image"
         
-        source ./${path}/docker/image-manifest-jq.sh "${image}" ".config.digest"
+        remote_digest=(./${path}/docker/image-manifest-jq.sh "${image}" ".config.digest" "--silent" 2>/dev/null)
         echo "> built digest: ${{ inputs.digest }}"
-        echo "> remote digest: ${PROPERTY}"
+        echo "> remote digest: ${remote_digest}"
         
-        if [ "${PROPERTY}" == "${{ inputs.digest }}" ]; then
+        if [ "${remote_digest}" == "${{ inputs.digest }}" ]; then
           echo "::warning::built image digest is equal to target branch related image, skip tagging"
           exit 1
         else

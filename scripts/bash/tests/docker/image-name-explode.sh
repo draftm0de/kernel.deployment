@@ -4,11 +4,9 @@ set -o pipefail
 
 base_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 base_path="$base_path/../../src"
+SCRIPT="${base_path}/docker/image-name-explode.sh"
 
-# image-split-name
 INPUT="draftmode/my-image:1.0"
-SCRIPT="${base_path}/converter/explode-docker-image-name.sh"
-# shellcheck disable=SC1090
 source "${SCRIPT}" "${INPUT}"
 echo "> > ${INPUT}"
 echo "DOCKER_HOST:$DOCKER_HOST"
