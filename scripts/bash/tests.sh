@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-source "./src/bashunit.sh"
+source "./src/shunit.sh"
 
 main_tags=("1.0" "1.0.1" "1.0.x1" "1.1" "1.1.1" "no.version")
 
@@ -12,10 +12,10 @@ scripts+=("git/read-tags")
 scripts+=("git/read-commit-tags")
 scripts+=("docker/image-name-explode")
 #scripts+=("converter/explode-docker-image-name")
-#scripts+=("converter/patch-branch")
+#scripts+=("converter/patch-version")
 #scripts+=("docker/image-manifest-jq")
 
-#scripts=("git/read-commit-tags")
+scripts=("converter/patch-version")
 
-UnitTests
+shTests
 

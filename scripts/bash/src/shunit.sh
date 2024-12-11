@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-UnitTest() {
+shTest() {
   local source source_print expected arguments response
   source="${1}"
   source_print=$(basename $source)
@@ -72,7 +72,7 @@ teardown() {
   fi
 }
 
-UnitTests() {
+shTests() {
   if [ -n "${scripts[*]}" ]; then
     setup
     for script in "${scripts[@]}"; do

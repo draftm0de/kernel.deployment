@@ -4,8 +4,18 @@ set -o pipefail
 
 base_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 base_path="$base_path/../../src"
+SCRIPT="${base_path}/converter/patch-version.sh"
 
-SCRIPT="${base_path}/converter/increase-branch.sh"
+#debugMode="true"
+#shTest "${SCRIPT}" "1.1" "1"
+#shTest "${SCRIPT}" "1.1.1" "1.1"
+#shTest "${SCRIPT}" "1.1.4" "1.1" "--latest=1.1.3"
+#shTest "${SCRIPT}" "1.2.1" "1.2" "--latest=1.1.3"
+shTest "${SCRIPT}" "{false}" "1x" "--silent"
+exit 0
+
+
+
 inputs=("1 1.0" "1.2 1.2.3" "v1.2" "v1")
 
 for input in "${inputs[@]}"; do
