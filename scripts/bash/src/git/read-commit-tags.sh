@@ -62,7 +62,6 @@ if git tag --points-at "$commit" &>/dev/null; then
     case "$filter" in
       version)
         is_version=$(source "${src_dir}/converter/branch-to-version.sh" "${commit_tag}" 2>/dev/null)
-        #if source "${src_dir}/converter/branch-to-version.sh" "${commit_tag}" 2>/dev/null; then
         if [ -n "${is_version}" ]; then
           echo "> > commit tag $commit_tag matches version patterns: apply " 1>&2
         else

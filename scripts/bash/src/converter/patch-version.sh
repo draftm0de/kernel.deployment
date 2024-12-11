@@ -23,7 +23,7 @@ for arg in "$@"; do
   esac
 done
 
-source ${src_dir}/converter/branch-to-version.sh "${version}" >/dev/null
+source ${src_dir}/converter/branch-to-version.sh "${version}" &>/dev/null
 if [ -n "${BRANCH}" ]; then
   echo "> version ${version} matches version patterns: yes" 1>&2
   echo "> prefix: ${PREFIX}" 1>&2
@@ -39,7 +39,7 @@ if [ -n "${BRANCH}" ]; then
   BRANCH=""
   if [ -n "${latest}" ]; then
     echo "> --latest given: yes (${latest})" 1>&2
-    source ${src_dir}/converter/branch-to-version.sh "${latest}" >/dev/null
+    source ${src_dir}/converter/branch-to-version.sh "${latest}" &>/dev/null
     if [ -n "${BRANCH}" ]; then
       echo "> > latest ${latest} matches version patterns: yes" 1>&2
       echo "> > prefix: ${PREFIX}" 1>&2
@@ -53,32 +53,56 @@ if [ -n "${BRANCH}" ]; then
       latest_patch="$PATCH"
       latest_postfix="$POSTFIX"
       BRANCH="${latest_prefix}${latest_major}"
-      if [ $base_major -gt $latest_major ]; then
-        echo "> > > base major $base_major > latest major $latest_major" 1>&2
-        latest_major="$base_major"
-        latest_minor="0"
-        if [ -n "${latest_patch}" ]; then
-          latest_minor="1"
-          latest_patch="0"
-        fi
-      elif [ $base_minor -gt $latest_minor ]; then
-        echo "> > > base minor $base_minor > latest minor $latest_minor" 1>&2
-        latest_minor="$base_minor"
-        if [ -n "${latest_patch}" ]; then
-          latest_patch="0"
-        fi
+      if [ -z "${failure}" ] && [ $latest_major -gt $base_major ]; then
+        failure="latest major $latest_major > base major $base_major"
       fi
-      if [ -n "${latest_patch}" ]; then
-        echo "> > > increase patch version" 1>&2
-        BRANCH="${BRANCH}.${latest_minor}"
-        PATCH=$((latest_patch + 1))
-        BRANCH="${BRANCH}.${PATCH}"
-      elif [ -n "${latest_minor}" ]; then
-        echo "> > > increase minor version" 1>&2
-        MINOR=$((latest_minor + 1))
-        BRANCH="${BRANCH}.${MINOR}"
+      if [ -z "${failure}" ] && [ $base_major -eq $latest_major ] && [ $latest_minor -gt $base_minor ]; then
+        failure="latest minor $latest_minor > base minor $base_minor"
       fi
-      POSTFIX="${latest_postfix}"
+      if [ -z "${failure}" ]; then
+        if [ $base_major -gt $latest_major ]; then
+          echo "> > > base major $base_major > latest major $latest_major" 1>&2
+          latest_major="$base_major"
+          latest_minor="0"
+          if [ -n "${latest_patch}" ]; then
+            latest_minor="1"
+            latest_patch="0"
+          fi
+        elif [ $base_minor -gt $latest_minor ]; then
+          echo "> > > base minor $base_minor > latest minor $latest_minor" 1>&2
+          latest_minor="$base_minor"
+          if [ -n "${latest_patch}" ]; then
+            if [ -n "${base_patch}" ]; then
+              echo "> > > base has patch (patch from base)" 1>&2
+              latest_patch="${base_patch}"
+            else
+              echo "> > > base has patch (set patch=0)" 1>&2
+              latest_patch="0"
+            fi
+          else
+            echo "> > > latest has no patch" 1>&2
+          fi
+        fi
+        if [ -n "${latest_patch}" ]; then
+          echo "> > > increase patch version" 1>&2
+          BRANCH="${BRANCH}.${latest_minor}"
+          PATCH=$((latest_patch + 1))
+          BRANCH="${BRANCH}.${PATCH}"
+        elif [ -n "${latest_minor}" ]; then
+          echo "> > > increase minor version" 1>&2
+          MINOR=$((latest_minor + 1))
+          BRANCH="${BRANCH}.${MINOR}"
+        fi
+        POSTFIX="${latest_postfix}"
+      else
+        echo "> > > ${failure}" 1>&2
+        BRANCH=""
+        PREFIX=""
+        MAJOR=""
+        MINOR=""
+        PATCH=""
+        POSTFIX=""
+      fi
     else
       echo "> > latest ${latest} matches version patterns: no" 1>&2
       if [ -n "${silent}" ]; then

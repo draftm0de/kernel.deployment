@@ -10,6 +10,16 @@ shTest() {
   expected="${1}"
   shift
   arguments="${*}"
+  if [[ "${expected}" == "{file"*"}" ]]; then
+    expected="${expected#\{file:}"
+    expected="${expected%\}}"
+    if [ -f "${expected}" ]; then
+      expected=$(cat "${expected}")
+    else
+      echo "${source_print} [${arguments}] failure, expected {file:} does not exist"
+      return
+    fi
+  fi
   if [ "${expected}" == "{true}" ] || [ "${expected}" == "{false}" ]; then
     if [ -n "${debugMode}" ]; then
       if ${source} $arguments; then
@@ -59,7 +69,7 @@ shTest() {
 setup() {
   if [ -n "${main_tags[*]}" ]; then
     for tag in "${main_tags[@]}"; do
-      git tag -f "${tag}" main >/dev/null
+      git tag -f "${tag}" main &>/dev/null
     done
   fi
 }
@@ -67,7 +77,7 @@ setup() {
 teardown() {
   if [ -n "${main_tags[*]}" ]; then
     for tag in "${main_tags[@]}"; do
-      git tag -d "${tag}" >/dev/null
+      git tag -d "${tag}" &>/dev/null
     done
   fi
 }
