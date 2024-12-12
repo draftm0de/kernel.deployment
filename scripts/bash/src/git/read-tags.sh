@@ -19,6 +19,11 @@ for arg in "$@"; do
       option_latest="true"
       option_sort="desc"
     ;;
+    --latest=*)
+      echo "> arg: $arg" 1>&2
+      option_latest="${arg#*=}"
+      option_sort="desc"
+    ;;
     --list)
       option_list="true"
     ;;
@@ -81,9 +86,9 @@ if [[ ${#tags[@]} -gt 0 ]]; then
   # sort array
   if [ -n "${option_sort}" ]; then
     if [ "${option_sort}" == "asc" ]; then
-      option_sort="-r"
-    elif [ "${option_sort}" == "desc" ]; then
       option_sort="-V"
+    elif [ "${option_sort}" == "desc" ]; then
+      option_sort="-r"
     else
       option_sort=""
     fi
@@ -98,6 +103,9 @@ if [[ ${#tags[@]} -gt 0 ]]; then
   fi
   # output tags
   for tag in "${tags[@]}"; do
+    echo "> tag: ${tags[*]}" 1>&2
     echo "$tag"
   done
+else
+  echo "> no tags found" 1>&2
 fi
