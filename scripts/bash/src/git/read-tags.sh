@@ -7,7 +7,6 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 src_dir="$script_dir/../../src"
 
 branch=""
-filter=""
 option_sort=""
 option_latest=""
 option_list=""
@@ -31,19 +30,16 @@ for arg in "$@"; do
       echo "> arg: $arg" 1>&2
       branch="${arg#*=}"
       # shellcheck disable=SC1090
-      tag_list=$(source "${src_dir}/converter/branch-to-version.sh" "${branch}" "--format=tag-list" 2>/dev/null)
+      tag_list=$(source "${src_dir}/version/convert.sh" "${branch}" "--format=tag-list" 2>/dev/null)
       if [ -n "$tag_list" ]; then
         list="$tag_list"
-        echo "> > branch matches version patterns: yes" 1>&2
-        echo "> > --list ${list}" 1>&2
-        filter="branch"
+        echo "> > branch <${branch}> matches version patterns: yes" 1>&2
+        echo "> --list ${list}" 1>&2
+        options+=("--list")
+        options+=("${list}")
       else
-        echo "> > branch matches version patterns: no" 1>&2
-        list="$branch"
-        echo "> > --list ${list}" 1>&2
+        echo "> > branch <${branch}> matches version patterns: no" 1>&2
       fi
-      options+=("--list")
-      options+=("${list}")
     ;;
     --sort)
       echo "> arg: $arg" 1>&2
@@ -64,23 +60,17 @@ for arg in "$@"; do
 done
 
 read_tags=$(git tag "${options[@]}")
+
 tags=()
-while IFS= read -r tag; do
-  case "$filter" in
-    branch)
-      message="> tag $tag contains $branch"
-      tag=$(source "${src_dir}/converter/branch-to-version.sh" "${tag}" "--contains=${branch}" 2>/dev/null)
-      if [ -n "${tag}" ]; then
-        echo "$message: yes" 1>&2
-      else
-        echo "$message: no" 1>&2
-      fi
-    ;;
-  esac
-  if [ -n "$tag" ]; then
-    tags+=("$tag")
-  fi
-done <<< "$read_tags"
+if [ -n "${read_tags}" ]; then
+  echo "> found tags" 1>&2
+  while IFS= read -r tag; do
+    if [ -n "$tag" ]; then
+      echo "> > tag: $tag" 1>&2
+      tags+=("$tag")
+    fi
+  done <<< "$read_tags"
+fi
 
 if [[ ${#tags[@]} -gt 0 ]]; then
   # sort array
@@ -99,11 +89,13 @@ if [[ ${#tags[@]} -gt 0 ]]; then
   fi
   # return first element only
   if [ -n "${option_latest}" ]; then
+    echo "> use latest" 1>&2
     tags=("${tags[0]}")
   fi
   # output tags
+  echo "> result" 1>&2
   for tag in "${tags[@]}"; do
-    echo "> tag: ${tags[*]}" 1>&2
+    echo "> > tag: ${tags[*]}" 1>&2
     echo "$tag"
   done
 else
