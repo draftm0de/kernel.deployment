@@ -28,7 +28,7 @@ for arg in "$@"; do
   esac
 done
 
-source ${src_dir}/converter/branch-to-version.sh "${version}" &>/dev/null
+source ${src_dir}/version/convert.sh "${version}" &>/dev/null
 if [ -n "${BRANCH}" ]; then
   echo "> version ${version} matches version patterns: yes" 1>&2
   echo "> prefix: ${PREFIX}" 1>&2

@@ -23,7 +23,7 @@ failure=""
 
 # Match branch name against the regex
 if [[ "$input" =~ $regex ]]; then
-  echo "> tag <$input> matches version pattern: true" 1>&2
+  echo "> <$input> matches version pattern: true" 1>&2
   PREFIX="${BASH_REMATCH[1]}"
   MAJOR="${BASH_REMATCH[2]}"
   MINOR="${BASH_REMATCH[3]}"
@@ -73,12 +73,12 @@ if [[ "$input" =~ $regex ]]; then
           contains_dot_count=${#contains_dots}
           contains_dot_count=$((contains_dot_count + 1))
           if [[ $branch_dot_count -eq $contains_dot_count ]]; then
-            echo "> tag <$input> contains ${contains}: yes" 1>&2
+            echo "> <$input> contains ${contains}: yes" 1>&2
           else
-            failure="> tag <$input> contains ${contains}: no (level does not match)" 1>&2
+            failure="> <$input> contains ${contains}: no (level does not match)" 1>&2
           fi
         else
-          failure="> tag <$input> contains ${contains}: no" 1>&2
+          failure="> <$input> contains ${contains}: no" 1>&2
         fi
       ;;
       --format=*)
@@ -108,21 +108,21 @@ if [[ "$input" =~ $regex ]]; then
       if [ -n "${silent}" ]; then
         exit 1
       fi
-      return
+      exit 0
     fi
   done
 else
-  failure="> tag <$input> matches version pattern: false" 1>&2
+  failure="> <$input> matches version pattern: false" 1>&2
 fi
 if [ -n "${failure}" ]; then
   echo "${failure}" 1>&2
   if [ -n "${silent}" ]; then
     exit 1
   fi
-  return
+  exit 0
 else
   if [ -n "${silent}" ]; then
-    return
+    exit 0
   fi
 fi
 
