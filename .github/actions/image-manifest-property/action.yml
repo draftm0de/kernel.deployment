@@ -1,0 +1,31 @@
+name: "Get Docker Manifest Property"
+description: "Get Docker Manifest Property (e.g. .config.digest)"
+inputs:
+  image:
+    description: "Docker image with tag"
+    required: true
+  property:
+    description: "jq pattern for a property"
+    required: true
+outputs:
+  property:
+    description: "Value for the requested property"
+    value: ${{ steps.get-value.outputs.property }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Checkout Draftmode Scripts"
+      id: script
+      uses: draftm0de/kernel.deployment/.github/actions/check-out-scripts@main
+
+    - name: "Getting Property From Manifest"
+      shell: bash
+      id: get-value
+      run: |
+        echo "::group::Getting Property From Manifest"
+        source ./${path}/docker/image-manifest.sh "${{ inputs.image }}" ".config.digest"
+        echo "> property: $PROPERTY"
+
+        echo "::endgroup::"
+        echo "property=$property" >> $GITHUB_OUTPUT        

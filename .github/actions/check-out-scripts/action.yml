@@ -1,0 +1,28 @@
+name: "Checkout Draftmode Script Repository"
+description: "Checkout Draftmode Script Repository"
+
+outputs:
+  path:
+    description: "Bash Script Path"
+    value: ".draftmode/scripts/bash/src"
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Prevent Multiple Checkout"
+      shell: bash
+      run: |
+        path=".draftmode/scripts/bash/src"
+        if [ -d "$path" ]; then
+          echo "SCRIPT_PATH=$path" >> $GITHUB_ENV
+        else
+          echo "SCRIPT_PATH=" >> $GITHUB_ENV
+        fi
+
+    - name: "Checkout Draftmode Repository"
+      if: ${{ env.SCRIPT_PATH == '' }}
+      uses: actions/checkout@v4
+      with:
+        repository: draftm0de/kernel.deployment
+        ref: main
+        path: ".draftmode"

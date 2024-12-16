@@ -1,0 +1,76 @@
+name: Push Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      source:
+        description: "Source branch"
+        type: string
+        required: false
+      target:
+        description: "Branch to be merged into"
+        type: string
+        required: false
+      image:
+        description: "Docker image without tag"
+        required: true
+        type: string
+      artifact:
+        description: "Artifact name"
+        required: false
+        type: string
+    secrets:
+      DOCKER_TOKEN:
+        required: false
+
+jobs:
+  push-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v4
+
+      - name: "Preparing Arguments"
+        run: |
+          echo "::notice::Preparing Arguments..."
+          image="${{ inputs.image }}"
+          repository="${image%%/*}"
+          echo "::notice::> repository:$repository"          
+          image="${image#*/}"
+          echo "::notice::> image:$image"
+          
+          echo "::notice::Arguments prepared."
+          echo "REPOSITORY=$repository" >> $GITHUB_ENV
+          echo "IMAGE=$image" >> $GITHUB_ENV          
+
+      - name: "Build Image Tags"
+        id: get-image-tags
+        uses: draftm0de/kernel.deployment/.github/actions/build-image-tags@main
+        with:
+          source: ${{ inputs.source || github.ref_name }}
+          target: ${{ inputs.target || github.event.pull_request.base.ref }}
+
+      - name: "Load Docker Image From Artifact"
+        id: load-image
+        if: ${{ inputs.artifact }}
+        uses: draftm0de/kernel.deployment/.github/actions/image-load@main
+        with:
+          image: ${{ inputs.image }}
+          artifact: ${{ inputs.artifact }}
+
+      - name: "Login to Docker Hub"
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.REPOSITORY }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: "Tag and Push Image"
+        if: ${{ steps.get-image-tags.outputs.tags }}
+        run: |
+          echo "::notice::Tagging and Pushing Image..."
+          while IFS= read -r tag; do
+            image="${{ secrets.DOCKER_USERNAME }}/${tag}"
+            echo "::notice::$tag"
+            echo "::notice::> tag image: $tag"
+            echo "::notice::> push image: $image"
+          done <<< "${{ steps.get-image-tags.outputs.tags }}"         
