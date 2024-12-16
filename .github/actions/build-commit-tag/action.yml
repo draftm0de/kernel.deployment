@@ -1,0 +1,145 @@
+name: "Build Commit Version Tags"
+description: "Build Commit Version Tags"
+inputs:
+  source:
+    description: "source branch name"
+    required: true
+  target:
+    description: "branch to be merged into"
+    required: true
+  image:
+    description: "Docker image (without tag)"
+    required: false
+  digest:
+    description: "Built docker image digest"
+    required: false
+
+outputs:
+  tag:
+    description: "tag to be use for commit"
+    value: ${{ steps.get-commit-tag.outputs.tag }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Checkout Draftmode Scripts"
+      id: script
+      uses: draftm0de/kernel.deployment/.github/actions/check-out-scripts@main
+
+    - name: "Ensure Commit Has To Be Tagged"
+      shell: bash
+      run: |
+        # -- ensure target branch is version based--
+        echo "::group::Ensure Commit Has To Be Tagged"
+        path=${{ steps.script.outputs.path }}
+        if ./${path}/converter/branch-to-version.sh "${{ inputs.target }}" "--silent" 2>/dev/null; then
+          echo "> target branch is version based"
+        else
+          echo "::warning::target branch is not version based, skip tagging"
+          exit 1
+        fi
+        
+        # -- ensure source branch is not version based--
+        if ./${path}/converter/branch-to-version.sh "${{ inputs.source }}" "--silent" 2>/dev/null; then
+          echo "::warning::source branch is version based, skip tagging"
+          exit 1
+        else
+          echo "> source branch is not version based"
+        fi
+        echo "::endgroup::"
+
+    - name: "Ensure Commit Does Not Have Any Versioned Tag"
+      shell: bash
+      run: |
+        path=${{ steps.script.outputs.path }}
+        if ./${path}/git/read-commit-tags.sh "--filter=version" "--silent" 2>/dev/null; then
+          echo "::warning::commit already has a versioned tag, skip tagging"
+          exit 1        
+        fi         
+
+    - name: "Compare Image Digest"
+      if: ${{ inputs.image  && inputs.digest }}
+      shell: bash
+      run: |
+        echo "::group::Compare Target Image Digest With Built Digest"
+        path=${{ steps.script.outputs.path }}
+        
+        tag=$(./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}" 2>/dev/null)
+        echo "> target branch tag: $tag"
+        
+        source ./${path}/converter/explode-docker-image-name.sh "${{ inputs.image }}"
+        image="${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:${tag}"
+        echo "> target branch image: $image"
+        
+        remote_digest=(./${path}/docker/image-manifest-jq.sh "${image}" ".config.digest" "--silent" 2>/dev/null)
+        echo "> built digest: ${{ inputs.digest }}"
+        echo "> remote digest: ${remote_digest}"
+        
+        if [ "${remote_digest}" == "${{ inputs.digest }}" ]; then
+          echo "::warning::built image digest is equal to target branch related image, skip tagging"
+          exit 1
+        else
+          echo "built image digest is not equal to target branch related image"
+        fi
+        echo "::endgroup::"
+
+    - name: "Build Commit Tag"
+      shell: bash
+      id: build-commit-tag
+      run: |
+        echo "::group::Building commit tag"              
+        
+        path=${{ steps.script.outputs.path }}
+        source ./${path}/git/read-tags.sh "--branch=${{ inputs.target }}" "--latest"
+        
+        source ./${path}/converter/explode-git-branch-to-version.sh "${{ inputs.target }}"
+        
+        pattern="${PREFIX}${MAJOR}"
+        if [ -n "${MINOR}" ]; then
+          pattern="${pattern}.${MINOR}"
+        fi
+        commit_tag="$pattern"
+        if [ -n "${POSTFIX}" ]; then
+          pattern="${pattern}.*-${POSTFIX}"
+        else
+          pattern="${pattern}.*"
+        fi        
+        echo "> search pattern: $pattern"
+        
+        latest_tag=$(git tag --list "${pattern}" --sort=-v:refname | head -n 1)
+        
+        # determine the new tag
+        if [ -z "$latest_tag" ]; then
+          echo "> latest tag: no latest tag"          
+          commit_tag="${commit_tag}.1${POSTFIX}"
+        else
+          echo "> latest tag: $latest_tag"
+        
+          # Increment the patch version
+          patch_version=${latest_tag##*.}
+          new_patch_version=$((patch_version + 1))        
+          commit_tag="${commit_tag}.${patch_version}${POSTFIX}"
+        fi
+        echo "> commit tag: $commit_tag"        
+        
+        echo "::endgroup::"        
+        echo "tag=${commit_tag}" >> $GITHUB_OUTPUT
+
+    - name: "Ensure Tag Is Not An Existing Branch"
+      if: ${{ steps.build-commit-tag.outputs.tag }}
+      shell: bash
+      id: get-commit-tag
+      run: |
+        echo "::group::Approving Commit Tag"
+        
+        tag="${{ steps.build-commit-tag.outputs.tag }}"
+        echo "> tag: $tag"
+        if git ls-remote --exit-code --heads origin $tag; then
+          echo "::error::Commit tag $tag already exists as branch"
+          exit 1
+        else
+          echo "> tag approved."
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+        fi
+        
+        echo "::endgroup::"

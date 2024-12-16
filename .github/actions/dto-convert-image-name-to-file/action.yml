@@ -1,0 +1,31 @@
+name: "Convert Docker Image Name to Filename"
+description: "Convert Docker Image Name to Filename"
+inputs:
+  image:
+    description: "image name"
+    required: true
+
+outputs:
+  file:
+    description: "file name"
+    value: ${{ steps.arguments.outputs.file }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Convert Docker Image Name to File"
+      shell: bash
+      id: arguments
+      run: |
+        echo "::group::Converting image name"
+        
+        # convert inputs.image to filename
+        filename="${{ inputs.image }}"
+        filename="${filename//\//-}"
+        filename="${filename//./-}"
+        filename="${filename//:/-}"
+        filename="${filename}.tar"
+        echo "> filename: $filename"
+        
+        echo "::endgroup::"         
+        echo "file=$filename" >> $GITHUB_OUTPUT                

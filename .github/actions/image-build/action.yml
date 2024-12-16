@@ -1,0 +1,85 @@
+name: "Build Docker Image"
+description: "Build Docker Image"
+inputs:
+  image:
+    description: "Docker image without tag"
+    required: true
+  target:
+    description: "Build --target option"
+    required: false
+  context:
+    description: "Build context (default: .)"
+    required: false
+    default: "."
+  reproducible:
+    description: "Build reproducible image"
+    required: false
+  options:
+    description: "Additional build options"
+    required: false
+  build_args_file:
+    description: "--build-args from file"
+    required: false
+outputs:
+  digest:
+    description: "Docker built image digest"
+    value: ${{ steps.build-image.outputs.digest }}
+
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Prepare Build Arguments"
+      id: arguments
+      shell: bash
+      run: |
+        echo "::group::Preparing build arguments"
+        
+        build_options="${{ inputs.options }}"
+        
+        build_args_file="${{ inputs.context }}/${{ inputs.build_args_file }}"
+        if [ -f "$build_args_file" ]; then
+          echo "> build-args from file: $build_args_file"
+          build_args=$(cat "$build_args_file" | awk -F "=" '{ print "--build-arg " $1"="$2;}' | xargs)
+          build_options="$build_options $build_args"        
+        fi    
+               
+        tag="${{ inputs.image }}:latest"
+        echo "> tag: $tag"       
+        build_options="$build_options --tag $tag"
+        
+        if [ -n "${{ inputs.target }}" ]; then
+          echo "> target: ${{ inputs.target }}"
+          build_options="$build_options --target ${{ inputs.target }}"
+        fi     
+        echo "> context: ${{ inputs.context }}"
+        build_options="$build_options ${{ inputs.context }}"
+
+        echo "::endgroup::"        
+        echo "build_options=$build_options" >> $GITHUB_OUTPUT        
+        echo "image=$tag" >> $GITHUB_OUTPUT
+
+    - name: "Set Up Docker Buildx for Reproducible Images"
+      if: ${{ inputs.reproducible == 'true' }}
+      uses: docker/setup-buildx-action@v3
+
+    - name: "Build Image"
+      shell: bash
+      id: build-image
+      run: |
+        echo "::group::Building docker image"
+        
+        options="${{ steps.arguments.outputs.build_options }}"
+        if [ ${{ inputs.reproducible }} == 'true' ]; then
+          echo "> use docker buildx build"
+          SOURCE_DATE_EPOCH=0 docker buildx build --no-cache --output type=docker,rewrite-timestamp=true $options
+        else
+          echo "> use docker build"
+          docker build $options
+        fi
+        tag="${{ inputs.image }}:latest"
+        digest=$(docker inspect --format="{{.Id}}" "$tag")        
+        echo "> digest: $digest"    
+        
+        echo "::endgroup::"        
+        echo "digest=$digest" >> $GITHUB_OUTPUT
