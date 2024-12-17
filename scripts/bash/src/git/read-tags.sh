@@ -30,7 +30,7 @@ for arg in "$@"; do
       echo "> arg: $arg" 1>&2
       branch="${arg#*=}"
       # shellcheck disable=SC1090
-      tag_list=$(source "${src_dir}/version/convert.sh" "${branch}" "--format=tag-list" 2>/dev/null)
+      tag_list=$(source "${src_dir}/version/read.sh" "${branch}" "--format=tag-list" 2>/dev/null)
       if [ -n "$tag_list" ]; then
         list="$tag_list"
         echo "> > branch <${branch}> matches version patterns: yes" 1>&2

@@ -2,16 +2,16 @@
 set -e
 set -o pipefail
 
-silent=""
-for arg in "$@"; do
-  if [[ "$arg" == "--silent" ]]; then
-    silent=true
-  fi
-done
-
-echo "/version/convert.sh" 1>&2
+echo "/version/read.sh" 1>&2
 regex="^(v)?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-[a-zA-Z0-9]+)?$"
+
+# handle argument --silent
 input="${1}"
+silent=""
+if [[ "$*" == *"--silent"* ]]; then
+  echo "> arg: --silent" 1>&2
+  silent="true"
+fi
 
 PREFIX=""
 MAJOR=""
@@ -19,11 +19,12 @@ MINOR=""
 PATCH=""
 POSTFIX=""
 BRANCH=""
+
 failure=""
 
 # Match branch name against the regex
 if [[ "$input" =~ $regex ]]; then
-  echo "> <$input> matches version pattern: true" 1>&2
+  echo "> <$input> matches version pattern successfully" 1>&2
   PREFIX="${BASH_REMATCH[1]}"
   MAJOR="${BASH_REMATCH[2]}"
   MINOR="${BASH_REMATCH[3]}"
@@ -36,31 +37,39 @@ if [[ "$input" =~ $regex ]]; then
   BRANCH="${input}"
   for arg in "$@"; do
     case "$arg" in
-      --silent)
-      ;;
-      --level=*)
-        level="${arg#*=}"
-        echo "> arg: $arg" 1>&2
-        case "${level}" in
-          3|patch)
-            if [ -z "${MINOR}" ]; then
-              failure="> tag level valid: no (minor required)"
-            fi
-            if [ -n "${PATCH}" ]; then
-              failure="> tag level valid: no (patch version already given)"
-            fi
-          ;;
-          2|minor)
-            if [ -n "${MINOR}" ]; then
-              failure="> tag level valid: no (minor version already given)"
-            fi
-          ;;
-          *)
-            failure="> tag level valid: no (given level ${level} invalid)" 1>&2
-          ;;
-        esac
-        if [ -z "${failure}" ]; then
-          echo "> tag level valid: yes" 1>&2
+      --expect=*)
+        expect="${arg#*=}"
+        if [ -n "${expect}" ]; then
+          version="${expect#*-}"
+          if [ "${version}" == "${expect}" ]; then
+            echo "> arg: $arg" 1>&2
+            version=""
+          else
+            expect="${expect%-*}"
+            echo "> arg: --expect=$expect" 1>&2
+            echo "> arg: --version=$version" 1>&2
+          fi
+          case "${expect}" in
+            major)
+              if [ -n "${MINOR}" ]; then
+                failure="> level verification failure: minor exists"
+              fi
+            ;;
+            minor)
+              if [ -z "${MINOR}" ]; then
+                failure="> level verification failure: minor missing"
+              fi
+              if [ -n "${PATCH}" ]; then
+                failure="> level verification failure: patch existing"
+              fi
+            ;;
+            *)
+              failure="> level verification failure: level <${expect}> invalid, allowed (major|minor)" 1>&2
+            ;;
+          esac
+          if [ -z "${failure}" ]; then
+            echo "> level verification passed successfully" 1>&2
+          fi
         fi
       ;;
       --contains=*)
@@ -103,16 +112,9 @@ if [[ "$input" =~ $regex ]]; then
         esac
       ;;
     esac
-    if [ -n "${failure}" ]; then
-      echo "${failure}" 1>&2
-      if [ -n "${silent}" ]; then
-        exit 1
-      fi
-      exit 0
-    fi
   done
 else
-  failure="> <$input> matches version pattern: false" 1>&2
+  failure="> <$input> matches version pattern failure" 1>&2
 fi
 if [ -n "${failure}" ]; then
   echo "${failure}" 1>&2
