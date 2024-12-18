@@ -11,7 +11,9 @@ option_sort=""
 option_latest=""
 option_list=""
 options=()
+echo "> arg: before" 1>&2
 for arg in "$@"; do
+  echo "> arg: $arg" 1>&2
   case "$arg" in
     --latest)
       echo "> arg: $arg" 1>&2
@@ -40,6 +42,15 @@ for arg in "$@"; do
       else
         echo "> > branch <${branch}> matches version patterns: no" 1>&2
       fi
+    ;;
+    --message)
+      echo "> arg: $arg" 1>&2
+      options+=("-l")
+      options+=("--format=\"%(contents)\"")
+    ;;
+    --tag=*)
+      echo "> arg: $arg" 1>&2
+      options+=("${arg#*=}")
     ;;
     --sort)
       echo "> arg: $arg" 1>&2
