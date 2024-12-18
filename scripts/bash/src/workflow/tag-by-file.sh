@@ -30,6 +30,19 @@ for arg in "$@"; do
   esac
 done
 
+if [ -z "${source}" ]; then
+  echo "argument --source= missing"
+  exit 9
+fi
+if [ -z "${target}" ]; then
+  echo "argument --target= missing"
+  exit 9
+fi
+if [ -z "${version}" ]; then
+  echo "argument --version missing"
+  exit 9
+fi
+
 if "$base_path/version/read.sh" "${source}" "--silent" 2>/dev/null; then
   echo "source branch <${source:-}> does not fit requirements for auto tagging"
   exit 1
@@ -57,10 +70,8 @@ echo "> content based minor tag: ${target_tag_minor}" 1>&2
 
 target_tag="${target_tag_major}.${target_tag_minor}"
 target_tag_major_filter="${target_tag_major}"
-target_tag_minor_filter="${target_tag_major}.${target_tag_minor}"
 if [ -n "${stage}" ]; then
   target_tag_major_filter="${target_tag_major_filter}-${stage}"
-  target_tag_minor_filter="${target_tag_minor_filter}-${stage}"
   target_tag="${target_tag}-${stage}"
 fi
 
@@ -69,14 +80,13 @@ echo "> target tag <${target_tag}> digest: $target_tag_digest" 1>&2
 echo "> image build digest: ${digest}" 1>&2
 
 if [ "${target_tag_digest}" != "${digest}" ]; then
-  target_tag_major_latest=$("$base_path/git/list-tags.sh" "--branch=${target_tag_major_filter}" "--latest" 2>/dev/null)
-  echo "> latest major tag for target <${target}>: ${target_tag_major_latest}" 1>&2
-  target_tag_minor_latest=$("$base_path/git/list-tags.sh" "--branch=${target_tag_minor_filter}" "--latest" 2>/dev/null)
+  target_tag_minor_latest=$("$base_path/git/list-tags.sh" "--branch=${target_tag_major_filter}" "--latest" 2>/dev/null)
   echo "> latest minor tag for target <${target}>: ${target_tag_minor_latest}" 1>&2
-  tags=$("$base_path/version/patch.sh" "${target_tag_minor_latest:-${target_tag}}" "--latest=${target_tag_major_latest}" 2>/dev/null)
+  target_tag_patch_latest=$("$base_path/git/list-tags.sh" "--branch=${target_tag}" "--latest" 2>/dev/null)
+  echo "> latest patch tag for target <${target}>: ${target_tag_patch_latest}" 1>&2
+  tags=$("$base_path/version/patch.sh" "${target_tag_patch_latest:-${target_tag}}" "--previous=${target_tag_minor_latest}" 2>/dev/null)
   echo "${tags[*]}"
 else
   echo "latest target tag <${target_tag}> digest is equal to build image digest"
   exit 1
 fi
-

@@ -10,24 +10,23 @@ src_dir="$script_dir/../../src"
 version="${1}"
 echo "> version: $version" 1>&2
 option_silent=""
-option_latest=""
+option_previous=""
 for arg in "$@"; do
-  case "$arg" in
+  case "${arg}" in
     --silent)
-      echo "> arg: $arg" 1>&2
-      option_silent=$arg
+      echo "> arg: ${arg}" 1>&2
+      option_silent="${arg}"
     ;;
-    --latest=*)
-      echo "> arg: $arg" 1>&2
-      option_latest="${arg#*=}"
+    --previous=*)
+      echo "> arg: ${arg}" 1>&2
+      option_previous="${arg#*=}"
     ;;
   esac
 done
 
 patch_branch=""
-source ${src_dir}/version/read.sh "${version}" &>/dev/null
+source ${src_dir}/version/read.sh "${version}" "${option_silent}" >/dev/null
 if [ -n "${BRANCH}" ]; then
-  echo "> version <${version}> matches version patterns" 1>&2
   patch_prefix="${PREFIX}"
   patch_major="${MAJOR}"
   patch_minor="${MINOR}"
@@ -62,19 +61,14 @@ if [ -n "${BRANCH}" ]; then
     patch_branch="${patch_branch}.${patch_patch}"
   fi
   patch_branch="${patch_branch}${version_postfix}"
-else
-  echo "> version <${version}> does not match version patterns" 1>&2
-  if [ -n "${option_silent}" ]; then
-    exit 1
-  fi
 fi
 
 if [ -n "${patch_branch}" ]; then
-  latest_minor=""
-  if [ -n "${option_latest}" ]; then
-    source ${src_dir}/version/read.sh "${option_latest}" &>/dev/null
+  previous_minor=""
+  if [ -n "${option_previous}" ]; then
+    source ${src_dir}/version/read.sh "${option_previous}" &>/dev/null
     if [ -n "${BRANCH}" ]; then
-      latest_minor="${MINOR}"
+      previous_minor="${MINOR}"
     fi
   fi
   branches=()
@@ -82,8 +76,8 @@ if [ -n "${patch_branch}" ]; then
   patch_patch=${patch_patch:-0}
   branches+=("${patch_prefix}${patch_major}.${patch_minor}.${patch_patch}${version_postfix}")
   branches+=("${patch_prefix}${patch_major}.${patch_minor}${version_postfix}")
-  if [ ${latest_minor:-${patch_minor}} -gt ${patch_minor} ]; then
-    echo "> > major version skipped, latest minor <${latest_minor}> greater then patching major <${patch_minor}>" 1>&2
+  if [ ${previous_minor:-${patch_minor}} -gt ${patch_minor} ]; then
+    echo "> > major version skipped, latest minor <${previous_minor}> greater then patching major <${patch_minor}>" 1>&2
   else
     branches+=("${patch_prefix}${patch_major}${version_postfix}")
   fi

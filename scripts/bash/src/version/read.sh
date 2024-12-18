@@ -24,7 +24,7 @@ failure=""
 
 # Match branch name against the regex
 if [[ "$input" =~ $regex ]]; then
-  echo "> <$input> matches version pattern successfully" 1>&2
+  echo "> version <$input> matches version patterns" 1>&2
   PREFIX="${BASH_REMATCH[1]}"
   MAJOR="${BASH_REMATCH[2]}"
   MINOR="${BASH_REMATCH[3]}"
@@ -103,7 +103,7 @@ if [[ "$input" =~ $regex ]]; then
     esac
   done
 else
-  failure="> <$input> matches version pattern failure" 1>&2
+  failure="> version <$input> does not match version patterns" 1>&2
 fi
 if [ -n "${failure}" ]; then
   echo "${failure}" 1>&2

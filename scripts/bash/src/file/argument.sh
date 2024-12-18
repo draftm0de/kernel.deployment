@@ -15,12 +15,12 @@ if [ -f "${file}" ]; then
   value=$(grep "^$key=" "$file" | tee /dev/null | cut -d'=' -f2 || true)
 else
   echo "> file <${file}> does not exist" 1>&2
-  exit 0
+  exit 1
 fi
 
 if [ -z "${value}" ] && [ -n "${required}" ]; then
   echo "> argument <${key}> in file <${file}> does not exist, or is empty" 1>&2
-  exit 0
+  exit 1
 fi
 
 echo "$value"
