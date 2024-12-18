@@ -83,7 +83,7 @@ if [ -n "${patch_branch}" ]; then
   branches+=("${patch_prefix}${patch_major}.${patch_minor}.${patch_patch}${version_postfix}")
   branches+=("${patch_prefix}${patch_major}.${patch_minor}${version_postfix}")
   if [ ${latest_minor:-${patch_minor}} -gt ${patch_minor} ]; then
-    echo "> > patching major version skipped, latest minor ${latest_minor} greater and patched major <${patch_minor}>" 1>&2
+    echo "> > major version skipped, latest minor <${latest_minor}> greater then patching major <${patch_minor}>" 1>&2
   else
     branches+=("${patch_prefix}${patch_major}${version_postfix}")
   fi

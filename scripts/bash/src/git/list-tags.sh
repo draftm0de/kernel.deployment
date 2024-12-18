@@ -9,7 +9,6 @@ src_dir="$script_dir/../../src"
 branch=""
 option_sort=""
 option_latest=""
-option_list=""
 options=()
 for arg in "$@"; do
   case "$arg" in
@@ -23,41 +22,30 @@ for arg in "$@"; do
       option_latest="${arg#*=}"
       option_sort="desc"
     ;;
-    --list)
-      option_list="true"
-    ;;
     --branch=*)
       echo "> arg: $arg" 1>&2
       branch="${arg#*=}"
-      # shellcheck disable=SC1090
-      tag_list=$(source "${src_dir}/version/read.sh" "${branch}" "--format=tag-list" 2>/dev/null)
-      if [ -n "$tag_list" ]; then
-        list="$tag_list"
+      tag_filter=$("${src_dir}/version/read.sh" "${branch}" "--format=tag-list" 2>/dev/null)
+      if [ -n "$tag_filter" ]; then
         echo "> > branch <${branch}> matches version patterns: yes" 1>&2
-        echo "> --list ${list}" 1>&2
+        echo "> --list ${tag_filter}" 1>&2
         options+=("--list")
-        options+=("${list}")
+        options+=("${tag_filter}")
       else
         echo "> > branch <${branch}> matches version patterns: no" 1>&2
       fi
     ;;
-    --sort)
+    --message=*)
       echo "> arg: $arg" 1>&2
-      option_sort="desc"
+      options+=("--list")
+      options+=("--format=%(contents:subject)")
+      options+=("${arg#*=}")
     ;;
-    --sort=*)
-      echo "> arg: $arg" 1>&2
-      option_sort="${arg#*=}"
-    ;;
-    *)
-      if [ -n "$option_list" ]; then
-        options+=("--list")
-        options+=("${arg}")
-        option_list=""
-        echo "> arg --list ${arg}" 1>&2
-      fi
   esac
 done
+if [[ ! "${options[*]}" == *"--list"* ]]; then
+  options+=("--list")
+fi
 
 read_tags=$(git tag "${options[@]}")
 
@@ -99,5 +87,5 @@ if [[ ${#tags[@]} -gt 0 ]]; then
     echo "$tag"
   done
 else
-  echo "> no tags found" 1>&2
+  echo "> no tag(s) found" 1>&2
 fi
