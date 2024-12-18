@@ -2,15 +2,10 @@
 set -e
 set -o pipefail
 
-source "./src/shunit.sh"
+base_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+base_path="$base_path/../../src"
 
-main_tags=("1.0" "1.0.1" "1.0.x1" "1.1" "1.1.1" "no.version")
-scripts=()
-scripts+=("./tests/version/read.sh")
-shTests
-exit 0
-
-SCRIPT="src/version/read.sh"
+SCRIPT="${base_path}/version/read.sh"
 shTest "${SCRIPT}" "1" "1"
 shTest "${SCRIPT}" "{true}" "1" "--silent"
 shTest "${SCRIPT}" "{false}" "1prod" "--silent"
@@ -27,5 +22,3 @@ shTest "${SCRIPT}" "v1.*-prod" "v1-prod" "--format=tag-list"
 shTest "${SCRIPT}" "v1-prod" "v1-prod" "--expect=major"
 shTest "${SCRIPT}" "" "v1.2-prod" "--expect=major"
 shTest "${SCRIPT}" "v1.2-prod" "v1.2-prod" "--expect=minor"
-
-teardown

@@ -9,6 +9,7 @@ src_dir="$script_dir/../../src"
 branch=""
 option_sort=""
 option_latest=""
+tag_regex=""
 options=()
 for arg in "$@"; do
   case "$arg" in
@@ -26,7 +27,9 @@ for arg in "$@"; do
       echo "> arg: $arg" 1>&2
       branch="${arg#*=}"
       tag_filter=$("${src_dir}/version/read.sh" "${branch}" "--format=tag-list" 2>/dev/null)
-      if [ -n "$tag_filter" ]; then
+      if [ -n "${tag_filter}" ]; then
+        tag_regex="^${tag_filter//\*/[0-9]+}$"
+        echo "> > tag_regex: <${tag_regex}>" 1>&2
         echo "> > branch <${branch}> matches version patterns: yes" 1>&2
         echo "> --list ${tag_filter}" 1>&2
         options+=("--list")
@@ -53,9 +56,13 @@ tags=()
 if [ -n "${read_tags}" ]; then
   echo "> found tags" 1>&2
   while IFS= read -r tag; do
-    if [ -n "$tag" ]; then
-      echo "> > tag: $tag" 1>&2
-      tags+=("$tag")
+    if [ -n "${tag}" ]; then
+      if [[ "${tag}" =~ ${tag_regex:-${tag}} ]]; then
+        echo "> > tag: ${tag}" 1>&2
+        tags+=("$tag")
+      else
+        echo "> > tag: ${tag}, skipped (tag_regx)" 1>&2
+      fi
     fi
   done <<< "$read_tags"
 fi

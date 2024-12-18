@@ -88,7 +88,7 @@ shTests() {
     for script in "${scripts[@]}"; do
       if [ -z "${1}" ] || [ "${1}" == "${script}" ]; then
         echo "-------------------- ${script} --------------------"
-        source "./tests/${script}.sh"
+        source "${script}"
       fi
     done
     teardown

@@ -39,37 +39,26 @@ if [[ "$input" =~ $regex ]]; then
     case "$arg" in
       --expect=*)
         expect="${arg#*=}"
-        if [ -n "${expect}" ]; then
-          version="${expect#*-}"
-          if [ "${version}" == "${expect}" ]; then
-            echo "> arg: $arg" 1>&2
-            version=""
-          else
-            expect="${expect%-*}"
-            echo "> arg: --expect=$expect" 1>&2
-            echo "> arg: --version=$version" 1>&2
-          fi
-          case "${expect}" in
-            major)
-              if [ -n "${MINOR}" ]; then
-                failure="> level verification failure: minor exists"
-              fi
-            ;;
-            minor)
-              if [ -z "${MINOR}" ]; then
-                failure="> level verification failure: minor missing"
-              fi
-              if [ -n "${PATCH}" ]; then
-                failure="> level verification failure: patch existing"
-              fi
-            ;;
-            *)
-              failure="> level verification failure: level <${expect}> invalid, allowed (major|minor)" 1>&2
-            ;;
-          esac
-          if [ -z "${failure}" ]; then
-            echo "> level verification passed successfully" 1>&2
-          fi
+        case "${expect}" in
+          major)
+            if [ -n "${MINOR}" ]; then
+              failure="> level verification failure: minor exists"
+            fi
+          ;;
+          minor)
+            if [ -z "${MINOR}" ]; then
+              failure="> level verification failure: minor missing"
+            fi
+            if [ -n "${PATCH}" ]; then
+              failure="> level verification failure: patch existing"
+            fi
+          ;;
+          *)
+            failure="> level verification failure: level <${expect}> invalid, allowed (major|minor)" 1>&2
+          ;;
+        esac
+        if [ -z "${failure}" ]; then
+          echo "> level verification passed successfully" 1>&2
         fi
       ;;
       --contains=*)
