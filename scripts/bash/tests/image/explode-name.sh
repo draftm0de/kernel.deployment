@@ -4,7 +4,7 @@ set -o pipefail
 
 base_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 base_path="$base_path/../../src"
-SCRIPT="${base_path}/docker/image-name-explode.sh"
+SCRIPT="${base_path}/image/explode-name.sh"
 
 INPUT="draftmode/my-image:1.0"
 source "${SCRIPT}" "${INPUT}"

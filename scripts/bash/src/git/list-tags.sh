@@ -7,8 +7,8 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 src_dir="$script_dir/../../src"
 
 branch=""
-option_sort=""
 option_latest=""
+option_sort=""
 tag_regex=""
 options=()
 for arg in "$@"; do
@@ -22,6 +22,10 @@ for arg in "$@"; do
       echo "> arg: $arg" 1>&2
       option_latest="${arg#*=}"
       option_sort="desc"
+    ;;
+    --sort=*)
+      echo "> arg: $arg" 1>&2
+      option_sort="${arg#*=}"
     ;;
     --branch=*)
       echo "> arg: $arg" 1>&2
